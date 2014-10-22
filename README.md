@@ -1,6 +1,6 @@
 # PKI.IO
 
-## Scalable and open source X.509 certificate management
+**Scalable and open source X.509 certificate management**
 
 pki.io is an open source project that aims to make managing and deploying X.509 certificates easy and scalable.
 
