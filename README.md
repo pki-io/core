@@ -9,3 +9,5 @@ This project is in the early design stage of development. If you're interested i
 The main site is here: http://pki.io
 
 Design ideas etc will be added to the [GitHub wiki](https://github.com/pki-io/pki.io/wiki)
+
+Google Group: https://groups.google.com/forum/#!forum/pki_io
