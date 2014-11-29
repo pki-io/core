@@ -3,6 +3,8 @@ package crypto
 import (
     "bytes"
     "encoding/base64"
+    "crypto/rand"
+    "crypto/cipher"
     "crypto/rsa"
     "crypto/aes"
     "crypto/sha256"
@@ -52,11 +54,12 @@ func UnPad(src []byte) []byte {
 }
 
 func Base64Encode(input []byte) ([]byte) {
-    return base64.StdEncoding.EncodeToString(input)
+    return []byte(base64.StdEncoding.EncodeToString(input))
 }
 
 func Base64Decode(input []byte) ([]byte, error) {
-    return base64.StdEncoding.DecodeString(input)
+    b, err := base64.StdEncoding.DecodeString(string(input))
+    return []byte(b), err
 }
 
 func AESEncrypt(plaintext []byte, key []byte) ([]byte, []byte, error) {
@@ -66,7 +69,7 @@ func AESEncrypt(plaintext []byte, key []byte) ([]byte, []byte, error) {
     if err != nil {
         return nil, nil, err
     }
-    paddedPlaintext := Pad(plaintxt, aes.BlockSize)
+    paddedPlaintext := Pad(plaintext, aes.BlockSize)
     ciphertext := make([]byte, len(paddedPlaintext))
     iv, err := RandomBytes(aes.BlockSize)
     if err != nil {
@@ -105,7 +108,7 @@ func PemDecodeRSAPublic(in []byte) (*rsa.PublicKey) {
 func RSAEncrypt(plaintext []byte, publicKey *rsa.PublicKey) ([]byte, error) {
     label := []byte("")
     hash := sha256.New()
-    return rsa.EncryptOAEP(hash, rand.Reader, publickey, plaintext, label)
+    return rsa.EncryptOAEP(hash, rand.Reader, publicKey, plaintext, label)
 }
 
 /*********************************************************************
@@ -115,7 +118,7 @@ func RSAEncrypt(plaintext []byte, publicKey *rsa.PublicKey) ([]byte, error) {
 func GroupEncrypt(plaintext string,  publicKeys map[string]string) (*Encrypted, error) {
 
     keySize := 32
-    key := RandomBytes(keySize)
+    key, _ := RandomBytes(keySize)
     ciphertext, iv, err := AESEncrypt([]byte(plaintext), key)
     if err != nil {
         return nil, err
@@ -133,29 +136,25 @@ func GroupEncrypt(plaintext string,  publicKeys map[string]string) (*Encrypted, 
         encryptedKeys[id] = string(Base64Encode(encryptedKey))
     }
 
-    return &Encrypted {
-        Ciphertext: string(Base64Encode(ciphertext)),
-        Mode: "aes-cbc-256+rsa",
-        Inputs: inputs,
-        Keys: encryptedKeys
-    }
+    return &Encrypted { Ciphertext: string(Base64Encode(ciphertext)), Mode: "aes-cbc-256+rsa", Inputs: inputs, Keys: encryptedKeys }, nil
 }
 
 func GroupDecrypt(encrypted *Encrypted, keyID string, privateKey string) (string, error) {
 
-    if encrypted.Mode != "aes-cbc-256+rsa" {
-        return nil, fmt.Errof("Invalid mode '%s'", encrypted.Mode)
+    /*if encrypted.Mode != "aes-cbc-256+rsa" {
+        return nil, fmt.Errorf("Invalid mode '%s'", encrypted.Mode)
     }
 
-    ciphertext := []byte(Base64Decode(encrypted.Ciphertext))
-    iv := []byte(Base64Decode(encrypted.Inputs["iv"]))
-    encryptedKey := []byte(Base64Decode(encrypted.Keys[keyID]))
+    ciphertext, _ := Base64Decode(encrypted.Ciphertext)
+    iv, _ := Base64Decode(encrypted.Inputs["iv"])
+    encryptedKey, _ := Base64Decode(encrypted.Keys[keyID])*/
+    return "", nil
 }
 
 func Sign(message string, privateKey string) (*Signed, error) {
-
+    return nil, nil
 }
 
 func Verify(message *Signed, publicKey string) (bool, error) {
-
+    return false, nil
 }
