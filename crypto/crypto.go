@@ -77,7 +77,7 @@ func AESEncrypt(plaintext []byte, key []byte) ([]byte, []byte, error) {
     }
 
     mode := cipher.NewCBCEncrypter(block, iv)
-    mode.CryptBlocks(ciphertext, plaintext)
+    mode.CryptBlocks(ciphertext, paddedPlaintext)
 
     return ciphertext, iv, nil
 }

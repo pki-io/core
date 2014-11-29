@@ -47,3 +47,12 @@ func TestBase64Decode(t *testing.T) {
     assert.Nil(t, err)
     assert.Equal(t, out, expectedOut, "output should match")
 }
+
+func TestAESEncrypt(t *testing.T) {
+    plaintext := []byte("secret message")
+    key, _ := RandomBytes(32)
+    ciphertext, iv, err := AESEncrypt(plaintext, key)
+    assert.NotNil(t, ciphertext)
+    assert.NotNil(t, iv)
+    assert.Nil(t, err)
+}
