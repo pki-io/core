@@ -1,6 +1,7 @@
 package crypto
 
 import (
+    "fmt"
     "bytes"
     "encoding/base64"
     "crypto/rand"
@@ -63,8 +64,6 @@ func Base64Decode(input []byte) ([]byte, error) {
 }
 
 func AESEncrypt(plaintext []byte, key []byte) ([]byte, []byte, error) {
-    var err error
-
     block, err := aes.NewCipher(key)
     if err != nil {
         return nil, nil, err
@@ -80,6 +79,31 @@ func AESEncrypt(plaintext []byte, key []byte) ([]byte, []byte, error) {
     mode.CryptBlocks(ciphertext, paddedPlaintext)
 
     return ciphertext, iv, nil
+}
+
+func AESDecrypt(ciphertext []byte, iv []byte, key []byte) ([]byte, error) {
+    block, err := aes.NewCipher(key)
+    if err != nil {
+        return nil, err
+    }
+
+    if len(ciphertext) % aes.BlockSize != 0 {
+        return nil, fmt.Errorf("ciphertext is not a multiple of the block size")
+    }
+
+    if len(iv) != aes.BlockSize {
+        return nil, fmt.Errorf("iv is wrong size")
+    }
+
+    paddedPlaintext := make([]byte, len(ciphertext))
+    mode := cipher.NewCBCDecrypter(block, iv)
+    mode.CryptBlocks(paddedPlaintext, ciphertext)
+
+    return UnPad(paddedPlaintext), nil
+}
+
+func GenerateRSAKey() (*rsa.PrivateKey, error) {
+    return rsa.GenerateKey(rand.Reader, 2048)
 }
 
 func PemEncodeRSAPrivate(key *rsa.PrivateKey) ([]byte) {
@@ -99,16 +123,22 @@ func PemDecodeRSAPrivate(in []byte) (*rsa.PrivateKey, error) {
     return x509.ParsePKCS1PrivateKey(b.Bytes)
 }
 
-func PemDecodeRSAPublic(in []byte) (*rsa.PublicKey) {
+func PemDecodeRSAPublic(in []byte) (*rsa.PublicKey, error) {
     b, _ := pem.Decode(in)
-    pubKey, _ := x509.ParsePKIXPublicKey(b.Bytes)
-    return pubKey.(*rsa.PublicKey)
+    pubKey, err := x509.ParsePKIXPublicKey(b.Bytes)
+    return pubKey.(*rsa.PublicKey), err
 }
 
 func RSAEncrypt(plaintext []byte, publicKey *rsa.PublicKey) ([]byte, error) {
     label := []byte("")
     hash := sha256.New()
     return rsa.EncryptOAEP(hash, rand.Reader, publicKey, plaintext, label)
+}
+
+func RSADecrypt(ciphertext []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
+    label := []byte("")
+    hash := sha256.New()
+    return rsa.DecryptOAEP(hash, rand.Reader, privateKey, ciphertext, label)
 }
 
 /*********************************************************************
@@ -128,7 +158,7 @@ func GroupEncrypt(plaintext string,  publicKeys map[string]string) (*Encrypted, 
 
     encryptedKeys := make(map[string]string)
     for id, publicKeyString := range publicKeys {
-        publicKey := PemDecodeRSAPublic([]byte(publicKeyString))
+        publicKey, err := PemDecodeRSAPublic([]byte(publicKeyString))
         encryptedKey, err := RSAEncrypt(key, publicKey)
         if err != nil {
             return nil, err
@@ -139,16 +169,21 @@ func GroupEncrypt(plaintext string,  publicKeys map[string]string) (*Encrypted, 
     return &Encrypted { Ciphertext: string(Base64Encode(ciphertext)), Mode: "aes-cbc-256+rsa", Inputs: inputs, Keys: encryptedKeys }, nil
 }
 
-func GroupDecrypt(encrypted *Encrypted, keyID string, privateKey string) (string, error) {
+func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (string, error) {
 
-    /*if encrypted.Mode != "aes-cbc-256+rsa" {
-        return nil, fmt.Errorf("Invalid mode '%s'", encrypted.Mode)
+    if encrypted.Mode != "aes-cbc-256+rsa" {
+        return "", fmt.Errorf("Invalid mode '%s'", encrypted.Mode)
     }
 
-    ciphertext, _ := Base64Decode(encrypted.Ciphertext)
-    iv, _ := Base64Decode(encrypted.Inputs["iv"])
-    encryptedKey, _ := Base64Decode(encrypted.Keys[keyID])*/
-    return "", nil
+    ciphertext, _ := Base64Decode([]byte(encrypted.Ciphertext))
+    iv, _ := Base64Decode([]byte(encrypted.Inputs["iv"]))
+    encryptedKey, _ := Base64Decode([]byte(encrypted.Keys[keyID]))
+
+    privateKey, err := PemDecodeRSAPrivate([]byte(privateKeyPem))
+    key, err := RSADecrypt(encryptedKey, privateKey)
+
+    plaintext, err := AESDecrypt(ciphertext, iv, key)
+    return string(plaintext), err
 }
 
 func Sign(message string, privateKey string) (*Signed, error) {
