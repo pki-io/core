@@ -9,8 +9,7 @@ import (
 
 func TestRandomBytes(t *testing.T) {
     size := 10
-    random, err := RandomBytes(size)
-    assert.Nil(t, err, "shouldn't get an error")
+    random := RandomBytes(size)
     assert.Equal(t, size, len(random), "they should be equal")
 }
 
@@ -52,7 +51,7 @@ func TestBase64Decode(t *testing.T) {
 
 func TestAESEncrypt(t *testing.T) {
     plaintext := []byte("secret message")
-    key, _ := RandomBytes(32)
+    key := RandomBytes(32)
     ciphertext, iv, err := AESEncrypt(plaintext, key)
     assert.Nil(t, err)
     assert.NotNil(t, ciphertext)
@@ -61,7 +60,7 @@ func TestAESEncrypt(t *testing.T) {
 
 func TestAESDecrypt(t *testing.T) {
     plaintext := []byte("secret message")
-    key, _ := RandomBytes(32)
+    key := RandomBytes(32)
     ciphertext, iv, err := AESEncrypt(plaintext, key)
     newPlaintext, err := AESDecrypt(ciphertext, iv, key)
     assert.Nil(t, err)
@@ -105,7 +104,7 @@ func TestPemDecodeRSAPublic(t *testing.T) {
 }
 
 func TestRSAEncrypt(t *testing.T) {
-    plaintext, _ := RandomBytes(32)
+    plaintext := RandomBytes(32)
     key, _ := GenerateRSAKey()
     ciphertext, err := RSAEncrypt(plaintext, &key.PublicKey)
     assert.Nil(t, err)
@@ -113,7 +112,7 @@ func TestRSAEncrypt(t *testing.T) {
 }
 
 func TestRSADecrypt(t *testing.T) {
-    plaintext, _ := RandomBytes(32)
+    plaintext := RandomBytes(32)
     key, _ := GenerateRSAKey()
     ciphertext, _ := RSAEncrypt(plaintext, &key.PublicKey)
     newPlaintext, err := RSADecrypt(ciphertext, key)

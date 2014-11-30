@@ -18,13 +18,13 @@ import (
 // https://www.socketloop.com/tutorials/golang-padding-un-padding-data
 // https://www.socketloop.com/tutorials/golang-example-for-rsa-package-functions-example
 
-func RandomBytes(size int) ([]byte, error) {
+func RandomBytes(size int) ([]byte) {
     randomBytes := make([]byte, size)
     _, err := rand.Read(randomBytes)
     if err != nil {
-        return nil, err
+        panic(fmt.Errorf("Could not generate random bytes: %s",err.Error()))
     } else {
-        return randomBytes, nil
+        return randomBytes
     }
 }
 
@@ -56,7 +56,7 @@ func AESEncrypt(plaintext []byte, key []byte) ([]byte, []byte, error) {
     }
     paddedPlaintext := Pad(plaintext, aes.BlockSize)
     ciphertext := make([]byte, len(paddedPlaintext))
-    iv, err := RandomBytes(aes.BlockSize)
+    iv := RandomBytes(aes.BlockSize)
     if err != nil {
         return nil, nil, err
     }

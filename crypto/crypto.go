@@ -21,7 +21,7 @@ type Signed struct {
 func GroupEncrypt(plaintext string,  publicKeys map[string]string) (*Encrypted, error) {
 
     keySize := 32
-    key, _ := RandomBytes(keySize)
+    key := RandomBytes(keySize)
     ciphertext, iv, err := AESEncrypt([]byte(plaintext), key)
     if err != nil {
         return nil, err
