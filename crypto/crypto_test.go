@@ -68,20 +68,19 @@ func TestAESDecrypt(t *testing.T) {
 }
 
 func TestGenerateRSAKey(t *testing.T) {
-    key, err := GenerateRSAKey()
-    assert.Nil(t, err)
+    key := GenerateRSAKey()
     assert.NotNil(t, key.D)
 }
 
 func TestPemEncodeRSAPrivate(t *testing.T) {
-    key, _ := GenerateRSAKey()
+    key := GenerateRSAKey()
     pemKey := PemEncodeRSAPrivate(key)
     assert.NotNil(t, pemKey)
     assert.Equal(t, strings.Contains(string(pemKey), "RSA PRIVATE KEY"), true)
 }
 
 func TestPemDecodeRSAPrivate(t *testing.T) {
-    key, _ := GenerateRSAKey()
+    key := GenerateRSAKey()
     pemKey := PemEncodeRSAPrivate(key)
     newKey, err := PemDecodeRSAPrivate(pemKey)
     assert.Nil(t, err)
@@ -89,14 +88,14 @@ func TestPemDecodeRSAPrivate(t *testing.T) {
 }
 
 func TestPemEncodeRSAPublic(t *testing.T) {
-    key, _ := GenerateRSAKey()
+    key := GenerateRSAKey()
     pemKey := PemEncodeRSAPublic(&key.PublicKey)
     assert.NotNil(t, pemKey)
     assert.Equal(t, strings.Contains(string(pemKey), "RSA PUBLIC KEY"), true)
 }
 
 func TestPemDecodeRSAPublic(t *testing.T) {
-    key, _ := GenerateRSAKey()
+    key := GenerateRSAKey()
     pemKey := PemEncodeRSAPublic(&key.PublicKey)
     newKey, err := PemDecodeRSAPublic(pemKey)
     assert.Nil(t, err)
@@ -105,7 +104,7 @@ func TestPemDecodeRSAPublic(t *testing.T) {
 
 func TestRSAEncrypt(t *testing.T) {
     plaintext := RandomBytes(32)
-    key, _ := GenerateRSAKey()
+    key := GenerateRSAKey()
     ciphertext, err := RSAEncrypt(plaintext, &key.PublicKey)
     assert.Nil(t, err)
     assert.NotNil(t, ciphertext)
@@ -113,7 +112,7 @@ func TestRSAEncrypt(t *testing.T) {
 
 func TestRSADecrypt(t *testing.T) {
     plaintext := RandomBytes(32)
-    key, _ := GenerateRSAKey()
+    key := GenerateRSAKey()
     ciphertext, _ := RSAEncrypt(plaintext, &key.PublicKey)
     newPlaintext, err := RSADecrypt(ciphertext, key)
     assert.Nil(t, err)
@@ -122,7 +121,7 @@ func TestRSADecrypt(t *testing.T) {
 
 func TestRSASign(t *testing.T) {
     message := []byte("this is a message")
-    key, _ := GenerateRSAKey()
+    key := GenerateRSAKey()
     sig, err := RSASign(message, key)
     assert.Nil(t, err)
     assert.NotNil(t, sig)
@@ -130,7 +129,7 @@ func TestRSASign(t *testing.T) {
 
 func TestRSAVerify(t *testing.T) {
     message := []byte("this is a message")
-    key, _ := GenerateRSAKey()
+    key := GenerateRSAKey()
     sig, _ := RSASign(message, key)
 
     valid, err := RSAVerify(message, sig, &key.PublicKey)
@@ -139,8 +138,8 @@ func TestRSAVerify(t *testing.T) {
 }
 
 func TestGroupEncrypt(t *testing.T) {
-    key1, _ := GenerateRSAKey()
-    key2, _ := GenerateRSAKey()
+    key1 := GenerateRSAKey()
+    key2 := GenerateRSAKey()
     keys := make(map[string]string)
     keys["1"] = string(PemEncodeRSAPublic(&key1.PublicKey))
     keys["2"] = string(PemEncodeRSAPublic(&key2.PublicKey))
@@ -152,8 +151,8 @@ func TestGroupEncrypt(t *testing.T) {
 }
 
 func TestGroupDecrypt(t *testing.T) {
-    key1, _ := GenerateRSAKey()
-    key2, _ := GenerateRSAKey()
+    key1 := GenerateRSAKey()
+    key2 := GenerateRSAKey()
     keys := make(map[string]string)
     keys["1"] = string(PemEncodeRSAPublic(&key1.PublicKey))
     keys["2"] = string(PemEncodeRSAPublic(&key2.PublicKey))
@@ -168,7 +167,7 @@ func TestGroupDecrypt(t *testing.T) {
 
 func TestSign(t *testing.T) {
     message := "this is a message"
-    key, _ := GenerateRSAKey()
+    key := GenerateRSAKey()
     privateKey := string(PemEncodeRSAPrivate(key))
     sig, err := Sign(message, privateKey)
     assert.Nil(t, err)
@@ -177,7 +176,7 @@ func TestSign(t *testing.T) {
 
 func TestVerify(t *testing.T) {
     message := "this is a message"
-    key, _ := GenerateRSAKey()
+    key := GenerateRSAKey()
     privateKey := string(PemEncodeRSAPrivate(key))
     sig, err := Sign(message, privateKey)
 
