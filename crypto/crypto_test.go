@@ -1,6 +1,7 @@
 package crypto
 
 import (
+    //"fmt"
     "strings"
     "testing"
     "github.com/stretchr/testify/assert"
@@ -120,6 +121,24 @@ func TestRSADecrypt(t *testing.T) {
     assert.Equal(t, plaintext, newPlaintext)
 }
 
+func TestRSASign(t *testing.T) {
+    message := []byte("this is a message")
+    key, _ := GenerateRSAKey()
+    sig, err := RSASign(message, key)
+    assert.Nil(t, err)
+    assert.NotNil(t, sig)
+}
+
+func TestRSAVerify(t *testing.T) {
+    message := []byte("this is a message")
+    key, _ := GenerateRSAKey()
+    sig, _ := RSASign(message, key)
+
+    valid, err := RSAVerify(message, sig, &key.PublicKey)
+    assert.Nil(t, err)
+    assert.Equal(t, valid, true)
+}
+
 func TestGroupEncrypt(t *testing.T) {
     key1, _ := GenerateRSAKey()
     key2, _ := GenerateRSAKey()
@@ -146,4 +165,25 @@ func TestGroupDecrypt(t *testing.T) {
     newPlaintext, err := GroupDecrypt(e, "1", string(PemEncodeRSAPrivate(key1)))
     assert.Nil(t, err)
     assert.Equal(t, plaintext, newPlaintext)
+}
+
+func TestSign(t *testing.T) {
+    message := "this is a message"
+    key, _ := GenerateRSAKey()
+    privateKey := string(PemEncodeRSAPrivate(key))
+    sig, err := Sign(message, privateKey)
+    assert.Nil(t, err)
+    assert.NotNil(t, sig.Signature)
+}
+
+func TestVerify(t *testing.T) {
+    message := "this is a message"
+    key, _ := GenerateRSAKey()
+    privateKey := string(PemEncodeRSAPrivate(key))
+    sig, err := Sign(message, privateKey)
+
+    publicKey := string(PemEncodeRSAPublic(&key.PublicKey))
+    valid, err := Verify(sig, publicKey)
+    assert.Nil(t, err)
+    assert.Equal(t, valid, true)
 }
