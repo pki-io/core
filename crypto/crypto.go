@@ -69,13 +69,9 @@ func Sign(message string, privateKeyString string) (*Signed, error) {
     }
 }
 
-func Verify(signed *Signed, publicKeyString string) (bool, error) {
+func Verify(signed *Signed, publicKeyString string) (error) {
     publicKey, _ := PemDecodeRSAPublic([]byte(publicKeyString))
     message := []byte(signed.Message)
     signature, _ := Base64Decode([]byte(signed.Signature))
-    if _, err := RSAVerify(message, signature, publicKey); err != nil {
-        return false, err
-    } else {
-        return true, nil
-    }
+    return RSAVerify(message, signature, publicKey)
 }

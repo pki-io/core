@@ -121,7 +121,15 @@ func (entity *Entity) Load(jsonString interface{}) error {
     }
 }
 
-func (entity *Entity) GenerateKeys() (bool, error) {
+func (entity *Entity) Dump() (string, error) {
+    if jsonString, err := entity.ToJson(entity.Data); err != nil {
+        return "", fmt.Errorf("Could not dump entity JSON: %s", err.Error())
+    } else {
+        return jsonString, nil
+    }
+}
+
+func (entity *Entity) GenerateKeys() (error) {
     signingKey := crypto.GenerateRSAKey()
     encryptionKey := crypto.GenerateRSAKey()
 
@@ -129,11 +137,11 @@ func (entity *Entity) GenerateKeys() (bool, error) {
     encryptionKey.Precompute()
 
     if err := signingKey.Validate(); err != nil {
-        return false, fmt.Errorf("Could not validate signing key: %s", err.Error())
+        return fmt.Errorf("Could not validate signing key: %s", err.Error())
     }
 
     if err := encryptionKey.Validate(); err != nil {
-        return false, fmt.Errorf("Could not validate encryption key: %s", err.Error())
+        return fmt.Errorf("Could not validate encryption key: %s", err.Error())
     }
 
     entity.Data.Body.PublicSigningKey = string(crypto.PemEncodeRSAPublic(&signingKey.PublicKey))
@@ -141,37 +149,13 @@ func (entity *Entity) GenerateKeys() (bool, error) {
     entity.Data.Body.PublicEncryptionKey = string(crypto.PemEncodeRSAPublic(&encryptionKey.PublicKey))
     entity.Data.Body.PrivateEncryptionKey = string(crypto.PemEncodeRSAPrivate(encryptionKey))
 
-    return true, nil
-}
-/*
-func (entity *Entity) Encrypt(plaintext string, entities []*Entity, container *Container) (bool, error) {
-    if len(plaintext) == 0 {
-        return false, fmt.Errorf("Plaintext cannot be empty");
-    }
-
-    if len(entities)  == 0 {
-        return false, fmt.Errorf("Number of entities cannot be zero")
-    }
-
-    if container.IsEncrypted() {
-        return false, fmt.Errorf("Output container already has encrypted data")
-
-        
-    }
-
-        Check plaintext length > 0
-        Check entities > 0
-        Check outDoc isn't already encrypted
-        
-        Generate AES inputs
-        Encrypt plaintext
-        For each entities
-          Encrypt AES key
-        Add results to outDoc
-        return bool, err
+    return nil
 }
 
-func (entity *Entity) Sign(doc *CipherDocument) (bool, error) {
-
+func (entity *Entity) Sign(message string) (*crypto.Signed, error) {
+    return crypto.Sign(message, entity.Data.Body.PrivateSigningKey)
 }
-    */
+
+func (entity *Entity) Verify(signed *crypto.Signed) (error) {
+    return crypto.Verify(signed, entity.Data.Body.PublicSigningKey)
+}

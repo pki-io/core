@@ -132,9 +132,8 @@ func TestRSAVerify(t *testing.T) {
     key := GenerateRSAKey()
     sig, _ := RSASign(message, key)
 
-    valid, err := RSAVerify(message, sig, &key.PublicKey)
+    err := RSAVerify(message, sig, &key.PublicKey)
     assert.Nil(t, err)
-    assert.Equal(t, valid, true)
 }
 
 func TestGroupEncrypt(t *testing.T) {
@@ -178,10 +177,9 @@ func TestVerify(t *testing.T) {
     message := "this is a message"
     key := GenerateRSAKey()
     privateKey := string(PemEncodeRSAPrivate(key))
-    sig, err := Sign(message, privateKey)
+    sig, _ := Sign(message, privateKey)
 
     publicKey := string(PemEncodeRSAPublic(&key.PublicKey))
-    valid, err := Verify(sig, publicKey)
+    err := Verify(sig, publicKey)
     assert.Nil(t, err)
-    assert.Equal(t, valid, true)
 }

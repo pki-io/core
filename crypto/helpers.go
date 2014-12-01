@@ -160,14 +160,14 @@ func RSASign(message []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
     }
 }
 
-func RSAVerify(message []byte, signature []byte, publicKey *rsa.PublicKey) (bool, error) {
+func RSAVerify(message []byte, signature []byte, publicKey *rsa.PublicKey) (error) {
     var h crypto.Hash
     hash := sha256.New()
     io.WriteString(hash, string(message))
     hashed := hash.Sum(nil)
     if err := rsa.VerifyPKCS1v15(publicKey, h, hashed, signature); err != nil {
-        return false, fmt.Errorf("Could not RSA verify: %s", err.Error())
+        return fmt.Errorf("Could not RSA verify: %s", err.Error())
     } else {
-        return true, nil
+        return nil
     }
 }
