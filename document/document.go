@@ -6,6 +6,11 @@ import (
     "github.com/xeipuuv/gojsonschema"
 )
 
+type Document interface {
+    Dump()
+    Load()
+}
+
 type document struct {
     schema string
     defaultValue string
@@ -41,14 +46,12 @@ func (doc *document) fromJson(data interface{}, target interface{}) (interface{}
 
     result := schemaDocument.Validate(jsonDocument)
     if result.Valid() {
-        fmt.Printf("The document is valid\n")
         if err := json.Unmarshal(jsonData, target); err != nil {
             return nil, err
         } else {
           return target, nil
         }
     } else {
-        fmt.Printf("The document is not valid. see errors :\n")
         // Loop through errors
         for _, desc := range result.Errors() {
             fmt.Printf("- %s\n", desc)
@@ -80,10 +83,8 @@ func (doc *document) toJson(data interface{}) (string, error) {
 
     result := schemaDocument.Validate(jsonDocument)
     if result.Valid() {
-        fmt.Printf("The document is valid\n")
         return string(jsonData), nil
     } else {
-        fmt.Printf("The document is not valid. see errors :\n")
         // Loop through errors
         for _, desc := range result.Errors() {
             fmt.Printf("- %s\n", desc)
