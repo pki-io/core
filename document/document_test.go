@@ -6,7 +6,7 @@ import (
 )
 
 func TestAbstractDocument(t *testing.T) {
-    d := new(document)
+    d := new(Document)
     assert.NotNil(t, d)
 }
 
@@ -24,7 +24,7 @@ func TestDocumentDefault(t *testing.T) {
     }
 
     type TestDocument struct {
-        document
+        Document
         Data TestData
     }
 
@@ -32,9 +32,9 @@ func TestDocumentDefault(t *testing.T) {
     data := new(TestData)
     assert.NotNil(t, doc)
     assert.NotNil(t, data)
-    doc.schema = schema
-    doc.defaultValue = defaultValue
-    d, err := doc.fromJson(nil, data)
+    doc.Schema = schema
+    doc.Default = defaultValue
+    d, err := doc.FromJson(nil, data)
     assert.Nil(t, err)
     assert.NotNil(t, data)
     doc.Data = *d.(*TestData)
@@ -55,7 +55,7 @@ func TestDocumentJson(t *testing.T) {
     }
 
     type TestDocument struct {
-        document
+        Document
         Data TestData
     }
 
@@ -65,9 +65,9 @@ func TestDocumentJson(t *testing.T) {
     data := new(TestData)
     assert.NotNil(t, doc)
     assert.NotNil(t, data)
-    doc.schema = schema
-    doc.defaultValue = defaultValue
-    d, err := doc.fromJson(inputJson, data)
+    doc.Schema = schema
+    doc.Default = defaultValue
+    d, err := doc.FromJson(inputJson, data)
     assert.Nil(t, err)
     assert.NotNil(t, data)
     doc.Data = *d.(*TestData)

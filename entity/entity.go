@@ -2,9 +2,8 @@ package entity
 
 import (
     "fmt"
-    "pki_io/document"
-    "crypto/rand"
-    "crypto/rsa"
+    "pki.io/document"
+    "pki.io/crypto"
 )
 
 const EntityDefault string = `{
@@ -97,51 +96,69 @@ type EntityData struct {
 }
 
 type Entity struct {
-    document
+    document.Document
     Data EntityData
 }
 
-func New(jsonData interface{}) (*Entity, error) {
-    doc := new(Entity)
-    data := new(EntityData)
-    doc.schema = EntitySchema
-    doc.defaultValue = EntityDefault
-    if data, err := doc.fromJson(jsonData, data); err != nil {
-        return nil, err
+func New(jsonString interface{}) (*Entity, error) {
+    entity := new(Entity)
+    entity.Schema = EntitySchema
+    entity.Default = EntityDefault
+    if err := entity.Load(jsonString); err != nil {
+        return nil, fmt.Errorf("Could not create new Entity: %s", err.Error())
     } else {
-        doc.Data = *data.(*CADocumentData)
-        return doc, nil
+        return entity, nil
+    }
+}
+
+func (entity *Entity) Load(jsonString interface{}) error {
+    data := new(EntityData)
+    if data, err := entity.FromJson(jsonString, data); err != nil {
+        return fmt.Errorf("Could not load entity JSON: %s", err.Error())
+    } else {
+        entity.Data = *data.(*EntityData)
+        return nil
     }
 }
 
 func (entity *Entity) GenerateKeys() (bool, error) {
-    signingKey, err := rsa.GenerateKey(rand.Reader, 2048)
-    if err != nil {
-        return false, fmt.Errorf("Could not generate signing key: %s", err.Error())
-    }
-    encryptionKey, err := rsa.GenerateKey(rand.Reader, 2048)
-    if err != nil {
-        return false, fmt.Errorf("Could not generate encryption key: %s", err.Error())
-    }
+    signingKey := crypto.GenerateRSAKey()
+    encryptionKey := crypto.GenerateRSAKey()
 
     signingKey.Precompute()
     encryptionKey.Precompute()
 
     if err := signingKey.Validate(); err != nil {
-        return false, err
+        return false, fmt.Errorf("Could not validate signing key: %s", err.Error())
     }
 
     if err := encryptionKey.Validate(); err != nil {
-        return false, err
+        return false, fmt.Errorf("Could not validate encryption key: %s", err.Error())
     }
 
-    entity.SigningKey = signingKey
-    entity.EncryptionKey = encryptionKey
+    entity.Data.Body.PublicSigningKey = string(crypto.PemEncodeRSAPublic(&signingKey.PublicKey))
+    entity.Data.Body.PrivateSigningKey = string(crypto.PemEncodeRSAPrivate(signingKey))
+    entity.Data.Body.PublicEncryptionKey = string(crypto.PemEncodeRSAPublic(&encryptionKey.PublicKey))
+    entity.Data.Body.PrivateEncryptionKey = string(crypto.PemEncodeRSAPrivate(encryptionKey))
+
     return true, nil
 }
+/*
+func (entity *Entity) Encrypt(plaintext string, entities []*Entity, container *Container) (bool, error) {
+    if len(plaintext) == 0 {
+        return false, fmt.Errorf("Plaintext cannot be empty");
+    }
 
-func (entity *Entity) Encrypt(plaintext []byte, entities []*Entity, container *Container) (bool, error) {
-    /*
+    if len(entities)  == 0 {
+        return false, fmt.Errorf("Number of entities cannot be zero")
+    }
+
+    if container.IsEncrypted() {
+        return false, fmt.Errorf("Output container already has encrypted data")
+
+        
+    }
+
         Check plaintext length > 0
         Check entities > 0
         Check outDoc isn't already encrypted
@@ -152,9 +169,9 @@ func (entity *Entity) Encrypt(plaintext []byte, entities []*Entity, container *C
           Encrypt AES key
         Add results to outDoc
         return bool, err
-    */
 }
 
 func (entity *Entity) Sign(doc *CipherDocument) (bool, error) {
 
 }
+    */

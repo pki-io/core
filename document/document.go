@@ -6,17 +6,17 @@ import (
     "github.com/xeipuuv/gojsonschema"
 )
 
-type Document interface {
+type Documenter interface {
     Dump()
     Load()
 }
 
-type document struct {
-    schema string
-    defaultValue string
+type Document struct {
+    Schema string
+    Default string
 }
 
-func (doc *document) fromJson(data interface{}, target interface{}) (interface{}, error) {
+func (doc *Document) FromJson(data interface{}, target interface{}) (interface{}, error) {
     var jsonData []byte
     switch t := data.(type) {
     case []byte:
@@ -24,7 +24,7 @@ func (doc *document) fromJson(data interface{}, target interface{}) (interface{}
     case string:
         jsonData = []byte(data.(string))
     case nil:
-        jsonData = []byte(doc.defaultValue)
+        jsonData = []byte(doc.Default)
     default:
         return nil, fmt.Errorf("Invalid input type: %T", t)
     }
@@ -35,7 +35,7 @@ func (doc *document) fromJson(data interface{}, target interface{}) (interface{}
     }
 
     var schemaMap map[string]interface{}
-    if err := json.Unmarshal([]byte(doc.schema), &schemaMap); err != nil {
+    if err := json.Unmarshal([]byte(doc.Schema), &schemaMap); err != nil {
         return nil, fmt.Errorf("Can't unmarshal schema: %s", err.Error())
     }
 
@@ -60,7 +60,7 @@ func (doc *document) fromJson(data interface{}, target interface{}) (interface{}
     }
 }
 
-func (doc *document) toJson(data interface{}) (string, error) {
+func (doc *Document) ToJson(data interface{}) (string, error) {
     jsonData, err := json.Marshal(data)
     if err != nil {
         return "", err
@@ -72,7 +72,7 @@ func (doc *document) toJson(data interface{}) (string, error) {
     }
 
     var schemaMap map[string]interface{}
-    if err := json.Unmarshal([]byte(doc.schema), &schemaMap); err != nil {
+    if err := json.Unmarshal([]byte(doc.Schema), &schemaMap); err != nil {
         return "", fmt.Errorf("Can't unmarshal schema: %s", err.Error())
     }
 
