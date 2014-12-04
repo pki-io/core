@@ -203,3 +203,11 @@ func (entity *Entity) Decrypt(container *document.Container) (string, error) {
         return decryptedJson, nil
     }
 }
+
+func (entity *Entity) Public() (*Entity, error) {
+    selfJson, _ := entity.Dump()
+    publicEntity, _ := New(selfJson)
+    publicEntity.Data.Body.PrivateSigningKey = ""
+    publicEntity.Data.Body.PrivateEncryptionKey = ""
+    return publicEntity, nil
+}
