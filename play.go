@@ -41,7 +41,7 @@ func main() {
     }
 
     /**************************************************************************************************
-    * Protect the Org
+    * Save org public keys
     **************************************************************************************************/
 
     fmt.Println("Generating Org keys")
@@ -52,9 +52,39 @@ func main() {
 
     fmt.Println("Creating public copy of org to save locally")
     publicOrg, err := org.Public()
-    publicOrgJson, _ := publicOrg.Dump()
-    fmt.Println(publicOrgJson)
-    
+    if err != nil {
+      panic(fmt.Sprintf("Could get public org: %s", err.Error()))
+    }
+    publicOrgJson, err := publicOrg.Dump()
+    if err != nil {
+      panic(fmt.Sprintf("Could dump public org to json: %s", err.Error()))
+    }
+
+    fmt.Println("Creating public org container document")
+    publicOrgContainer, err := document.NewContainer(nil)
+    if err != nil {
+        panic(fmt.Sprintf("Could not create container: %s", err.Error()))
+    }
+    publicOrgContainer.Data.Options.Source = publicOrg.Data.Body.Id
+    publicOrgContainer.Data.Body = publicOrgJson
+
+    fmt.Println("Signing public org container as admin")
+    if err := admin.Sign(publicOrgContainer); err != nil  {
+      panic(fmt.Sprintf("Could not sign container: %s", err.Error()))
+    }
+
+    fmt.Println("Dumping public org container")
+    publicOrgContainerJson, err := publicOrgContainer.Dump()
+    if err != nil {
+        panic(fmt.Sprintf("Could not dump public org container json: %s", err.Error()))
+    }
+    fmt.Println(publicOrgContainerJson)
+
+    /**************************************************************************************************
+    * Protect the Org
+    **************************************************************************************************/
+
+
     fmt.Println("Encrypting org for admin")
     keys := make(map[string]string)
     keys[admin.Data.Body.Id] = admin.Data.Body.PublicEncryptionKey

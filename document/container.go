@@ -148,3 +148,22 @@ func (doc *Container) Decrypt(id string, privateKey string) (string, error) {
         return decryptedJson, nil
     }
 }
+
+func (doc *Container) IsEncrypted() bool {
+    if len(doc.Data.Options.EncryptionKeys) == 0 || 
+    len(doc.Data.Options.EncryptionMode) == 0 ||
+    len(doc.Data.Options.EncryptionInputs) == 0 {
+        return false
+    } else {
+        return true
+    }
+}
+
+func (doc *Container) IsSigned() bool {
+    if len(doc.Data.Options.SignatureMode) == 0 || 
+    len(doc.Data.Options.Signature) == 0 {
+        return false
+    } else {
+        return true
+    }
+}
