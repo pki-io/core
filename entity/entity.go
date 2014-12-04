@@ -152,10 +152,54 @@ func (entity *Entity) GenerateKeys() (error) {
     return nil
 }
 
-func (entity *Entity) Sign(message string) (*crypto.Signed, error) {
-    return crypto.Sign(message, entity.Data.Body.PrivateSigningKey)
+func (entity *Entity) Sign(container *document.Container) error {
+    signature := crypto.NewSignature()
+    container.Data.Options.SignatureMode = signature.Mode
+
+    containerJson, err := container.Dump()
+    if err != nil {
+        return fmt.Errorf("Could not dump container json: %s", err.Error())
+    }
+
+    if err := crypto.Sign(containerJson, entity.Data.Body.PrivateSigningKey, signature); err != nil {
+        return fmt.Errorf("Could not sign container json: %s", err.Error())
+    }
+    if signature.Message != containerJson {
+        return fmt.Errorf("Signed message doesn't match input")
+    }
+    if signature.Mode != crypto.SignatureMode {
+        return fmt.Errorf("Signature mode doesn't match")
+    }
+
+    container.Data.Options.Signature = signature.Signature
+    return nil
 }
 
-func (entity *Entity) Verify(signed *crypto.Signed) (error) {
-    return crypto.Verify(signed, entity.Data.Body.PublicSigningKey)
+func (entity *Entity) Verify(container *document.Container) (error) {
+    signature := crypto.NewSignature()
+    signature.Signature = container.Data.Options.Signature
+
+    container.Data.Options.Signature = ""
+    containerJson, err := container.Dump()
+    if err != nil {
+        return fmt.Errorf("Could not dump container: %s", err.Error())
+    }
+
+    signature.Message = containerJson
+
+    if err := crypto.Verify(signature, entity.Data.Body.PublicSigningKey); err != nil {
+        return fmt.Errorf("Could not verify org container signature: %s", err.Error())
+    } else {
+        return nil
+    }
+}
+
+func (entity *Entity) Decrypt(container *document.Container) (string, error) {
+    id := entity.Data.Body.Id
+    key := entity.Data.Body.PrivateEncryptionKey
+    if decryptedJson, err := container.Decrypt(id, key); err != nil {
+        return "", fmt.Errorf("Could not decrypt: %s", err.Error())
+    } else {
+        return decryptedJson, nil
+    }
 }

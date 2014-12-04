@@ -1,25 +1,26 @@
 package document
 
+import (
+    "fmt"
+    "pki.io/crypto"
+)
+
 const ContainerDefault string = `{
   "scope": "pki.io",
   "version": 1,
   "type": "container",
   "options": {
-    "source": "00112233445566778899aabbccddeeff",
-    "signature-mode": "sha256+rsa",
-    "signature": "abc",
-    "encryption-keys": {
-      "8899aabbccddeeff0011223344556677": "xxx"
-    },
-    "encryption-mode": "aes-cbc-256+rsa"
-    "encryption-inputs": {
-      "iv": "aaa"
-    }
+    "source": "",
+    "signature-mode": "",
+    "signature": "",
+    "encryption-keys": {},
+    "encryption-mode": "",
+    "encryption-inputs": {}
   },
-  "body": "abc"
+  "body": ""
 }`
 
-const ContainerDefault string = `{
+const ContainerSchema string = `{
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Container",
   "description": "Container",
@@ -50,11 +51,11 @@ const ContainerDefault string = `{
                   "type": "string",
                   "pattern": "^[a-fA-F0-9]{32}$"
               },
-              "signature-mode" : {
+              "signature-mode": {
                   "description": "Signature mode",
                   "type": "string"
               },
-              "signature" : {
+              "signature": {
                   "description": "Base64 encoded signature",
                   "type": "string"
               },
@@ -74,7 +75,7 @@ const ContainerDefault string = `{
       },
       "body": {
           "description": "Encrypted data",
-          "type": "string",
+          "type": "string"
       }
   }
 }`
@@ -95,35 +96,55 @@ type ContainerData struct {
 }
 
 type Container struct {
-    document
+    Document
     Data ContainerData
 }
 
 func NewContainer(jsonData interface{}) (*Container, error) {
     doc := new(Container)
     data := new(ContainerData)
-    doc.schema = ContainerSchema
-    doc.defaultValue = ContainerDefault
-    if data, err := doc.fromJson(jsonData, data); err != nil {
-        return nil, err
+    doc.Schema = ContainerSchema
+    doc.Default = ContainerDefault
+    if data, err := doc.FromJson(jsonData, data); err != nil {
+        return nil, fmt.Errorf("Could not load container json: %s", err.Error())
     } else {
         doc.Data = *data.(*ContainerData)
         return doc, nil
     }
 }
 
-func (doc *Container) Json() (string, error) {
-    if jsonString, err := doc.toJson(doc.Data); err != nil {
+func (doc *Container) Dump() (string, error) {
+    if jsonString, err := doc.ToJson(doc.Data); err != nil {
         return "", err
     } else {
         return jsonString, nil
     }
 }
 
-func (doc *Container) IsEncrypted() (bool, error) {
-    reurn false, nil
+func (doc *Container) Encrypt(jsonString string, keys map[string]string) error {
+    encrypted, err := crypto.GroupEncrypt(jsonString, keys)
+    if err != nil {
+        return fmt.Errorf("Could not group encrypt: %s", err.Error())
+    }
+
+    doc.Data.Options.EncryptionKeys = encrypted.Keys
+    doc.Data.Options.EncryptionMode = encrypted.Mode
+    doc.Data.Options.EncryptionInputs = encrypted.Inputs
+    doc.Data.Body = encrypted.Ciphertext
+
+    return nil
 }
 
-func (doc *Container) IsSigned() (bool, error) {
-    reurn false, nil
+func (doc *Container) Decrypt(id string, privateKey string) (string, error) {
+    encrypted := new(crypto.Encrypted)
+    encrypted.Keys = doc.Data.Options.EncryptionKeys
+    encrypted.Mode = doc.Data.Options.EncryptionMode
+    encrypted.Inputs = doc.Data.Options.EncryptionInputs
+    encrypted.Ciphertext = doc.Data.Body
+
+    if decryptedJson, err := crypto.GroupDecrypt(encrypted, id, privateKey); err != nil {
+        return "", fmt.Errorf("Could not decrypt container: %s", err.Error())
+    } else {
+        return decryptedJson, nil
+    }
 }

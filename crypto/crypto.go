@@ -4,6 +4,8 @@ import (
     "fmt"
 )
 
+const SignatureMode string = "sha256+rsa"
+
 type Encrypted struct {
     Ciphertext string
     Mode string
@@ -16,6 +18,10 @@ type Signed struct {
     Mode string
     //Inputs map[string]string
     Signature string
+}
+
+func NewSignature() *Signed {
+    return &Signed{Mode: SignatureMode}
 }
 
 func GroupEncrypt(plaintext string,  publicKeys map[string]string) (*Encrypted, error) {
@@ -59,13 +65,16 @@ func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (str
     return string(plaintext), err
 }
 
-func Sign(message string, privateKeyString string) (*Signed, error) {
+func Sign(message string, privateKeyString string, signature *Signed) (error) {
     privateKey, _ := PemDecodeRSAPrivate([]byte(privateKeyString))
     sig, err := RSASign([]byte(message), privateKey)
     if err != nil {
-        return nil, err
+        return err
     } else {
-      return &Signed{Message: message, Mode: "sha256+rsa", Signature: string(Base64Encode(sig))}, nil
+      signature.Message = message
+      signature.Mode = SignatureMode
+      signature.Signature = string(Base64Encode(sig))
+      return nil
     }
 }
 
