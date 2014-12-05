@@ -1,0 +1,10 @@
+Path = "xxx814943593"
+Mode = 384
+
+[[Org]]
+  Name = "org1"
+  Path = "path1"
+
+[[Org]]
+  Name = "org2"
+  Path = "path2"

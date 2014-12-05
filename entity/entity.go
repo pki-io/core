@@ -176,6 +176,11 @@ func (entity *Entity) Sign(container *document.Container) error {
 }
 
 func (entity *Entity) Verify(container *document.Container) (error) {
+
+    if container.IsSigned() == false {
+        return fmt.Errorf("Container isn't signed")
+    }
+
     signature := crypto.NewSignature()
     signature.Signature = container.Data.Options.Signature
 
@@ -195,6 +200,10 @@ func (entity *Entity) Verify(container *document.Container) (error) {
 }
 
 func (entity *Entity) Decrypt(container *document.Container) (string, error) {
+    if container.IsEncrypted() == false {
+        return "", fmt.Errorf("Container isn't encrypted")
+    }
+
     id := entity.Data.Body.Id
     key := entity.Data.Body.PrivateEncryptionKey
     if decryptedJson, err := container.Decrypt(id, key); err != nil {
