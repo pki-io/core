@@ -8,6 +8,19 @@ import (
     "github.com/BurntSushi/toml"
 )
 
+func Exists(name string) (bool, error) {
+  if f, err := os.Open(name); err != nil {
+      if os.IsNotExist(err) {
+          return false, nil
+      } else {
+          return false, err
+      }
+  } else {
+      f.Close()
+      return true, nil
+  }
+}
+
 type OrgConfig struct {
     Name string `toml:"name"`
     Path string `toml:"path"`
@@ -49,11 +62,18 @@ func (conf *Config) Save() error {
 }
 
 func (conf *Config) Load() error {
-    data := &ConfigData{}
-    if _, err := toml.DecodeFile(conf.Path, data); err != nil {
-        return fmt.Errorf("Could not decode file %s: %s", conf.Path, err.Error())
+    exists, err := Exists(conf.Path)
+    if err != nil {
+        return fmt.Errorf("Could not open file %s: %s", conf.Path, err.Error())
     }
-    conf.Data = *data
+
+    if exists {
+        data := new(ConfigData)
+        if _, err := toml.DecodeFile(conf.Path, data); err != nil {
+            return fmt.Errorf("Could not decode file %s: %s", conf.Path, err.Error())
+        }
+        conf.Data = *data
+    }
 
     return nil
 }

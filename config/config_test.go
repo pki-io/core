@@ -37,3 +37,13 @@ func TestConfigSaveLoad(t *testing.T) {
     assert.Equal(t, conf, newConf)
     os.Remove(filename)
 }
+
+func TestLoadNoFile(t *testing.T) {
+    filename := "does_not_exist"
+
+    confNew := New(filename)
+    conf := New(filename)
+    err := conf.Load()
+    assert.Nil(t, err)
+    assert.Equal(t, confNew, conf)
+}
