@@ -17,16 +17,21 @@ const privatePath string = "private"
 
 type FsAPI struct {
     Id string
-    Name string
     Path string
 }
 
-func NewAPI(name string, path string) (*FsAPI, error ){
-    return &FsAPI{Name: name, Path: path}, nil
+func NewAPI(name string, path string) (*FsAPI, error){
+    var fullPath string
+    if len(name) > 0 {
+        fullPath = filepath.Join(path, name)
+    } else {
+        fullPath = path
+    }
+    return &FsAPI{Path: fullPath}, nil
 }
 
 func (fs *FsAPI) SendPublic(dstId string, name string, content string) error {
-    path := filepath.Join(fs.Path, fs.Name, publicPath, dstId)
+    path := filepath.Join(fs.Path, publicPath, dstId)
     if err := os.MkdirAll(path, publicDirMode); err != nil {
         return fmt.Errorf("Could not create path '%s': %s", path, err.Error())
     }
@@ -37,8 +42,17 @@ func (fs *FsAPI) SendPublic(dstId string, name string, content string) error {
     return nil
 }
 
+func (fs *FsAPI) GetPublic(dstId string, name string) (string, error) {
+    filename := filepath.Join(fs.Path, publicPath, dstId, name)
+    if content, err := ioutil.ReadFile(filename); err != nil {
+        return "", fmt.Errorf("Could not read file '%s': %s", filename, err.Error())
+    } else {
+        return string(content), nil
+    }
+}
+
 func (fs *FsAPI) SendPrivate(dstId string, name string, content string) error {
-    path := filepath.Join(fs.Path, fs.Name, privatePath, dstId)
+    path := filepath.Join(fs.Path, privatePath, dstId)
     if err := os.MkdirAll(path, privateDirMode); err != nil {
         return fmt.Errorf("Could not create path '%s': %s", path, err.Error())
     }
@@ -49,6 +63,15 @@ func (fs *FsAPI) SendPrivate(dstId string, name string, content string) error {
     return nil
 }
 
+func (fs *FsAPI) GetPrivate(dstId string, name string) (string, error) {
+    filename := filepath.Join(fs.Path, privatePath, dstId, name)
+    if content, err := ioutil.ReadFile(filename); err != nil {
+        return "", fmt.Errorf("Could not read file '%s': %s", filename, err.Error())
+    } else {
+        return string(content), nil
+    }
+}
+
 func (fs *FsAPI) StorePublic(name string, content string) error {
     if len(fs.Id) == 0 {
         return fmt.Errorf("Id cannot be empty")
@@ -56,11 +79,25 @@ func (fs *FsAPI) StorePublic(name string, content string) error {
     return fs.SendPublic(fs.Id, name, content)
 }
 
+func (fs *FsAPI) LoadPublic(name string) (string, error) {
+    if len(fs.Id) == 0 {
+        return "", fmt.Errorf("Id cannot be empty")
+    }
+    return fs.GetPublic(fs.Id, name)
+}
+
 func (fs *FsAPI) StorePrivate(name string, content string) error {
     if len(fs.Id) == 0 {
         return fmt.Errorf("Id cannot be empty")
     }
     return fs.SendPrivate(fs.Id, name, content)
+}
+
+func (fs *FsAPI) LoadPrivate(name string) (string, error) {
+    if len(fs.Id) == 0 {
+        return "", fmt.Errorf("Id cannot be empty")
+    }
+    return fs.GetPrivate(fs.Id, name)
 }
 
 func (fs *FsAPI) Push() {
