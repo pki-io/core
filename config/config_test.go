@@ -3,6 +3,7 @@ package config
 import (
     //"fmt"
     //"strings"
+    "os"
     "io/ioutil"
     "testing"
     "github.com/stretchr/testify/assert"
@@ -17,7 +18,7 @@ func TestConfigNew(t *testing.T) {
 func TestConfigAddOrg(t *testing.T) {
     conf := New("abc")
     conf.AddOrg("hello", "somewhere")
-    assert.Equal(t, conf.Org[0].Name, "hello")
+    assert.Equal(t, conf.Data.Org[0].Name, "hello")
 }
 
 func TestConfigSaveLoad(t *testing.T) {
@@ -31,7 +32,8 @@ func TestConfigSaveLoad(t *testing.T) {
     conf.Save()
 
     newConf := New(filename)
-    newConf.Load()
-
+    err := newConf.Load()
+    assert.Nil(t, err)
     assert.Equal(t, conf, newConf)
+    os.Remove(filename)
 }

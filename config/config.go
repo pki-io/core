@@ -8,13 +8,13 @@ import (
     "github.com/BurntSushi/toml"
 )
 
-type orgConfig struct {
-    Name string
-    Path string
+type OrgConfig struct {
+    Name string `toml:"name"`
+    Path string `toml:"path"`
 }
 
 type ConfigData struct {
-    Org []orgConfig
+    Org []OrgConfig `toml:"org"`
 }
 
 type Config struct {
@@ -32,7 +32,7 @@ func New(path string) (*Config) {
 }
 
 func (conf *Config) AddOrg(name string, path string) error {
-    org := orgConfig{Name: name, Path: path}
+    org := OrgConfig{Name: name, Path: path}
     conf.Data.Org = append(conf.Data.Org, org)
     return nil
 }
@@ -49,14 +49,11 @@ func (conf *Config) Save() error {
 }
 
 func (conf *Config) Load() error {
-    content, err := ioutil.ReadFile(conf.Path)
-    if err != nil {
-        return fmt.Errorf("Could not read config file: %s", err.Error())
+    data := &ConfigData{}
+    if _, err := toml.DecodeFile(conf.Path, data); err != nil {
+        return fmt.Errorf("Could not decode file %s: %s", conf.Path, err.Error())
     }
-
-    if _, err := toml.Decode(string(content), conf.Data); err != nil {
-        return fmt.Errorf("Could not decode config: %s", err.Error())
-    }
+    conf.Data = *data
 
     return nil
 }
