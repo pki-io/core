@@ -8,49 +8,40 @@ import (
     "github.com/BurntSushi/toml"
 )
 
-func Exists(name string) (bool, error) {
-  if f, err := os.Open(name); err != nil {
-      if os.IsNotExist(err) {
-          return false, nil
-      } else {
-          return false, err
-      }
-  } else {
-      f.Close()
-      return true, nil
-  }
-}
-
-type OrgConfig struct {
+type GlobalOrgConfig struct {
     Name string `toml:"name"`
     Path string `toml:"path"`
+    Default bool `toml:"default"`
 }
 
-type ConfigData struct {
-    Org []OrgConfig `toml:"org"`
+type GlobalData struct {
+    Org []GlobalOrgConfig `toml:"org"`
 }
 
-type Config struct {
+type GlobalConfig struct {
     Path string
     Mode os.FileMode
-    Data ConfigData
+    Data GlobalData
 }
 
-func New(path string) (*Config) {
-    conf := new(Config)
+func Global(path string) (*GlobalConfig) {
+    conf := new(GlobalConfig)
     conf.Path = path
     conf.Mode = 0600
-    conf.Data = ConfigData{}
+    conf.Data = GlobalData{}
     return conf
 }
 
-func (conf *Config) AddOrg(name string, path string) error {
-    org := OrgConfig{Name: name, Path: path}
+func (conf *GlobalConfig) AddOrg(name string, path string) error {
+    org := GlobalOrgConfig{Name: name, Path: path}
+    if len(conf.Data.Org) == 0 {
+        org.Default = true
+    }
     conf.Data.Org = append(conf.Data.Org, org)
     return nil
 }
 
-func (conf *Config) Save() error {
+func (conf *GlobalConfig) Save() error {
     buf := new(bytes.Buffer)
     if err := toml.NewEncoder(buf).Encode(conf.Data); err != nil {
         return fmt.Errorf("Could not encode config: %s", err.Error())
@@ -61,14 +52,14 @@ func (conf *Config) Save() error {
     return nil
 }
 
-func (conf *Config) Load() error {
+func (conf *GlobalConfig) Load() error {
     exists, err := Exists(conf.Path)
     if err != nil {
         return fmt.Errorf("Could not open file %s: %s", conf.Path, err.Error())
     }
 
     if exists {
-        data := new(ConfigData)
+        data := new(GlobalData)
         if _, err := toml.DecodeFile(conf.Path, data); err != nil {
             return fmt.Errorf("Could not decode file %s: %s", conf.Path, err.Error())
         }

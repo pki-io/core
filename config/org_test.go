@@ -9,40 +9,34 @@ import (
     "github.com/stretchr/testify/assert"
 )
 
-func TestConfigNew(t *testing.T) {
-    conf := New("abc")
+func TestOrgConfigOrg(t *testing.T) {
+    conf := Org("abc")
     assert.NotNil(t, conf)
     assert.Equal(t, conf.Path, "abc")
 }
 
-func TestConfigAddOrg(t *testing.T) {
-    conf := New("abc")
-    conf.AddOrg("hello", "somewhere")
-    assert.Equal(t, conf.Data.Org[0].Name, "hello")
-}
-
-func TestConfigSaveLoad(t *testing.T) {
+func TestOrgConfigSaveLoad(t *testing.T) {
     file, _ := ioutil.TempFile(".", "xxx")
     filename := file.Name()
     file.Close()
 
-    conf := New(filename)
-    conf.AddOrg("org1", "path1")
-    conf.AddOrg("org2", "path2")
+    conf := Org(filename)
+    conf.Data.OrgId = "123"
+    conf.Data.AdminId = "456"
     conf.Save()
 
-    newConf := New(filename)
+    newConf := Org(filename)
     err := newConf.Load()
     assert.Nil(t, err)
     assert.Equal(t, conf, newConf)
     os.Remove(filename)
 }
 
-func TestLoadNoFile(t *testing.T) {
+func TestOrgLoadNoFile(t *testing.T) {
     filename := "does_not_exist"
 
-    confNew := New(filename)
-    conf := New(filename)
+    confNew := Org(filename)
+    conf := Org(filename)
     err := conf.Load()
     assert.Nil(t, err)
     assert.Equal(t, confNew, conf)
