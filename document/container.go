@@ -113,11 +113,11 @@ func NewContainer(jsonData interface{}) (*Container, error) {
     }
 }
 
-func (doc *Container) Dump() (string, error) {
+func (doc *Container) Dump() string {
     if jsonString, err := doc.ToJson(doc.Data); err != nil {
-        return "", err
+        return ""
     } else {
-        return jsonString, nil
+        return jsonString
     }
 }
 

@@ -54,6 +54,10 @@ func Base64Decode(input []byte) (decoded []byte, err error) {
 }
 
 func AESEncrypt(plaintext []byte, key []byte) ([]byte, []byte, error) {
+    if len(plaintext) == 0 {
+        return nil, nil, fmt.Errorf("Plaintext can't be empty")
+    }
+
     block, err := aes.NewCipher(key)
     if err != nil {
         return nil, nil, fmt.Errorf("Can't initialise cipher: %s", err.Error())

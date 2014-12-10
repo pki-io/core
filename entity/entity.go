@@ -121,11 +121,11 @@ func (entity *Entity) Load(jsonString interface{}) error {
     }
 }
 
-func (entity *Entity) Dump() (string, error) {
+func (entity *Entity) Dump() string {
     if jsonString, err := entity.ToJson(entity.Data); err != nil {
-        return "", fmt.Errorf("Could not dump entity JSON: %s", err.Error())
+        return ""
     } else {
-        return jsonString, nil
+        return jsonString
     }
 }
 
@@ -156,10 +156,7 @@ func (entity *Entity) Sign(container *document.Container) error {
     signature := crypto.NewSignature()
     container.Data.Options.SignatureMode = signature.Mode
 
-    containerJson, err := container.Dump()
-    if err != nil {
-        return fmt.Errorf("Could not dump container json: %s", err.Error())
-    }
+    containerJson := container.Dump()
 
     if err := crypto.Sign(containerJson, entity.Data.Body.PrivateSigningKey, signature); err != nil {
         return fmt.Errorf("Could not sign container json: %s", err.Error())
@@ -185,11 +182,7 @@ func (entity *Entity) Verify(container *document.Container) (error) {
     signature.Signature = container.Data.Options.Signature
 
     container.Data.Options.Signature = ""
-    containerJson, err := container.Dump()
-    if err != nil {
-        return fmt.Errorf("Could not dump container: %s", err.Error())
-    }
-
+    containerJson := container.Dump()
     signature.Message = containerJson
 
     if err := crypto.Verify(signature, entity.Data.Body.PublicSigningKey); err != nil {
@@ -214,9 +207,53 @@ func (entity *Entity) Decrypt(container *document.Container) (string, error) {
 }
 
 func (entity *Entity) Public() (*Entity, error) {
-    selfJson, _ := entity.Dump()
+    selfJson := entity.Dump()
     publicEntity, _ := New(selfJson)
     publicEntity.Data.Body.PrivateSigningKey = ""
     publicEntity.Data.Body.PrivateEncryptionKey = ""
     return publicEntity, nil
+}
+
+func (entity *Entity) SignString(content string) (*document.Container, error) {
+    container, err := document.NewContainer(nil)
+    if err != nil {
+        return nil, fmt.Errorf("Could not create container: %s", err.Error())
+    }
+    container.Data.Options.Source = entity.Data.Body.Id
+    container.Data.Body = content
+    if err := entity.Sign(container); err != nil {
+        return nil, fmt.Errorf("Could not sign container: %s", err.Error())
+    } else {
+        return container, nil
+    }
+}
+
+func (entity *Entity) EncryptThenSignString(content string, entities interface{}) (*document.Container, error) {
+
+    encryptionKeys := make(map[string]string)
+
+    switch t := entities.(type) {
+    case []*Entity:
+        return nil, fmt.Errorf("Not implemented")
+    case nil:
+        encryptionKeys[entity.Data.Body.Id] = entity.Data.Body.PublicEncryptionKey
+    default:
+        return nil, fmt.Errorf("Invalid entities given: %T", t)
+    }
+
+    container, err := document.NewContainer(nil)
+    if err != nil {
+        return nil, fmt.Errorf("Could not create container: %s", err.Error())
+    }
+
+    container.Data.Options.Source = entity.Data.Body.Id
+    if err := container.Encrypt(content, encryptionKeys); err != nil {
+        return nil, fmt.Errorf("Could not encrypt container: %s", err.Error())
+    }
+
+    if err := entity.Sign(container); err != nil {
+        return nil, fmt.Errorf("Could not sign container: %s", err.Error())
+    }
+
+    return container, nil
 }
