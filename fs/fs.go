@@ -20,12 +20,15 @@ type FsAPI struct {
     Path string
 }
 
-func NewAPI(name string, path string) (*FsAPI, error){
+func NewAPI(path string, name string) (*FsAPI, error){
     var fullPath string
     if len(name) > 0 {
         fullPath = filepath.Join(path, name)
     } else {
         fullPath = path
+    }
+    if err := os.MkdirAll(fullPath, publicDirMode); err != nil {
+        return nil, fmt.Errorf("Could not create path '%s': %s", fullPath, err.Error())
     }
     return &FsAPI{Path: fullPath}, nil
 }

@@ -9,35 +9,31 @@ import (
     "github.com/stretchr/testify/assert"
 )
 
-func TestOrgConfigOrg(t *testing.T) {
-    conf := Org("abc")
+func TestConfigNew(t *testing.T) {
+    conf := New("abc")
     assert.NotNil(t, conf)
     assert.Equal(t, conf.Path, "abc")
 }
 
-func TestOrgConfigSaveLoad(t *testing.T) {
+func TestConfigSaveLoad(t *testing.T) {
     file, _ := ioutil.TempFile(".", "xxx")
     filename := file.Name()
     file.Close()
 
-    conf := Org(filename)
+    conf := New(filename)
     conf.Data.OrgId = "123"
     conf.Data.AdminId = "456"
     conf.Save()
 
-    newConf := Org(filename)
+    newConf := New(filename)
     err := newConf.Load()
     assert.Nil(t, err)
     assert.Equal(t, conf, newConf)
     os.Remove(filename)
 }
 
-func TestOrgLoadNoFile(t *testing.T) {
-    filename := "does_not_exist"
-
-    confNew := Org(filename)
-    conf := Org(filename)
+func TestConfigLoadNoFile(t *testing.T) {
+    conf := New("does_not_exist")
     err := conf.Load()
-    assert.Nil(t, err)
-    assert.Equal(t, confNew, conf)
+    assert.NotNil(t, err)
 }
