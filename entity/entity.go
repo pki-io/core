@@ -208,7 +208,10 @@ func (entity *Entity) Decrypt(container *document.Container) (string, error) {
 
 func (entity *Entity) Public() (*Entity, error) {
     selfJson := entity.Dump()
-    publicEntity, _ := New(selfJson)
+    publicEntity, err := New(selfJson)
+    if err != nil {
+        return nil, fmt.Errorf("Could not create public entity: %s", err.Error())
+    }
     publicEntity.Data.Body.PrivateSigningKey = ""
     publicEntity.Data.Body.PrivateEncryptionKey = ""
     return publicEntity, nil
