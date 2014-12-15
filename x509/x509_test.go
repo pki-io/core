@@ -1,7 +1,7 @@
 package x509
 
 import (
-	"fmt"
+	//"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -29,5 +29,4 @@ func TestX509SignCSR(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, cert)
 	assert.NotEqual(t, cert.Data.Body.Certificate, "")
-	fmt.Println(cert.Data.Body.Certificate)
 }

@@ -177,7 +177,6 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, notBefor
 	certificate.Data.Body.PrivateKey = string(crypto.PemEncodeRSAPrivate(privateKey))
 
 	return nil
-
 }
 
 func (certificate *Certificate) Certificate() (*x509.Certificate, error) {

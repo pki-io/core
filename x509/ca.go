@@ -192,7 +192,59 @@ func (ca *CA) GenerateRoot(notBefore time.Time, notAfter time.Time) error {
 func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter time.Time) error {
 	//https://www.socketloop.com/tutorials/golang-create-x509-certificate-private-and-public-keys
 
-	subject := ca.BuildSubject(parentCA)
+	// Override from parent if necessary
+	// Ugly as hell. Need to fix.
+	switch parentCA.(type) {
+	case *CA:
+		p := parentCA.(*CA)
+		if p.Data.Body.DNScope.Country != "" {
+			ca.Data.Body.DNScope.Country = p.Data.Body.DNScope.Country
+		}
+		if p.Data.Body.DNScope.Organization != "" {
+			ca.Data.Body.DNScope.Organization = p.Data.Body.DNScope.Organization
+		}
+		if p.Data.Body.DNScope.OrganizationalUnit != "" {
+			ca.Data.Body.DNScope.OrganizationalUnit = p.Data.Body.DNScope.OrganizationalUnit
+		}
+		if p.Data.Body.DNScope.Locality != "" {
+			ca.Data.Body.DNScope.Locality = p.Data.Body.DNScope.Locality
+		}
+		if p.Data.Body.DNScope.Province != "" {
+			ca.Data.Body.DNScope.Province = p.Data.Body.DNScope.Province
+		}
+		if p.Data.Body.DNScope.StreetAddress != "" {
+			ca.Data.Body.DNScope.StreetAddress = p.Data.Body.DNScope.StreetAddress
+		}
+		if p.Data.Body.DNScope.PostalCode != "" {
+			ca.Data.Body.DNScope.PostalCode = p.Data.Body.DNScope.PostalCode
+		}
+	}
+
+	subject := new(pkix.Name)
+	subject.CommonName = ca.Data.Body.Name
+
+	// Set using CA's DNScope
+	if ca.Data.Body.DNScope.Country != "" {
+		subject.Country = []string{ca.Data.Body.DNScope.Country}
+	}
+	if ca.Data.Body.DNScope.Organization != "" {
+		subject.Organization = []string{ca.Data.Body.DNScope.Organization}
+	}
+	if ca.Data.Body.DNScope.OrganizationalUnit != "" {
+		subject.OrganizationalUnit = []string{ca.Data.Body.DNScope.OrganizationalUnit}
+	}
+	if ca.Data.Body.DNScope.Locality != "" {
+		subject.Locality = []string{ca.Data.Body.DNScope.Locality}
+	}
+	if ca.Data.Body.DNScope.Province != "" {
+		subject.Province = []string{ca.Data.Body.DNScope.Province}
+	}
+	if ca.Data.Body.DNScope.StreetAddress != "" {
+		subject.StreetAddress = []string{ca.Data.Body.DNScope.StreetAddress}
+	}
+	if ca.Data.Body.DNScope.PostalCode != "" {
+		subject.PostalCode = []string{ca.Data.Body.DNScope.PostalCode}
+	}
 
 	template := &x509.Certificate{
 		IsCA: true,
@@ -240,64 +292,6 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 
 	return nil
 
-}
-
-// This whole function is ugly as hell
-func (ca *CA) BuildSubject(parentCA interface{}) *pkix.Name {
-	subject := new(pkix.Name)
-	subject.CommonName = ca.Data.Body.Name
-
-	// Set using CA's DNScope
-	if ca.Data.Body.DNScope.Country != "" {
-		subject.Country = []string{ca.Data.Body.DNScope.Country}
-	}
-	if ca.Data.Body.DNScope.Organization != "" {
-		subject.Organization = []string{ca.Data.Body.DNScope.Organization}
-	}
-	if ca.Data.Body.DNScope.OrganizationalUnit != "" {
-		subject.OrganizationalUnit = []string{ca.Data.Body.DNScope.OrganizationalUnit}
-	}
-	if ca.Data.Body.DNScope.Locality != "" {
-		subject.Locality = []string{ca.Data.Body.DNScope.Locality}
-	}
-	if ca.Data.Body.DNScope.Province != "" {
-		subject.Province = []string{ca.Data.Body.DNScope.Province}
-	}
-	if ca.Data.Body.DNScope.StreetAddress != "" {
-		subject.StreetAddress = []string{ca.Data.Body.DNScope.StreetAddress}
-	}
-	if ca.Data.Body.DNScope.PostalCode != "" {
-		subject.PostalCode = []string{ca.Data.Body.DNScope.PostalCode}
-	}
-
-	// Override from parent if necessary
-	switch parentCA.(type) {
-	case *CA:
-		ca := parentCA.(*CA)
-		if ca.Data.Body.DNScope.Country != "" {
-			subject.Country = []string{ca.Data.Body.DNScope.Country}
-		}
-		if ca.Data.Body.DNScope.Organization != "" {
-			subject.Organization = []string{ca.Data.Body.DNScope.Organization}
-		}
-		if ca.Data.Body.DNScope.OrganizationalUnit != "" {
-			subject.OrganizationalUnit = []string{ca.Data.Body.DNScope.OrganizationalUnit}
-		}
-		if ca.Data.Body.DNScope.Locality != "" {
-			subject.Locality = []string{ca.Data.Body.DNScope.Locality}
-		}
-		if ca.Data.Body.DNScope.Province != "" {
-			subject.Province = []string{ca.Data.Body.DNScope.Province}
-		}
-		if ca.Data.Body.DNScope.StreetAddress != "" {
-			subject.StreetAddress = []string{ca.Data.Body.DNScope.StreetAddress}
-		}
-		if ca.Data.Body.DNScope.PostalCode != "" {
-			subject.PostalCode = []string{ca.Data.Body.DNScope.PostalCode}
-		}
-	}
-
-	return subject
 }
 
 func (ca *CA) Certificate() (*x509.Certificate, error) {
