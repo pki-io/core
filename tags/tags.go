@@ -2,13 +2,6 @@ package tags
 
 import (
 	"fmt"
-	//"time"
-	//"math/big"
-	//"crypto/rand"
-	//"crypto/rsa"
-	//"crypto/x509"
-	//"crypto/x509/pkix"
-	//"pki.io/crypto"
 	"pki.io/document"
 )
 
@@ -20,7 +13,9 @@ const TagsDefault string = `{
     "body": {
         "parent-id": "",
         "ca-tags": {},
-        "entity-tags": {}
+        "entity-tags": {},
+        "tag-cas": {},
+        "tag-entities": {}
     }
 }`
 
@@ -51,7 +46,7 @@ const TagsSchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["parent-id", "ca-tags", "entity-tags"],
+          "required": ["parent-id", "ca-tags", "entity-tags", "tag-cas", "tag-entities"],
           "additionalProperties": false,
           "properties": {
               "parent-id" : {
@@ -65,6 +60,14 @@ const TagsSchema string = `{
               "entity-tags": {
                   "description": "Map of CA tags",
                   "type": "object"
+              },
+              "tag-cas": {
+                  "description": "Map of tag to CAs",
+                  "type": "object"
+              },
+              "tag-entities": {
+                  "description": "Map of tags to entities",
+                  "type": "object"
               }
           }
       }
@@ -77,9 +80,11 @@ type TagsData struct {
 	Type    string `json:"type"`
 	Options string `json:"options"`
 	Body    struct {
-		ParentId   string              `json:"parent-id"`
-		CATags     map[string][]string `json:"ca-tags"`
-		EntityTags map[string][]string `json:"entity-tags"`
+		ParentId    string              `json:"parent-id"`
+		CATags      map[string][]string `json:"ca-tags"`
+		EntityTags  map[string][]string `json:"entity-tags"`
+		TagCAs      map[string][]string `json:"tag-cas"`
+		TagEntities map[string][]string `json:"tag-entities"`
 	} `json:"body"`
 }
 
@@ -117,26 +122,55 @@ func (tags *Tags) Dump() string {
 	}
 }
 
-func (tags *Tags) AddCA(ca string, inTags interface{}) error {
-	switch t := inTags.(type) {
+func AppendUnique(slice []string, val string) []string {
+	found := false
+	for _, v := range slice {
+		if v == val {
+			found = true
+			break
+		}
+	}
+
+	if found {
+		return slice
+	} else {
+		return append(slice, val)
+	}
+}
+
+func (tags *Tags) AddCA(ca string, i interface{}) error {
+	var inTags []string
+	switch t := i.(type) {
 	case string:
-		tags.Data.Body.CATags[ca] = []string{inTags.(string)}
+		inTags = []string{i.(string)}
 	case []string:
-		tags.Data.Body.CATags[ca] = inTags.([]string)
+		inTags = i.([]string)
 	default:
 		return fmt.Errorf("Could not add CA tags. Wrong data type for tags: %T", t)
 	}
+
+	for _, tag := range inTags {
+		tags.Data.Body.CATags[ca] = AppendUnique(tags.Data.Body.CATags[ca], tag)
+		tags.Data.Body.TagCAs[tag] = AppendUnique(tags.Data.Body.TagCAs[tag], ca)
+	}
+
 	return nil
 }
 
-func (tags *Tags) AddEntity(entity string, inTags interface{}) error {
-	switch t := inTags.(type) {
+func (tags *Tags) AddEntity(entity string, i interface{}) error {
+	var inTags []string
+	switch t := i.(type) {
 	case string:
-		tags.Data.Body.EntityTags[entity] = []string{inTags.(string)}
+		inTags = []string{i.(string)}
 	case []string:
-		tags.Data.Body.EntityTags[entity] = inTags.([]string)
+		inTags = i.([]string)
 	default:
 		return fmt.Errorf("Could not add Entity tags. Wrong data type for tags: %T", t)
 	}
+	for _, tag := range inTags {
+		tags.Data.Body.EntityTags[entity] = AppendUnique(tags.Data.Body.EntityTags[entity], tag)
+		tags.Data.Body.TagEntities[tag] = AppendUnique(tags.Data.Body.TagEntities[tag], entity)
+	}
+
 	return nil
 }

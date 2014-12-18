@@ -43,3 +43,17 @@ func TestTagsAddEntitySlice(t *testing.T) {
 	err := tags.AddEntity("entity2", inTags)
 	assert.Nil(t, err)
 }
+
+func TestTagsAdd(t *testing.T) {
+	tags, _ := New(nil)
+	inTags1 := []string{"tag1", "tag2"}
+	inTags2 := []string{"tag2", "tag3"}
+	err := tags.AddEntity("entity1", inTags1)
+	assert.Nil(t, err)
+	err = tags.AddEntity("entity2", inTags2)
+	assert.Nil(t, err)
+	err = tags.AddCA("ca1", inTags2)
+	assert.Nil(t, err)
+	err = tags.AddCA("ca2", inTags1)
+	assert.Nil(t, err)
+}
