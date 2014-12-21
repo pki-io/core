@@ -1,39 +1,40 @@
 package config
 
 import (
-    //"fmt"
-    //"strings"
-    "os"
-    "io/ioutil"
-    "testing"
-    "github.com/stretchr/testify/assert"
+	//"fmt"
+	//"strings"
+	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"os"
+	"testing"
 )
 
 func TestConfigNew(t *testing.T) {
-    conf := New("abc")
-    assert.NotNil(t, conf)
-    assert.Equal(t, conf.Path, "abc")
+	conf := New("abc")
+	assert.NotNil(t, conf)
+	assert.Equal(t, conf.Path, "abc")
 }
 
 func TestConfigSaveLoad(t *testing.T) {
-    file, _ := ioutil.TempFile(".", "xxx")
-    filename := file.Name()
-    file.Close()
+	file, _ := ioutil.TempFile(".", "xxx")
+	filename := file.Name()
+	file.Close()
 
-    conf := New(filename)
-    conf.Data.OrgId = "123"
-    conf.Data.AdminId = "456"
-    conf.Save()
+	conf := New(filename)
+	conf.Data.Admins = append(conf.Data.Admins, AdminData{"123", "456"})
+	conf.Data.Agents = append(conf.Data.Agents, AgentData{"agent1", "555"})
+	conf.Data.Agents = append(conf.Data.Agents, AgentData{"agent2", "666"})
+	conf.Save()
 
-    newConf := New(filename)
-    err := newConf.Load()
-    assert.Nil(t, err)
-    assert.Equal(t, conf, newConf)
-    os.Remove(filename)
+	newConf := New(filename)
+	err := newConf.Load()
+	assert.Nil(t, err)
+	assert.Equal(t, conf, newConf)
+	os.Remove(filename)
 }
 
 func TestConfigLoadNoFile(t *testing.T) {
-    conf := New("does_not_exist")
-    err := conf.Load()
-    assert.NotNil(t, err)
+	conf := New("does_not_exist")
+	err := conf.Load()
+	assert.NotNil(t, err)
 }
