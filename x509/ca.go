@@ -250,7 +250,7 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 		IsCA: true,
 		BasicConstraintsValid: true,
 		SubjectKeyId:          []byte{1, 2, 3},
-		SerialNumber:          big.NewInt(1234),
+		SerialNumber:          big.NewInt(1234), // uuid
 		Subject:               *subject,
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
@@ -287,6 +287,7 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 	if err != nil {
 		return fmt.Errorf("Could not create certificate: %s", err.Error())
 	}
+	ca.Data.Body.Id = fmt.Sprintf("%d", template.SerialNumber)
 	ca.Data.Body.Certificate = string(PemEncodeX509CertificateDER(der))
 	ca.Data.Body.PrivateKey = string(crypto.PemEncodeRSAPrivate(privateKey))
 

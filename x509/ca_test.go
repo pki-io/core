@@ -25,6 +25,7 @@ func TestX509CAGenerateRoot(t *testing.T) {
 	err := ca.GenerateRoot(time.Now(), time.Now().AddDate(5, 5, 5))
 	assert.Nil(t, err)
 	assert.NotEqual(t, ca.Data.Body.Certificate, "")
+	assert.NotEqual(t, ca.Data.Body.Id, "")
 }
 
 func TestX509CAGenerateSub(t *testing.T) {
