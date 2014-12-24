@@ -6,9 +6,11 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
+	"github.com/mitchellh/packer/common/uuid"
 	"math/big"
 	"pki.io/crypto"
 	"pki.io/document"
+	"strings"
 	"time"
 )
 
@@ -156,6 +158,18 @@ type CA struct {
 	Data CAData
 }
 
+func NewSerial() (*big.Int, error) {
+	uuid := uuid.TimeOrderedUUID()
+	clean := strings.Replace(uuid, "-", "", -1)
+	i := new(big.Int)
+	_, err := fmt.Sscanf(clean, "%x", i)
+	if err != nil {
+		return nil, fmt.Errorf("Could not scan UUID to int: %s", err.Error())
+	} else {
+		return i, nil
+	}
+}
+
 func NewCA(jsonString interface{}) (*CA, error) {
 	ca := new(CA)
 	ca.Schema = CASchema
@@ -246,11 +260,16 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 		subject.PostalCode = []string{ca.Data.Body.DNScope.PostalCode}
 	}
 
+	serial, err := NewSerial()
+	if err != nil {
+		return fmt.Errorf("Could not create serial: %s", err.Error())
+	}
+
 	template := &x509.Certificate{
 		IsCA: true,
 		BasicConstraintsValid: true,
 		SubjectKeyId:          []byte{1, 2, 3},
-		SerialNumber:          big.NewInt(1234), // uuid
+		SerialNumber:          serial,
 		Subject:               *subject,
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
@@ -263,7 +282,6 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 
 	var parent *x509.Certificate
 	var signingKey *rsa.PrivateKey
-	var err error
 
 	switch t := parentCA.(type) {
 	case *CA:
@@ -333,11 +351,15 @@ func (ca *CA) Sign(csr *CSR) (*Certificate, error) {
 		subject.PostalCode = []string{ca.Data.Body.DNScope.PostalCode}
 	}
 
+	serial, err := NewSerial()
+	if err != nil {
+		return nil, fmt.Errorf("Could not create serial: %s", err.Error())
+	}
 	template := &x509.Certificate{
 		IsCA: false,
 		BasicConstraintsValid: true,
 		SubjectKeyId:          []byte{1, 2, 3},
-		SerialNumber:          big.NewInt(1234),
+		SerialNumber:          serial,
 		Subject:               *subject,
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(5, 5, 5),
