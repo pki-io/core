@@ -2,6 +2,7 @@ package fs
 
 import (
 	"fmt"
+	"github.com/mitchellh/packer/common/uuid"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -120,10 +121,45 @@ func (fs *FsAPI) LoadPrivate(name string) (string, error) {
 	return fs.GetPrivate(fs.Id, name)
 }
 
-func (fs *FsAPI) Push() {
+func (fs *FsAPI) Push(content string) error {
+	if 0 == len(fs.Id) {
+		return fmt.Errorf("Id cannot be empty")
+	}
+	path := filepath.Join(fs.Path, privatePath, fs.Id, "queue")
 
+	if err := os.MkdirAll(path, privateDirMode); err != nil {
+		return fmt.Errorf("Could not create path '%s': %s", path, err.Error())
+	}
+	filename := filepath.Join(path, uuid.TimeOrderedUUID())
+	if err := ioutil.WriteFile(filename, []byte(content), privateFileMode); err != nil {
+		return fmt.Errorf("Could not write file '%s': %s", filename, err.Error())
+	}
+	return nil
 }
 
-func (fs *FsAPI) Pop() {
+func (fs *FsAPI) Pop() (string, error) {
+	if 0 == len(fs.Id) {
+		return "", fmt.Errorf("Id cannot be empty")
+	}
+	pattern := filepath.Join(fs.Path, privatePath, fs.Id, "queue", "*")
+	files, err := filepath.Glob(pattern)
+	if err != nil {
+		return "", fmt.Errorf("Could not glob files: %s", err.Error())
+	}
+
+	if len(files) == 0 {
+		return "", fmt.Errorf("Nothing to pop")
+	}
+
+	filename := files[0]
+	if content, err := ioutil.ReadFile(filename); err != nil {
+		return "", fmt.Errorf("Could not read file '%s': %s", filename, err.Error())
+	} else {
+		if err := os.Remove(filename); err != nil {
+			return "", fmt.Errorf("Couldn't remove file: %s", err.Error())
+		} else {
+			return string(content), nil
+		}
+	}
 
 }

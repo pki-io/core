@@ -1,40 +1,27 @@
 package fs
 
-/*
+import (
+	"github.com/stretchr/testify/assert"
+	"os"
+	"testing"
+)
 
-$ yum install pki,io
+// Need teardown function to clean up dir
 
-$ cd a/path
+func TestFSNewAPI(t *testing.T) {
+	currentDir, _ := os.Getwd()
+	fs, err := NewAPI(currentDir, "fs-test")
+	assert.Nil(t, err)
+	assert.NotNil(t, fs)
+}
 
-$ pki.io org create a_name
-
-$ cat ~/.pki.io.conf
-
-[a_name]
-org_id = abc
-path = a/path
-
-$ cd a_name
-
-$ ls 
-
-  private/
-    abc.json
-    abc/
-  public/
-    abc/
-
-$ pki.io admin init fscott
-
-$ ls
-
-  private/
-    abc.json
-    abc/
-    xxx.json
-    xxx/
-  public/
-    abc/
-    xxx/
-:w
-*/
+func TestFSPushPop(t *testing.T) {
+	currentDir, _ := os.Getwd()
+	fs, _ := NewAPI(currentDir, "fs-test")
+	fs.Id = "123"
+	err := fs.Push("this is a test")
+	assert.Nil(t, err)
+	content, err := fs.Pop()
+	assert.Nil(t, err)
+	assert.Equal(t, content, "this is a test")
+}
