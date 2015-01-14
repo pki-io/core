@@ -4,6 +4,7 @@ import (
     "encoding/json"
     "fmt"
     "github.com/xeipuuv/gojsonschema"
+    "errors"
 )
 
 type Documenter interface {
@@ -17,40 +18,29 @@ type Document struct {
 }
 
 func (doc *Document) FromJson(data interface{}, target interface{}) (interface{}, error) {
-    var jsonData []byte
+    var jsonData string
     doValidation := true
 
     switch t := data.(type) {
     case []byte:
-        jsonData = data.([]byte)
+        jsonData = string(t)
     case string:
-        jsonData = []byte(data.(string))
+        jsonData = t
     case nil:
-        jsonData = []byte(doc.Default)
+        jsonData = doc.Default
         doValidation = false
     default:
         return nil, fmt.Errorf("Invalid input type: %T", t)
     }
 
     if doValidation {
-        var jsonDocument interface{}
-        if err := json.Unmarshal(jsonData, &jsonDocument); err != nil {
-            return nil, err
-        }
+        documentLoader := gojsonschema.NewStringLoader(jsonData)
+        schemaLoader := gojsonschema.NewStringLoader(doc.Schema)
 
-        var schemaMap map[string]interface{}
-        if err := json.Unmarshal([]byte(doc.Schema), &schemaMap); err != nil {
-            return nil, fmt.Errorf("Can't unmarshal schema: %s", err.Error())
-        }
-
-        schemaDocument, err := gojsonschema.NewJsonSchemaDocument(schemaMap)
-        if err != nil {
-            return nil, fmt.Errorf("Can't create schema document: %s", err.Error())
-        }
-
-        result := schemaDocument.Validate(jsonDocument)
-        if result.Valid() {
-            if err := json.Unmarshal(jsonData, target); err != nil {
+        if result, err := gojsonschema.Validate(schemaLoader, documentLoader); err != nil {
+            return nil, errors.New("Something went wrong when trying to validate json.")
+        } else if result.Valid() {
+            if err := json.Unmarshal([]byte(jsonData), target); err != nil {
                 return nil, err
             } else {
               return target, nil
@@ -60,10 +50,10 @@ func (doc *Document) FromJson(data interface{}, target interface{}) (interface{}
             for _, desc := range result.Errors() {
                 fmt.Printf("- %s\n", desc)
             }
-            return nil, fmt.Errorf("ffs")
+            return nil, errors.New("ffs")
         }
     } else {
-        if err := json.Unmarshal(jsonData, target); err != nil {
+        if err := json.Unmarshal([]byte(jsonData), target); err != nil {
             return nil, err
         } else {
           return target, nil
@@ -77,29 +67,18 @@ func (doc *Document) ToJson(data interface{}) (string, error) {
         return "", err
     }
 
-    var jsonDocument interface{}
-    if err := json.Unmarshal(jsonData, &jsonDocument); err != nil {
-        return "", err
-    }
+    documentLoader := gojsonschema.NewStringLoader(string(jsonData))
+    schemaLoader := gojsonschema.NewStringLoader(doc.Schema)
 
-    var schemaMap map[string]interface{}
-    if err := json.Unmarshal([]byte(doc.Schema), &schemaMap); err != nil {
-        return "", fmt.Errorf("Can't unmarshal schema: %s", err.Error())
-    }
-
-    schemaDocument, err := gojsonschema.NewJsonSchemaDocument(schemaMap)
-    if err != nil {
-        return "", fmt.Errorf("Can't create schema document: %s", err.Error())
-    }
-
-    result := schemaDocument.Validate(jsonDocument)
-    if result.Valid() {
+    if result, err := gojsonschema.Validate(schemaLoader, documentLoader); err != nil {
+        return "", errors.New("something went wrong when trying to validate json.")
+    } else if result.Valid() {
         return string(jsonData), nil
     } else {
         // Loop through errors
         for _, desc := range result.Errors() {
             fmt.Printf("- %s\n", desc)
         }
-        return "", fmt.Errorf("ffs")
+        return "", errors.New("ffs")
     }
 }

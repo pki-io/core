@@ -22,8 +22,6 @@ func TestConfigSaveLoad(t *testing.T) {
 
 	conf := New(filename)
 	conf.Data.Admins = append(conf.Data.Admins, AdminData{"123", "456"})
-	conf.Data.Agents = append(conf.Data.Agents, AgentData{"agent1", "555"})
-	conf.Data.Agents = append(conf.Data.Agents, AgentData{"agent2", "666"})
 	conf.Save()
 
 	newConf := New(filename)
