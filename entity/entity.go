@@ -165,6 +165,7 @@ func (entity *Entity) Sign(container *document.Container) error {
 		return fmt.Errorf("Signed message doesn't match input")
 	}
 	if signature.Mode != crypto.SignatureMode {
+		// Shouldn't really need this check
 		return fmt.Errorf("Signature mode doesn't match")
 	}
 
