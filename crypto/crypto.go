@@ -5,6 +5,7 @@ import (
 )
 
 const SignatureMode string = "sha256+rsa"
+const HMACMode string = "hmac+sha256"
 
 type Encrypted struct {
 	Ciphertext string
@@ -22,6 +23,10 @@ type Signed struct {
 
 func NewSignature() *Signed {
 	return &Signed{Mode: SignatureMode}
+}
+
+func NewHMAC() *Signed {
+	return &Signed{Mode: HMACMode}
 }
 
 func GroupEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, error) {

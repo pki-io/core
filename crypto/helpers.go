@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -12,6 +13,7 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"golang.org/x/crypto/pbkdf2"
 	"io"
 )
 
@@ -38,6 +40,12 @@ func UnPad(src []byte) []byte {
 	length := len(src)
 	unpadding := int(src[length-1])
 	return src[:(length - unpadding)]
+}
+
+func ExpandKey(key []byte) ([]byte, []byte) {
+	salt := RandomBytes(16) // TODO Shouldn't be hardcoded i guess
+	newKey := pbkdf2.Key(key, salt, 100000, 32, sha256.New)
+	return newKey, salt
 }
 
 func Base64Encode(input []byte) []byte {
@@ -173,5 +181,33 @@ func RSAVerify(message []byte, signature []byte, publicKey *rsa.PublicKey) error
 		return fmt.Errorf("Could not RSA verify: %s", err.Error())
 	} else {
 		return nil
+	}
+}
+
+// Should really be moved into Sign method then case on mode (with nice consts)
+func HMAC(message []byte, key []byte, signature *Signed) error {
+	mac := hmac.New(sha256.New, key)
+	mac.Write(message)
+	finalMAC := mac.Sum(nil)
+	signature.Message = string(message)
+	signature.Mode = HMACMode
+	signature.Signature = string(Base64Encode(finalMAC))
+	return nil
+}
+
+func HMACVerify(message, key []byte, signature *Signed) error {
+	newMac := hmac.New(sha256.New, key)
+	newMac.Write(message)
+	newFinalMac := newMac.Sum(nil)
+
+	oldMac, err := Base64Decode([]byte(signature.Signature))
+	if err != nil {
+		return fmt.Errorf("Could not base64 decode mac: %s", err.Error())
+	}
+
+	if hmac.Equal(newFinalMac, oldMac) {
+		return nil
+	} else {
+		return fmt.Errorf("MACs not equal")
 	}
 }
