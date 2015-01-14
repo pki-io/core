@@ -121,11 +121,8 @@ func (fs *FsAPI) LoadPrivate(name string) (string, error) {
 	return fs.GetPrivate(fs.Id, name)
 }
 
-func (fs *FsAPI) Push(content string) error {
-	if 0 == len(fs.Id) {
-		return fmt.Errorf("Id cannot be empty")
-	}
-	path := filepath.Join(fs.Path, privatePath, fs.Id, "queue")
+func (fs *FsAPI) Push(dstId, name, queue, content string) error {
+	path := filepath.Join(fs.Path, privatePath, dstId, name, queue)
 
 	if err := os.MkdirAll(path, privateDirMode); err != nil {
 		return fmt.Errorf("Could not create path '%s': %s", path, err.Error())
@@ -137,11 +134,19 @@ func (fs *FsAPI) Push(content string) error {
 	return nil
 }
 
-func (fs *FsAPI) Pop() (string, error) {
+func (fs *FsAPI) PushIncoming(dstId, queue, content string) error {
+	return fs.Push(dstId, "incoming", queue, content)
+}
+
+func (fs *FsAPI) PushOutgoing(queue, content string) error {
 	if 0 == len(fs.Id) {
-		return "", fmt.Errorf("Id cannot be empty")
+		return fmt.Errorf("Id cannot be empty")
 	}
-	pattern := filepath.Join(fs.Path, privatePath, fs.Id, "queue", "*")
+	return fs.Push(fs.Id, "outgoing", queue, content)
+}
+
+func (fs *FsAPI) Pop(srcId, name, queue string) (string, error) {
+	pattern := filepath.Join(fs.Path, privatePath, srcId, name, queue, "*")
 	files, err := filepath.Glob(pattern)
 	if err != nil {
 		return "", fmt.Errorf("Could not glob files: %s", err.Error())
@@ -161,5 +166,35 @@ func (fs *FsAPI) Pop() (string, error) {
 			return string(content), nil
 		}
 	}
+}
 
+func (fs *FsAPI) PopIncoming(queue string) (string, error) {
+	if 0 == len(fs.Id) {
+		return "", fmt.Errorf("Id cannot be empty")
+	}
+	return fs.Pop(fs.Id, "incoming", queue)
+}
+
+func (fs *FsAPI) PopOutgoing(srcId, queue string) (string, error) {
+	return fs.Pop(srcId, "outgoing", queue)
+}
+
+func (fs *FsAPI) Size(id, name, queue string) (int, error) {
+	pattern := filepath.Join(fs.Path, privatePath, id, name, queue, "*")
+	files, err := filepath.Glob(pattern)
+	if err != nil {
+		return 0, fmt.Errorf("Could not glob files: %s", err.Error())
+	}
+	return len(files), nil
+}
+
+func (fs *FsAPI) IncomingSize(queue string) (int, error) {
+	if 0 == len(fs.Id) {
+		return 0, fmt.Errorf("Id cannot be empty")
+	}
+	return fs.Size(fs.Id, "incoming", queue)
+}
+
+func (fs *FsAPI) OutgoingSize(id, queue string) (int, error) {
+	return fs.Size(id, "outgoing", queue)
 }
