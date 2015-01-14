@@ -168,16 +168,16 @@ func TestSign(t *testing.T) {
     message := "this is a message"
     key := GenerateRSAKey()
     privateKey := string(PemEncodeRSAPrivate(key))
-    sig, err := Sign(message, privateKey)
+    err := Sign(message, privateKey, NewSignature())
     assert.Nil(t, err)
-    assert.NotNil(t, sig.Signature)
 }
 
 func TestVerify(t *testing.T) {
     message := "this is a message"
     key := GenerateRSAKey()
     privateKey := string(PemEncodeRSAPrivate(key))
-    sig, _ := Sign(message, privateKey)
+    sig := NewSignature()
+    Sign(message, privateKey, sig)
 
     publicKey := string(PemEncodeRSAPublic(&key.PublicKey))
     err := Verify(sig, publicKey)
