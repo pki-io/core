@@ -1,7 +1,9 @@
 package x509
 
 import (
+	"encoding/hex"
 	"fmt"
+	"pki.io/crypto"
 	"pki.io/document"
 	"pki.io/entity"
 )
@@ -14,6 +16,7 @@ const NodeRegistrationDefault string = `{
       "pairing-id": "",
       "source": "",
       "signature-mode": "",
+      "signature-salt": "",
       "signature": ""
     },
     "body": {
@@ -47,7 +50,7 @@ const NodeRegistrationSchema string = `{
       "options": {
           "description": "Options data",
           "type": "object",
-          "required": ["source", "pairing-id", "signature-mode", "signature"],
+          "required": ["source", "pairing-id", "signature-mode", "signature-salt", "signature"],
           "additionalProperties": false,
           "properties": {
               "pairing-id" : {
@@ -62,6 +65,10 @@ const NodeRegistrationSchema string = `{
                   "description": "Signature mode",
                   "type": "string"
               },
+              "signature-salt": {
+                  "description": "Signature salt",
+                  "type": "string"
+              },
               "signature": {
                   "description": "Base64 encoded signature",
                   "type": "string"
@@ -72,7 +79,7 @@ const NodeRegistrationSchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["id", "name", "certificate", "private-key", "dn-scope"],
+          "required": ["id", "name", "public-signing-key", "public-encryption-key" ],
           "additionalProperties": false,
           "properties": {
               "id" : {
@@ -102,8 +109,9 @@ type NodeRegistrationData struct {
 	Type    string `json:"type"`
 	Options struct {
 		Source        string `json:"source"`
-		PairingId     string `json:"certificate"`
+		PairingId     string `json:"pairing-id"`
 		SignatureMode string `json:"signature-mode"`
+		SignatureSalt string `json:"signature-salt"`
 		Signature     string `json:"signature"`
 	} `json:"options"`
 	Body struct {
@@ -154,4 +162,29 @@ func (reg *NodeRegistration) Dump() string {
 	} else {
 		return jsonString
 	}
+}
+
+func (reg *NodeRegistration) Authenticate(id, inKey string) error {
+	key, err := hex.DecodeString(inKey)
+	if err != nil {
+		return fmt.Errorf("Could not decode key: %s", err.Error())
+	}
+
+	newKey, salt := crypto.ExpandKey(key)
+	signature := crypto.NewHMAC()
+
+	reg.Data.Options.PairingId = id
+	reg.Data.Options.SignatureSalt = string(crypto.Base64Encode(salt))
+	reg.Data.Options.SignatureMode = signature.Mode
+
+	regJson := reg.Dump()
+	if err := crypto.HMAC([]byte(regJson), newKey, signature); err != nil {
+		return fmt.Errorf("Could not HMAC node registration: %s", err.Error())
+	}
+	if signature.Message != regJson {
+		return fmt.Errorf("Signed message doesn't match input")
+	}
+
+	reg.Data.Options.Signature = signature.Signature
+	return nil
 }
