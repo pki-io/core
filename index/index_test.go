@@ -57,3 +57,12 @@ func TestIndexAddTags(t *testing.T) {
 	err = index.AddCATags("ca2", inTags1)
 	assert.Nil(t, err)
 }
+
+func TestAddPairingKey(t *testing.T) {
+	index, _ := New(nil)
+	id := "123"
+	key := "abc"
+	tags := []string{"tag1", "tag2"}
+	err := index.AddPairingKey(id, key, tags)
+	assert.Nil(t, err)
+}

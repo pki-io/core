@@ -17,7 +17,8 @@ const IndexDefault string = `{
           "ca-reverse": {},
           "entity-forward": {},
           "entity-reverse": {}
-        }
+        },
+        "pairing-keys": {}
     }
 }`
 
@@ -55,6 +56,10 @@ const IndexSchema string = `{
                   "description": "Parent ID",
                   "type": "string"
               },
+              "pairing-keys": {
+                  "description": "Pairing Keys",
+                  "type": "object"
+              },
               "tags": {
                   "description": "Tags",
                   "type": "object",
@@ -84,14 +89,20 @@ const IndexSchema string = `{
   }
 }`
 
+type PairingKey struct {
+	Key  string   `json:"key"`
+	Tags []string `json:"tags"`
+}
+
 type IndexData struct {
 	Scope   string `json:"scope"`
 	Version int    `json:"version"`
 	Type    string `json:"type"`
 	Options string `json:"options"`
 	Body    struct {
-		ParentId string `json:"parent-id"`
-		Tags     struct {
+		ParentId    string                `json:"parent-id"`
+		PairingKeys map[string]PairingKey `json:"pairing-keys"`
+		Tags        struct {
 			CAForward     map[string][]string `json:"ca-forward"`
 			CAReverse     map[string][]string `json:"ca-reverse"`
 			EntityForward map[string][]string `json:"entity-forward"`
@@ -184,5 +195,26 @@ func (index *Index) AddEntityTags(entity string, i interface{}) error {
 		index.Data.Body.Tags.EntityReverse[entity] = AppendUnique(index.Data.Body.Tags.EntityReverse[entity], tag)
 	}
 
+	return nil
+}
+
+func (index *Index) AddPairingKey(id, key string, i interface{}) error {
+	var inTags []string
+	switch t := i.(type) {
+	case string:
+		inTags = []string{i.(string)}
+	case []string:
+		inTags = i.([]string)
+	default:
+		return fmt.Errorf("Could not add pairing key. Wrong data type for tags: %T", t)
+	}
+
+	pairingKey := new(PairingKey)
+	pairingKey.Key = key
+
+	for _, tag := range inTags {
+		pairingKey.Tags = AppendUnique(pairingKey.Tags, tag)
+	}
+	index.Data.Body.PairingKeys[id] = *pairingKey
 	return nil
 }
