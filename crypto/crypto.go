@@ -4,8 +4,11 @@ import (
 	"fmt"
 )
 
-const SignatureMode string = "sha256+rsa"
-const HMACMode string = "hmac+sha256"
+const (
+	SignatureModeSha256Rsa string = "sha256+rsa"
+	SignatureModeSha256Ecdsa string = "sha256+ecdsa"
+	HMACMode string = "hmac+sha256"
+)
 
 type Encrypted struct {
 	Ciphertext string
@@ -21,15 +24,19 @@ type Signed struct {
 	Signature string
 }
 
-func NewSignature() *Signed {
-	return &Signed{Mode: SignatureMode}
-}
-
 func NewHMAC() *Signed {
 	return &Signed{Mode: HMACMode}
 }
 
-func GroupEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, error) {
+func NewRSASignature() *Signed {
+	return &Signed{Mode: SignatureModeSha256Rsa}
+}
+
+func NewECDSASignature() *Signed {
+	return &Signed{Mode: SignatureModeSha256Ecdsa}
+}
+
+func GroupRSAEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, error) {
 
 	keySize := 32
 	key := RandomBytes(keySize)
@@ -53,7 +60,34 @@ func GroupEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, e
 	return &Encrypted{Ciphertext: string(Base64Encode(ciphertext)), Mode: "aes-cbc-256+rsa", Inputs: inputs, Keys: encryptedKeys}, nil
 }
 
-func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (string, error) {
+func GroupECIESEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, error) {
+	keySize := 32
+	key := RandomBytes(keySize)
+	ciphertext, iv, err := AESEncrypt([]byte(plaintext), key)
+	if err != nil {
+		return nil, err
+	}
+	inputs := make(map[string]string)
+	inputs["iv"] = string(Base64Encode(iv))
+
+	encryptedKeys := make(map[string]string)
+	for id, publicKeyString := range publicKeys {
+		publicKey, err := PemDecodeECPublic([]byte(publicKeyString))
+		if err != nil {
+			return nil, err
+		}
+		encryptedKey, err := ECIESEncrypt(key, publicKey)
+		if err != nil {
+			return nil, err
+		}
+		encryptedKeys[id] = string(Base64Encode(encryptedKey))
+	}
+
+	return &Encrypted{Ciphertext: string(Base64Encode(ciphertext)), Mode: "aes-cbc-256+ecies", Inputs: inputs,
+		Keys: encryptedKeys}, nil
+}
+
+func GroupRSADecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (string, error) {
 
 	if encrypted.Mode != "aes-cbc-256+rsa" {
 		return "", fmt.Errorf("Invalid mode '%s'", encrypted.Mode)
@@ -74,22 +108,68 @@ func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (str
 	return string(plaintext), err
 }
 
-func Sign(message string, privateKeyString string, signature *Signed) error {
-	privateKey, _ := PemDecodeRSAPrivate([]byte(privateKeyString))
-	sig, err := RSASign([]byte(message), privateKey)
-	if err != nil {
-		return err
-	} else {
-		signature.Message = message
-		signature.Mode = SignatureMode
-		signature.Signature = string(Base64Encode(sig))
-		return nil
+func GroupECIESDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (string, error) {
+	if encrypted.Mode != "aes-cbc-256+ecies" {
+		return "", fmt.Errorf("Invalid mode '%s'", encrypted.Mode)
 	}
+
+	if len(privateKeyPem) == 0 {
+		return "", fmt.Errorf("Private key pem is 0 bytes")
+	}
+
+	ciphertext, _ := Base64Decode([]byte(encrypted.Ciphertext))
+	iv, _ := Base64Decode([]byte(encrypted.Inputs["iv"]))
+	encryptedKey, _ := Base64Decode([]byte(encrypted.Keys[keyID]))
+
+	privateKey, err := PemDecodeECPrivate([]byte(privateKeyPem))
+	if err != nil {
+		return "", err
+	}
+
+	key, err := ECIESDecrypt(encryptedKey, privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	plaintext, err := AESDecrypt(ciphertext, iv, key)
+	return string(plaintext), err
+}
+
+func Sign(message string, privateKeyString string, signature *Signed) error {
+	var sig []byte
+	var err error
+	if signature.Mode == SignatureModeSha256Rsa {
+		privateKey, _ := PemDecodeRSAPrivate([]byte(privateKeyString))
+		sig, err = RSASign([]byte(message), privateKey)
+		if err != nil {
+			return err
+		}
+	} else if signature.Mode == SignatureModeSha256Ecdsa {
+		privateKey, _ := PemDecodeECPrivate([]byte(privateKeyString))
+		sig, err = ECDSASign([]byte(message), privateKey)
+		if err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("signature mode %s not supported.", signature.Mode)
+	}
+
+	signature.Message = message
+	signature.Signature = string(Base64Encode(sig))
+	return nil
 }
 
 func Verify(signed *Signed, publicKeyString string) error {
-	publicKey, _ := PemDecodeRSAPublic([]byte(publicKeyString))
 	message := []byte(signed.Message)
 	signature, _ := Base64Decode([]byte(signed.Signature))
-	return RSAVerify(message, signature, publicKey)
+	if signed.Mode == SignatureModeSha256Rsa {
+		publicKey, _ := PemDecodeRSAPublic([]byte(publicKeyString))
+		return RSAVerify(message, signature, publicKey)
+	} else if signed.Mode == SignatureModeSha256Ecdsa {
+		publicKey, _ := PemDecodeECPublic([]byte(publicKeyString))
+		return ECDSAVerify(message, signature, publicKey)
+	} else {
+		return fmt.Errorf("signature mode %s not supported.", signed.Mode)
+	}
+
 }

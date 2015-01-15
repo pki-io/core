@@ -1,7 +1,6 @@
 package crypto
 
 import (
-	//"fmt"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
@@ -136,32 +135,32 @@ func TestRSAVerify(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestGroupEncrypt(t *testing.T) {
-	key1 := GenerateRSAKey()
-	key2 := GenerateRSAKey()
-	keys := make(map[string]string)
-	keys["1"] = string(PemEncodeRSAPublic(&key1.PublicKey))
-	keys["2"] = string(PemEncodeRSAPublic(&key2.PublicKey))
+func TestGroupRSAEncrypt(t *testing.T) {
+    key1 := GenerateRSAKey()
+    key2 := GenerateRSAKey()
+    keys := make(map[string]string)
+    keys["1"] = string(PemEncodeRSAPublic(&key1.PublicKey))
+    keys["2"] = string(PemEncodeRSAPublic(&key2.PublicKey))
 
-	plaintext := "this is a secret message"
-	e, err := GroupEncrypt(plaintext, keys)
-	assert.Nil(t, err)
-	assert.NotNil(t, e)
+    plaintext := "this is a secret message"
+    e, err := GroupRSAEncrypt(plaintext, keys)
+    assert.Nil(t, err)
+    assert.NotNil(t, e)
 }
 
-func TestGroupDecrypt(t *testing.T) {
-	key1 := GenerateRSAKey()
-	key2 := GenerateRSAKey()
-	keys := make(map[string]string)
-	keys["1"] = string(PemEncodeRSAPublic(&key1.PublicKey))
-	keys["2"] = string(PemEncodeRSAPublic(&key2.PublicKey))
+func TestGroupRSADecrypt(t *testing.T) {
+    key1 := GenerateRSAKey()
+    key2 := GenerateRSAKey()
+    keys := make(map[string]string)
+    keys["1"] = string(PemEncodeRSAPublic(&key1.PublicKey))
+    keys["2"] = string(PemEncodeRSAPublic(&key2.PublicKey))
 
-	plaintext := "this is a secret message"
-	e, err := GroupEncrypt(plaintext, keys)
+    plaintext := "this is a secret message"
+    e, err := GroupRSAEncrypt(plaintext, keys)
 
-	newPlaintext, err := GroupDecrypt(e, "1", string(PemEncodeRSAPrivate(key1)))
-	assert.Nil(t, err)
-	assert.Equal(t, plaintext, newPlaintext)
+    newPlaintext, err := GroupRSADecrypt(e, "1", string(PemEncodeRSAPrivate(key1)))
+    assert.Nil(t, err)
+    assert.Equal(t, plaintext, newPlaintext)
 }
 
 func TestSign(t *testing.T) {
@@ -169,7 +168,16 @@ func TestSign(t *testing.T) {
 	key := GenerateRSAKey()
 	privateKey := string(PemEncodeRSAPrivate(key))
 	sig := new(Signed)
+	sig.Mode = SignatureModeSha256Rsa
 	err := Sign(message, privateKey, sig)
+	assert.Nil(t, err)
+	assert.NotNil(t, sig.Signature)
+
+	eckey := GenerateECKey()
+	privateKey = string(PemEncodeECPrivate(eckey))
+	sig = new(Signed)
+	sig.Mode = SignatureModeSha256Ecdsa
+	err = Sign(message, privateKey, sig)
 	assert.Nil(t, err)
 	assert.NotNil(t, sig.Signature)
 }
@@ -179,10 +187,21 @@ func TestVerify(t *testing.T) {
 	key := GenerateRSAKey()
 	privateKey := string(PemEncodeRSAPrivate(key))
 	sig := new(Signed)
+	sig.Mode = SignatureModeSha256Rsa
 	Sign(message, privateKey, sig)
 
 	publicKey := string(PemEncodeRSAPublic(&key.PublicKey))
 	err := Verify(sig, publicKey)
+	assert.Nil(t, err)
+
+	eckey := GenerateECKey()
+	privateKey = string(PemEncodeECPrivate(eckey))
+	sig = new(Signed)
+	sig.Mode = SignatureModeSha256Ecdsa
+	Sign(message, privateKey, sig)
+
+	publicKey = string(PemEncodeECPublic(&eckey.PublicKey))
+	err = Verify(sig, publicKey)
 	assert.Nil(t, err)
 }
 

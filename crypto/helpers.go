@@ -15,6 +15,10 @@ import (
 	"fmt"
 	"golang.org/x/crypto/pbkdf2"
 	"io"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"math/big"
+	"errors"
 )
 
 // https://www.socketloop.com/tutorials/golang-padding-un-padding-data
@@ -110,10 +114,27 @@ func GenerateRSAKey() *rsa.PrivateKey {
 	}
 }
 
+func GenerateECKey() *ecdsa.PrivateKey {
+	if key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader); err != nil {
+		panic(fmt.Sprintf("Can't create ECDSA keys: %s", err))
+	} else {
+		return key
+	}
+}
+
 func PemEncodeRSAPrivate(key *rsa.PrivateKey) []byte {
 	der := x509.MarshalPKCS1PrivateKey(key)
 	b := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: der}
 	return pem.EncodeToMemory(b)
+}
+
+func PemEncodeECPrivate(key *ecdsa.PrivateKey) []byte {
+	if der, err := x509.MarshalECPrivateKey(key); err != nil {
+		panic(fmt.Sprintf("Can't marshal ECDSA key: %s", err))
+	} else {
+		b := &pem.Block{Type: "ECDSA PRIVATE KEY", Bytes: der}
+		return pem.EncodeToMemory(b)
+	}
 }
 
 func PemEncodeRSAPublic(key *rsa.PublicKey) []byte {
@@ -122,10 +143,28 @@ func PemEncodeRSAPublic(key *rsa.PublicKey) []byte {
 	return pem.EncodeToMemory(b)
 }
 
+func PemEncodeECPublic(key *ecdsa.PublicKey) []byte {
+	if der, err := x509.MarshalPKIXPublicKey(key); err != nil {
+		panic(fmt.Sprintf("Can't marshal ec public key: %s", err))
+	} else {
+		b := &pem.Block{Type: "ECDSA PUBLIC KEY", Bytes: der}
+		return pem.EncodeToMemory(b)
+	}
+}
+
 func PemDecodeRSAPrivate(in []byte) (*rsa.PrivateKey, error) {
 	b, _ := pem.Decode(in)
 	if key, err := x509.ParsePKCS1PrivateKey(b.Bytes); err != nil {
 		return nil, fmt.Errorf("Could not parse private key: %s", err.Error())
+	} else {
+		return key, nil
+	}
+}
+
+func PemDecodeECPrivate(in []byte) (*ecdsa.PrivateKey, error) {
+	b, _ := pem.Decode(in)
+	if key, err := x509.ParseECPrivateKey(b.Bytes); err != nil {
+		return nil, fmt.Errorf("Could not parse private key: %s", err)
 	} else {
 		return key, nil
 	}
@@ -140,6 +179,15 @@ func PemDecodeRSAPublic(in []byte) (*rsa.PublicKey, error) {
 	}
 }
 
+func PemDecodeECPublic(in []byte) (*ecdsa.PublicKey, error) {
+	b, _ := pem.Decode(in)
+	if pub, err := x509.ParsePKIXPublicKey(b.Bytes); err != nil {
+		return nil, fmt.Errorf("Could not parse public key: %s", err)
+	} else {
+		return pub.(*ecdsa.PublicKey), nil
+	}
+}
+
 func RSAEncrypt(plaintext []byte, publicKey *rsa.PublicKey) ([]byte, error) {
 	label := []byte("")
 	hash := sha256.New()
@@ -150,6 +198,11 @@ func RSAEncrypt(plaintext []byte, publicKey *rsa.PublicKey) ([]byte, error) {
 	}
 }
 
+func ECIESEncrypt(plaintext []byte, publicKey *ecdsa.PublicKey) ([]byte, error) {
+	// TODO: implement
+	return nil, nil
+}
+
 func RSADecrypt(ciphertext []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	label := []byte("")
 	hash := sha256.New()
@@ -158,6 +211,11 @@ func RSADecrypt(ciphertext []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	} else {
 		return plaintext, nil
 	}
+}
+
+func ECIESDecrypt(ciphertext []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
+	// TODO: implement
+	return nil, nil
 }
 
 func RSASign(message []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
@@ -172,6 +230,23 @@ func RSASign(message []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	}
 }
 
+func ECDSASign(message[]byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
+	hash := sha256.New()
+	io.WriteString(hash, string(message))
+	hashed := hash.Sum(nil)
+	if r, s, err := ecdsa.Sign(rand.Reader, privateKey, hashed); err != nil {
+		return nil, fmt.Errorf("Could not ECDSA sign: %s", err)
+	} else {
+
+		buf := new(bytes.Buffer)
+		buf.Write([]byte{byte(len(r.Bytes()))})
+		buf.Write(r.Bytes())
+		buf.Write(s.Bytes())
+
+		return buf.Bytes(), nil
+	}
+}
+
 func RSAVerify(message []byte, signature []byte, publicKey *rsa.PublicKey) error {
 	var h crypto.Hash
 	hash := sha256.New()
@@ -179,6 +254,20 @@ func RSAVerify(message []byte, signature []byte, publicKey *rsa.PublicKey) error
 	hashed := hash.Sum(nil)
 	if err := rsa.VerifyPKCS1v15(publicKey, h, hashed, signature); err != nil {
 		return fmt.Errorf("Could not RSA verify: %s", err.Error())
+	} else {
+		return nil
+	}
+}
+
+func ECDSAVerify(message []byte, signature []byte , publicKey *ecdsa.PublicKey) error {
+	hash := sha256.New()
+	io.WriteString(hash, string(message))
+	hashed := hash.Sum(nil)
+	l := int(signature[0])
+	r := new(big.Int).SetBytes(signature[1:l+1])
+	s := new(big.Int).SetBytes(signature[l+1:])
+	if ok := ecdsa.Verify(publicKey, hashed, r, s); !ok {
+		return errors.New("Could not ECDSA verify.")
 	} else {
 		return nil
 	}
