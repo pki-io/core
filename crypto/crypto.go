@@ -6,10 +6,12 @@ import (
 	"crypto/ecdsa"
 )
 
+type Mode string
+
 const (
-	SignatureModeSha256Rsa string = "sha256+rsa"
-	SignatureModeSha256Ecdsa string = "sha256+ecdsa"
-	HMACMode string = "hmac+sha256"
+	SignatureModeSha256Rsa Mode = "sha256+rsa"
+	SignatureModeSha256Ecdsa Mode = "sha256+ecdsa"
+	HMACMode Mode = "hmac+sha256"
 )
 
 type Encrypted struct {
@@ -21,7 +23,7 @@ type Encrypted struct {
 
 type Signed struct {
 	Message string
-	Mode    string
+	Mode    Mode
 	//Inputs map[string]string
 	Signature string
 }
@@ -30,12 +32,8 @@ func NewHMAC() *Signed {
 	return &Signed{Mode: HMACMode}
 }
 
-func NewRSASignature() *Signed {
-	return &Signed{Mode: SignatureModeSha256Rsa}
-}
-
-func NewECDSASignature() *Signed {
-	return &Signed{Mode: SignatureModeSha256Ecdsa}
+func NewSignature(mode Mode) *Signed {
+	return &Signed{Mode: mode}
 }
 
 func GroupEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, error) {
