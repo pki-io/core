@@ -130,8 +130,15 @@ func (entity *Entity) Dump() string {
 }
 
 func (entity *Entity) GenerateKeys() error {
-	signingKey := crypto.GenerateRSAKey()
-	encryptionKey := crypto.GenerateRSAKey()
+	signingKey, err := crypto.GenerateRSAKey()
+	if err != nil {
+		return err
+	}
+
+	encryptionKey, err := crypto.GenerateRSAKey()
+	if err != nil {
+		return err
+	}
 
 	signingKey.Precompute()
 	encryptionKey.Precompute()
@@ -144,18 +151,36 @@ func (entity *Entity) GenerateKeys() error {
 		return fmt.Errorf("Could not validate encryption key: %s", err.Error())
 	}
 
-	entity.Data.Body.PublicSigningKey = string(crypto.PemEncodeRSAPublic(&signingKey.PublicKey))
-	entity.Data.Body.PrivateSigningKey = string(crypto.PemEncodeRSAPrivate(signingKey))
-	entity.Data.Body.PublicEncryptionKey = string(crypto.PemEncodeRSAPublic(&encryptionKey.PublicKey))
-	entity.Data.Body.PrivateEncryptionKey = string(crypto.PemEncodeRSAPrivate(encryptionKey))
+	if pub, err := crypto.PemEncodePublic(&signingKey.PublicKey); err != nil {
+		return err
+	} else {
+		entity.Data.Body.PublicSigningKey = string(pub)
+	}
+
+
+	if key, err := crypto.PemEncodePrivate(signingKey); err != nil {
+		return err
+	} else {
+		entity.Data.Body.PrivateSigningKey = string(key)
+	}
+
+	if pub, err := crypto.PemEncodePublic(&encryptionKey.PublicKey); err != nil {
+		return err
+	} else {
+		entity.Data.Body.PublicEncryptionKey = string(pub)
+	}
+
+	if key, err := crypto.PemEncodePrivate(encryptionKey); err != nil {
+		return err
+	} else {
+		entity.Data.Body.PrivateEncryptionKey = string(key)
+	}
 
 	return nil
 }
 
 func (entity *Entity) Sign(container *document.Container) error {
-	signature := crypto.NewSignature()
-	container.Data.Options.SignatureMode = signature.Mode
-
+	signature := new(crypto.Signed)
 	containerJson := container.Dump()
 
 	if err := crypto.Sign(containerJson, entity.Data.Body.PrivateSigningKey, signature); err != nil {
@@ -164,11 +189,8 @@ func (entity *Entity) Sign(container *document.Container) error {
 	if signature.Message != containerJson {
 		return fmt.Errorf("Signed message doesn't match input")
 	}
-	if signature.Mode != crypto.SignatureMode {
-		// Shouldn't really need this check
-		return fmt.Errorf("Signature mode doesn't match")
-	}
 
+	container.Data.Options.SignatureMode = string(signature.Mode)
 	container.Data.Options.Signature = signature.Signature
 	return nil
 }
@@ -179,7 +201,7 @@ func (entity *Entity) Verify(container *document.Container) error {
 		return fmt.Errorf("Container isn't signed")
 	}
 
-	signature := crypto.NewSignature()
+	signature := new(crypto.Signed)
 	signature.Signature = container.Data.Options.Signature
 
 	container.Data.Options.Signature = ""
