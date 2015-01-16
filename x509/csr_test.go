@@ -4,7 +4,7 @@ import (
     //"fmt"
     //"time"
     "testing"
-    //"pki.io/crypto"
+    //"github.com/pki-io/pki.io/crypto"
     "github.com/stretchr/testify/assert"
 )
 

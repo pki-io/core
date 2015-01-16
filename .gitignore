@@ -1,2 +1,4 @@
 *.swp
 *.swo
+_vendor/
+.vendor/
