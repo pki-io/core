@@ -261,3 +261,16 @@ func (entity *Entity) EncryptThenSignString(content string, entities interface{}
 
 	return container, nil
 }
+
+func (entity *Entity) VerifyThenDecrypt(container *document.Container) (string, error) {
+	if err := entity.Verify(container); err != nil {
+		return "", fmt.Errorf("Could not verify container: %s", err.Error())
+	}
+
+	content, err := entity.Decrypt(container)
+	if err != nil {
+		return "", fmt.Errorf("Could not decrypt container: %s", err.Error())
+	}
+	return content, nil
+
+}

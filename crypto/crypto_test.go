@@ -213,7 +213,15 @@ func TestHMACVerifyHelper(t *testing.T) {
 
 func TestExpandKeyHelper(t *testing.T) {
 	key := RandomBytes(16)
-	newKey, salt := ExpandKey(key)
+	newKey, salt := ExpandKey(key, nil)
 	assert.Equal(t, len(salt), 16)
+	assert.Equal(t, len(newKey), 32)
+}
+
+func TestExpandKeyHelperWithSalt(t *testing.T) {
+	key := RandomBytes(16)
+	salt := RandomBytes(16)
+	newKey, newSalt := ExpandKey(key, salt)
+	assert.Equal(t, salt, newSalt)
 	assert.Equal(t, len(newKey), 32)
 }

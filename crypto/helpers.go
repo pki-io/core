@@ -42,8 +42,10 @@ func UnPad(src []byte) []byte {
 	return src[:(length - unpadding)]
 }
 
-func ExpandKey(key []byte) ([]byte, []byte) {
-	salt := RandomBytes(16) // TODO Shouldn't be hardcoded i guess
+func ExpandKey(key, salt []byte) ([]byte, []byte) {
+	if len(salt) == 0 {
+		salt = RandomBytes(16) // TODO Shouldn't be hardcoded i guess
+	}
 	newKey := pbkdf2.Key(key, salt, 100000, 32, sha256.New)
 	return newKey, salt
 }
@@ -199,7 +201,6 @@ func HMACVerify(message, key []byte, signature *Signed) error {
 	newMac := hmac.New(sha256.New, key)
 	newMac.Write(message)
 	newFinalMac := newMac.Sum(nil)
-
 	oldMac, err := Base64Decode([]byte(signature.Signature))
 	if err != nil {
 		return fmt.Errorf("Could not base64 decode mac: %s", err.Error())

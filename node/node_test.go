@@ -1,4 +1,4 @@
-package x509
+package node
 
 import (
 	"encoding/hex"
@@ -25,7 +25,7 @@ func TestNodeNewRegistration(t *testing.T) {
 func TestNodeRegistrationAuthenticate(t *testing.T) {
 	reg, _ := NewRegistration(nil)
 	pairingId := uuid.TimeOrderedUUID()
-	pairingKey := hex.EncodeToString(crypto.RandomBytes(32))
+	pairingKey := hex.EncodeToString(crypto.RandomBytes(16))
 	err := reg.Authenticate(pairingId, pairingKey)
 	assert.Nil(t, err)
 	assert.NotEqual(t, reg.Data.Options.Signature, "")
