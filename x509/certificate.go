@@ -7,8 +7,8 @@ import (
 	"crypto/x509/pkix"
 	"fmt"
 	"math/big"
-	"pki.io/crypto"
-	"pki.io/document"
+	"github.com/pki-io/pki.io/crypto"
+	"github.com/pki-io/pki.io/document"
 	"time"
 )
 

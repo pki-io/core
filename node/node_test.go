@@ -5,7 +5,7 @@ import (
 	//"fmt"
 	"github.com/mitchellh/packer/common/uuid"
 	"github.com/stretchr/testify/assert"
-	"pki.io/crypto"
+	"github.com/pki-io/pki.io/crypto"
 	"testing"
 )
 

@@ -2,8 +2,8 @@ package entity
 
 import (
 	"fmt"
-	"pki.io/crypto"
-	"pki.io/document"
+	"github.com/pki-io/pki.io/crypto"
+	"github.com/pki-io/pki.io/document"
 )
 
 const EntityDefault string = `{

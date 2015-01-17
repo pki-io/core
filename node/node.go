@@ -3,9 +3,9 @@ package node
 import (
 	"encoding/hex"
 	"fmt"
-	"pki.io/crypto"
-	"pki.io/document"
-	"pki.io/entity"
+	"github.com/pki-io/pki.io/crypto"
+	"github.com/pki-io/pki.io/document"
+	"github.com/pki-io/pki.io/entity"
 )
 
 const NodeRegistrationDefault string = `{
