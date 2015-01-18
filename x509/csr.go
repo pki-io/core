@@ -8,8 +8,8 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	//"crypto/x509/pkix"
-	"pki.io/crypto"
-	"pki.io/document"
+	"github.com/pki-io/pki.io/crypto"
+	"github.com/pki-io/pki.io/document"
 )
 
 const CSRDefault string = `{

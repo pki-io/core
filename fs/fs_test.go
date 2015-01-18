@@ -36,3 +36,13 @@ func TestFSPushPopOutgoing(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, content, "this is a test")
 }
+
+func TestFSIncomingSize(t *testing.T) {
+	currentDir, _ := os.Getwd()
+	fs, _ := NewAPI(currentDir, "fs-test")
+	fs.Id = "123"
+	fs.PushIncoming(fs.Id, "test", "this is a test")
+	size, err := fs.IncomingSize("test")
+	assert.Nil(t, err)
+	assert.NotEqual(t, size, 0)
+}

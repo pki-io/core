@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"github.com/mitchellh/packer/common/uuid"
 	"math/big"
-	"pki.io/crypto"
-	"pki.io/document"
+	"github.com/pki-io/pki.io/crypto"
+	"github.com/pki-io/pki.io/document"
 	"strings"
 	"time"
 )

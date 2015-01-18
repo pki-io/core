@@ -2,8 +2,8 @@ package entity
 
 import (
 	"fmt"
-	"pki.io/crypto"
-	"pki.io/document"
+	"github.com/pki-io/pki.io/crypto"
+	"github.com/pki-io/pki.io/document"
 )
 
 const EntityDefault string = `{
@@ -282,4 +282,17 @@ func (entity *Entity) EncryptThenSignString(content string, entities interface{}
 	}
 
 	return container, nil
+}
+
+func (entity *Entity) VerifyThenDecrypt(container *document.Container) (string, error) {
+	if err := entity.Verify(container); err != nil {
+		return "", fmt.Errorf("Could not verify container: %s", err.Error())
+	}
+
+	content, err := entity.Decrypt(container)
+	if err != nil {
+		return "", fmt.Errorf("Could not decrypt container: %s", err.Error())
+	}
+	return content, nil
+
 }

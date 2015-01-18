@@ -1,17 +1,17 @@
-package x509
+package node
 
 import (
 	"encoding/hex"
 	"fmt"
-	"pki.io/crypto"
-	"pki.io/document"
-	"pki.io/entity"
+	"github.com/pki-io/pki.io/crypto"
+	"github.com/pki-io/pki.io/document"
+	"github.com/pki-io/pki.io/entity"
 )
 
 const NodeRegistrationDefault string = `{
     "scope": "pki.io",
     "version": 1,
-    "type": "ca-document",
+    "type": "node-registration-document",
     "options": {
       "pairing-id": "",
       "source": "",
@@ -135,14 +135,46 @@ func New(jsonString interface{}) (*entity.Entity, error) {
 	}
 }
 
-func NewRegistration(jsonString interface{}) (*NodeRegistration, error) {
+func NewFromRegistration(reg *NodeRegistration) (*entity.Entity, error) {
+	node, err := New(nil)
+	if err != nil {
+		return nil, fmt.Errorf("Could not create node: %s", err.Error())
+	}
+
+	node.Data.Body.Id = reg.Data.Body.Id
+	node.Data.Body.Name = reg.Data.Body.Name
+	node.Data.Body.PublicSigningKey = reg.Data.Body.PublicSigningKey
+	node.Data.Body.PublicEncryptionKey = reg.Data.Body.PublicEncryptionKey
+	return node, nil
+}
+
+func NewRegistration(input interface{}) (*NodeRegistration, error) {
 	reg := new(NodeRegistration)
 	reg.Schema = NodeRegistrationSchema
 	reg.Default = NodeRegistrationDefault
-	if err := reg.Load(jsonString); err != nil {
-		return nil, fmt.Errorf("Could not create new node registration: %s", err.Error())
-	} else {
+
+	switch t := input.(type) {
+	case string:
+		if err := reg.Load(input); err != nil {
+			return nil, fmt.Errorf("Could not create new node registration: %s", err.Error())
+		} else {
+			return reg, nil
+		}
+	case *entity.Entity:
+		node := input.(*entity.Entity)
+		reg.Data.Body.Id = node.Data.Body.Id
+		reg.Data.Body.Name = node.Data.Body.Name
+		reg.Data.Body.PublicSigningKey = node.Data.Body.PublicSigningKey
+		reg.Data.Body.PublicEncryptionKey = node.Data.Body.PublicEncryptionKey
 		return reg, nil
+	case nil:
+		if err := reg.Load(nil); err != nil {
+			return nil, fmt.Errorf("Could not create new node registration: %s", err.Error())
+		} else {
+			return reg, nil
+		}
+	default:
+		return nil, fmt.Errorf("Invalid input type: %T", t)
 	}
 }
 
@@ -170,7 +202,7 @@ func (reg *NodeRegistration) Authenticate(id, inKey string) error {
 		return fmt.Errorf("Could not decode key: %s", err.Error())
 	}
 
-	newKey, salt := crypto.ExpandKey(key)
+	newKey, salt := crypto.ExpandKey(key, nil)
 	signature := crypto.NewHMAC()
 
 	reg.Data.Options.PairingId = id
@@ -187,4 +219,28 @@ func (reg *NodeRegistration) Authenticate(id, inKey string) error {
 
 	reg.Data.Options.Signature = signature.Signature
 	return nil
+}
+
+func (reg *NodeRegistration) Verify(inKey string) error {
+	key, err := hex.DecodeString(inKey)
+	if err != nil {
+		return fmt.Errorf("Could not decode key: %s", err.Error())
+	}
+
+	salt, err := crypto.Base64Decode([]byte(reg.Data.Options.SignatureSalt))
+	if err != nil {
+		fmt.Errorf("Could not base64 decode signature salt: %s", err.Error())
+	}
+
+	newKey, _ := crypto.ExpandKey(key, salt)
+	mac := crypto.NewHMAC()
+	mac.Signature = reg.Data.Options.Signature
+	reg.Data.Options.Signature = ""
+
+	if err := crypto.HMACVerify([]byte(reg.Dump()), newKey, mac); err != nil {
+		return fmt.Errorf("Couldn't verify registration: %s", err.Error())
+	} else {
+
+		return nil
+	}
 }
