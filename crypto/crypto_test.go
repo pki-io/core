@@ -80,25 +80,10 @@ func TestVerify(t *testing.T) {
 func TestNewHMAC(t *testing.T) {
 	mac := NewHMAC()
 	message := "message to be authenticated"
-	key := RandomBytes(32)
+	key, _ := RandomBytes(32)
 
 	HMAC([]byte(message), key, mac)
 
 	err := HMACVerify([]byte(message), key, mac)
 	assert.Nil(t, err)
-}
-
-func TestExpandKeyHelper(t *testing.T) {
-	key := RandomBytes(16)
-	newKey, salt := ExpandKey(key, nil)
-	assert.Equal(t, len(salt), 16)
-	assert.Equal(t, len(newKey), 32)
-}
-
-func TestExpandKeyHelperWithSalt(t *testing.T) {
-	key := RandomBytes(16)
-	salt := RandomBytes(16)
-	newKey, newSalt := ExpandKey(key, salt)
-	assert.Equal(t, salt, newSalt)
-	assert.Equal(t, len(newKey), 32)
 }
