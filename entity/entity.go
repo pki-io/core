@@ -180,7 +180,8 @@ func (entity *Entity) GenerateKeys() error {
 }
 
 func (entity *Entity) Sign(container *document.Container) error {
-	signature := new(crypto.Signed)
+	signature := crypto.NewSignature(crypto.SignatureModeSha256Rsa)
+	container.Data.Options.SignatureMode = string(signature.Mode)
 	containerJson := container.Dump()
 
 	if err := crypto.Sign(containerJson, entity.Data.Body.PrivateSigningKey, signature); err != nil {
