@@ -110,7 +110,7 @@ type NodeRegistrationData struct {
 	Options struct {
 		Source        string `json:"source"`
 		PairingId     string `json:"pairing-id"`
-		SignatureMode string `json:"signature-mode"`
+		SignatureMode string `json:"signature-mode"`	// TODO: Make signature mode type crypto.Mode
 		SignatureSalt string `json:"signature-salt"`
 		Signature     string `json:"signature"`
 	} `json:"options"`
@@ -128,6 +128,7 @@ type NodeRegistration struct {
 }
 
 func New(jsonString interface{}) (*entity.Entity, error) {
+	// TODO: Does this need to use jsonString?
 	if node, err := entity.New(nil); err != nil {
 		return nil, fmt.Errorf("Could not create node entity: %s", err.Error())
 	} else {
@@ -199,15 +200,18 @@ func (reg *NodeRegistration) Dump() string {
 func (reg *NodeRegistration) Authenticate(id, inKey string) error {
 	key, err := hex.DecodeString(inKey)
 	if err != nil {
-		return fmt.Errorf("Could not decode key: %s", err.Error())
+		return fmt.Errorf("Could not decode key: %s", err)
 	}
 
-	newKey, salt := crypto.ExpandKey(key, nil)
+	newKey, salt, err := crypto.ExpandKey(key, nil)
+	if err != nil {
+		return fmt.Errorf("Cold not expand key: %s", err);
+	}
 	signature := crypto.NewHMAC()
 
 	reg.Data.Options.PairingId = id
 	reg.Data.Options.SignatureSalt = string(crypto.Base64Encode(salt))
-	reg.Data.Options.SignatureMode = signature.Mode
+	reg.Data.Options.SignatureMode = string(signature.Mode)
 
 	regJson := reg.Dump()
 	if err := crypto.HMAC([]byte(regJson), newKey, signature); err != nil {
@@ -224,15 +228,18 @@ func (reg *NodeRegistration) Authenticate(id, inKey string) error {
 func (reg *NodeRegistration) Verify(inKey string) error {
 	key, err := hex.DecodeString(inKey)
 	if err != nil {
-		return fmt.Errorf("Could not decode key: %s", err.Error())
+		return fmt.Errorf("Could not decode key: %s", err)
 	}
 
 	salt, err := crypto.Base64Decode([]byte(reg.Data.Options.SignatureSalt))
 	if err != nil {
-		fmt.Errorf("Could not base64 decode signature salt: %s", err.Error())
+		fmt.Errorf("Could not base64 decode signature salt: %s", err)
 	}
 
-	newKey, _ := crypto.ExpandKey(key, salt)
+	newKey, _, err := crypto.ExpandKey(key, salt)
+	if err != nil {
+		return fmt.Errorf("Could not expand key: %s", err)
+	}
 	mac := crypto.NewHMAC()
 	mac.Signature = reg.Data.Options.Signature
 	reg.Data.Options.Signature = ""

@@ -2,12 +2,9 @@ package x509
 
 import (
 	"fmt"
-	//"time"
-	//"math/big"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	//"crypto/x509/pkix"
 	"github.com/pki-io/pki.io/crypto"
 	"github.com/pki-io/pki.io/document"
 )
@@ -125,8 +122,17 @@ func (csr *CSR) Dump() string {
 
 func (csr *CSR) Generate() error {
 
-	privateKey := crypto.GenerateRSAKey()
-	csr.Data.Body.PrivateKey = string(crypto.PemEncodeRSAPrivate(privateKey))
+	privateKey, err := crypto.GenerateRSAKey()
+	if err != nil {
+		return fmt.Errorf("Failed to generate rsa key: %s", err)
+	}
+
+	enc, err := crypto.PemEncodePrivate(privateKey)
+	if err != nil {
+		return fmt.Errorf("Failed to pem encode private key: %s", err)
+	}
+
+	csr.Data.Body.PrivateKey = string(enc)
 
 	template := &x509.CertificateRequest{
 	//Raw                      []byte // Complete ASN.1 DER content (CSR, signature algorithm and signature).

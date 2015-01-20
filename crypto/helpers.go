@@ -162,6 +162,8 @@ func PemEncodePrivate(key interface {}) ([]byte, error) {
 
 }
 
+// TODO: These PEM Encode functions should probably return a string, since everywhere (so far) that these are being used
+// TODO: Are converting them anyway...
 func PemEncodePublic(key interface {}) ([]byte, error) {
 	der, err := x509.MarshalPKIXPublicKey(key)
 	if err != nil {

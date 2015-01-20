@@ -2,7 +2,6 @@ package x509
 
 import (
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
@@ -277,11 +276,14 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 	}
-	privateKey := crypto.GenerateRSAKey()
+	privateKey, err := crypto.GenerateRSAKey()
+	if err != nil {
+		return fmt.Errorf("Failed to generate RSA Key: %s", err)
+	}
 	publicKey := &privateKey.PublicKey
 
 	var parent *x509.Certificate
-	var signingKey *rsa.PrivateKey
+	var signingKey interface {}
 
 	switch t := parentCA.(type) {
 	case *CA:
@@ -307,7 +309,11 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 	}
 	ca.Data.Body.Id = fmt.Sprintf("%d", template.SerialNumber)
 	ca.Data.Body.Certificate = string(PemEncodeX509CertificateDER(der))
-	ca.Data.Body.PrivateKey = string(crypto.PemEncodeRSAPrivate(privateKey))
+	enc, err := crypto.PemEncodePrivate(privateKey)
+	if err != nil {
+		return fmt.Errorf("Could not pem encode private key: %s", err)
+	}
+	ca.Data.Body.PrivateKey = string(enc)
 
 	return nil
 
@@ -317,8 +323,8 @@ func (ca *CA) Certificate() (*x509.Certificate, error) {
 	return PemDecodeX509Certificate([]byte(ca.Data.Body.Certificate))
 }
 
-func (ca *CA) PrivateKey() (*rsa.PrivateKey, error) {
-	if privateKey, err := crypto.PemDecodeRSAPrivate([]byte(ca.Data.Body.PrivateKey)); err != nil {
+func (ca *CA) PrivateKey() (interface {}, error) {
+	if privateKey, err := crypto.PemDecodePrivate([]byte(ca.Data.Body.PrivateKey)); err != nil {
 		return nil, fmt.Errorf("Could not decode rsa private key: %s", err.Error())
 	} else {
 		return privateKey, nil
