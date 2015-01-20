@@ -128,8 +128,7 @@ type NodeRegistration struct {
 }
 
 func New(jsonString interface{}) (*entity.Entity, error) {
-	// TODO: Does this need to use jsonString?
-	if node, err := entity.New(nil); err != nil {
+	if node, err := entity.New(jsonString); err != nil {
 		return nil, fmt.Errorf("Could not create node entity: %s", err.Error())
 	} else {
 		return node, nil

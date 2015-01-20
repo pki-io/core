@@ -181,7 +181,10 @@ func (entity *Entity) GenerateKeys() error {
 
 func (entity *Entity) Sign(container *document.Container) error {
 	signature := crypto.NewSignature(crypto.SignatureModeSha256Rsa)
-	container.Data.Options.SignatureMode = string(signature.Mode)
+	container.Data.Options.SignatureMode = signature.Mode
+	// Force a clear of any existing signature values as that doesn't make sense
+	container.Data.Options.Signature = ""
+
 	containerJson := container.Dump()
 
 	if err := crypto.Sign(containerJson, entity.Data.Body.PrivateSigningKey, signature); err != nil {
