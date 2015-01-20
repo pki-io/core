@@ -3,7 +3,6 @@ package x509
 import (
 	"fmt"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"github.com/pki-io/pki.io/crypto"
 	"github.com/pki-io/pki.io/document"
@@ -18,6 +17,7 @@ const CSRDefault string = `{
         "id": "",
         "name": "",
         "csr": "",
+        "key-type": "ec",
         "private-key": ""
     }
 }`
@@ -49,7 +49,7 @@ const CSRSchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["id", "name", "csr"],
+          "required": ["id", "name", "csr", "key-type"],
           "additionalProperties": false,
           "properties": {
               "id" : {
@@ -63,6 +63,10 @@ const CSRSchema string = `{
               "csr" : {
                   "description": "PEM encoded X.509 csr",
                   "type": "string"
+              },
+              "key-type": {
+              	  "description": "Key type. Must be either RSA or EC",
+              	  "type": "string"
               },
               "private-key" : {
                   "description": "PEM encoded private key",
@@ -82,6 +86,7 @@ type CSRData struct {
 		Id         string `json:"id"`
 		Name       string `json:"name"`
 		CSR        string `json:"csr"`
+		KeyType	   string `json:"key-type"`
 		PrivateKey string `json:"private-key"`
 	} `json:"body"`
 }
@@ -122,10 +127,21 @@ func (csr *CSR) Dump() string {
 
 func (csr *CSR) Generate() error {
 
-	privateKey, err := crypto.GenerateRSAKey()
-	if err != nil {
-		return fmt.Errorf("Failed to generate rsa key: %s", err)
+	var privateKey interface {}
+	var err error
+	switch crypto.KeyType(csr.Data.Body.KeyType) {
+	case crypto.KeyTypeRSA:
+		privateKey, err = crypto.GenerateRSAKey()
+		if err != nil {
+			return fmt.Errorf("Failed to generate rsa key: %s", err)
+		}
+	case crypto.KeyTypeEC:
+		privateKey, err = crypto.GenerateECKey()
+		if err != nil {
+			return fmt.Errorf("Failed to generate ec key: %s", err)
+		}
 	}
+
 
 	enc, err := crypto.PemEncodePrivate(privateKey)
 	if err != nil {
@@ -192,10 +208,10 @@ func (csr *CSR) Public() (*CSR, error) {
 	return publicCSR, nil
 }
 
-func (csr *CSR) PublicKey() (*rsa.PublicKey, error) {
+func (csr *CSR) PublicKey() (interface {}, error) {
 	if rawCSR, err := PemDecodeX509CSR([]byte(csr.Data.Body.CSR)); err != nil {
 		return nil, fmt.Errorf("Could not decode csr key: %s", err.Error())
 	} else {
-		return rawCSR.PublicKey.(*rsa.PublicKey), nil
+		return rawCSR.PublicKey, nil
 	}
 }

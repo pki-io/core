@@ -24,6 +24,12 @@ import (
 // https://www.socketloop.com/tutorials/golang-padding-un-padding-data
 // https://www.socketloop.com/tutorials/golang-example-for-rsa-package-functions-example
 
+type KeyType string
+const (
+	KeyTypeRSA KeyType = "rsa"
+	KeyTypeEC KeyType = "ec"
+)
+
 func RandomBytes(size int) ([]byte, error) {
 	randomBytes := make([]byte, size)
 	_, err := rand.Read(randomBytes)

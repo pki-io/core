@@ -110,7 +110,7 @@ type NodeRegistrationData struct {
 	Options struct {
 		Source        string `json:"source"`
 		PairingId     string `json:"pairing-id"`
-		SignatureMode string `json:"signature-mode"`	// TODO: Make signature mode type crypto.Mode
+		SignatureMode string `json:"signature-mode"`
 		SignatureSalt string `json:"signature-salt"`
 		Signature     string `json:"signature"`
 	} `json:"options"`

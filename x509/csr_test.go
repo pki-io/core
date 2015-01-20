@@ -1,10 +1,7 @@
 package x509
 
 import (
-    //"fmt"
-    //"time"
     "testing"
-    //"github.com/pki-io/pki.io/crypto"
     "github.com/stretchr/testify/assert"
 )
 

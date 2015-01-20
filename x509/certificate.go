@@ -19,6 +19,7 @@ const CertificateDefault string = `{
     "body": {
         "id": "",
         "name": "",
+        "key-type": "ec",
         "certificate": "",
         "private-key": ""
     }
@@ -51,7 +52,7 @@ const CertificateSchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["id", "name", "certificate", "private-key"],
+          "required": ["id", "name", "key-type", "certificate", "private-key"],
           "additionalProperties": false,
           "properties": {
               "id" : {
@@ -61,6 +62,10 @@ const CertificateSchema string = `{
               "name" : {
                   "description": "Entity name",
                   "type": "string"
+              },
+              "key-type": {
+              	  "description": "Key type. Must be either rsa or ec",
+              	  "type": "string"
               },
               "certificate" : {
                   "description": "PEM encoded X.509 certificate",
@@ -83,6 +88,7 @@ type CertificateData struct {
 	Body    struct {
 		Id          string `json:"id"`
 		Name        string `json:"name"`
+		KeyType		string `json:"key-type"`
 		Certificate string `json:"certificate"`
 		PrivateKey  string `json:"private-key"`
 	} `json:"body"`
@@ -144,12 +150,26 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, notBefor
 		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 	}
 
-	privateKey, err := crypto.GenerateRSAKey()
-	if err != nil {
-		return fmt.Errorf("Could not generate RSA key: %s", err)
-	}
+	var privateKey interface {}
+	var publicKey interface {}
+	var err error
 
-	publicKey := &privateKey.PublicKey
+	switch crypto.KeyType(certificate.Data.Body.KeyType) {
+	case crypto.KeyTypeRSA:
+		rsaKey, err := crypto.GenerateRSAKey()
+		if err != nil {
+			return fmt.Errorf("Could not generate RSA key: %s", err)
+		}
+		privateKey = rsaKey
+		publicKey = &rsaKey.PublicKey
+	case crypto.KeyTypeEC:
+		ecKey, err := crypto.GenerateECKey()
+		if err != nil {
+			return fmt.Errorf("Could not generate ec key: %s", err)
+		}
+		privateKey = ecKey
+		publicKey = &ecKey.PublicKey
+	}
 
 	var parent *x509.Certificate
 	var signingKey interface {}
