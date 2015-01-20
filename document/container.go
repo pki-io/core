@@ -85,7 +85,7 @@ type ContainerData struct {
 	Type    string `json:"type"`
 	Options struct {
 		Source           string            `json:"source"`
-		SignatureMode    string            `json:"signature-mode"`
+		SignatureMode    crypto.Mode       `json:"signature-mode"`
 		Signature        string            `json:"signature"`
 		EncryptionKeys   map[string]string `json:"encryption-keys"`
 		EncryptionMode   string            `json:"encryption-mode"`
