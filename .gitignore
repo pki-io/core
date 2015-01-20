@@ -2,3 +2,7 @@
 *.swo
 _vendor/
 .vendor/
+
+# intellij
+.idea
+*.iml
