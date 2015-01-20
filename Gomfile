@@ -2,5 +2,4 @@ gom "github.com/BurntSushi/toml"
 gom "github.com/mitchellh/packer"
 gom "github.com/stretchr/testify"
 gom "github.com/xeipuuv/gojsonschema"
-
-
+gom "golang.org/x/crypto/pbkdf2"
