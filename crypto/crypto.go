@@ -2,10 +2,17 @@ package crypto
 
 import (
 	"fmt"
+	"crypto/rsa"
+	"crypto/ecdsa"
 )
 
-const SignatureMode string = "sha256+rsa"
-const HMACMode string = "hmac+sha256"
+type Mode string
+
+const (
+	SignatureModeSha256Rsa Mode = "sha256+rsa"
+	SignatureModeSha256Ecdsa Mode = "sha256+ecdsa"
+	HMACMode Mode = "hmac+sha256"
+)
 
 type Encrypted struct {
 	Ciphertext string
@@ -16,23 +23,26 @@ type Encrypted struct {
 
 type Signed struct {
 	Message string
-	Mode    string
+	Mode    Mode
 	//Inputs map[string]string
 	Signature string
-}
-
-func NewSignature() *Signed {
-	return &Signed{Mode: SignatureMode}
 }
 
 func NewHMAC() *Signed {
 	return &Signed{Mode: HMACMode}
 }
 
+func NewSignature(mode Mode) *Signed {
+	return &Signed{Mode: mode}
+}
+
 func GroupEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, error) {
 
 	keySize := 32
-	key := RandomBytes(keySize)
+	key, err := RandomBytes(keySize)
+	if err != nil {
+		return nil, err
+	}
 	ciphertext, iv, err := AESEncrypt([]byte(plaintext), key)
 	if err != nil {
 		return nil, err
@@ -42,8 +52,8 @@ func GroupEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, e
 
 	encryptedKeys := make(map[string]string)
 	for id, publicKeyString := range publicKeys {
-		publicKey, err := PemDecodeRSAPublic([]byte(publicKeyString))
-		encryptedKey, err := RSAEncrypt(key, publicKey)
+		publicKey, err := PemDecodePublic([]byte(publicKeyString))
+		encryptedKey, err := Encrypt(key, publicKey)
 		if err != nil {
 			return nil, err
 		}
@@ -54,6 +64,8 @@ func GroupEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, e
 }
 
 func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (string, error) {
+	var privateKey interface {}
+	var err error
 
 	if encrypted.Mode != "aes-cbc-256+rsa" {
 		return "", fmt.Errorf("Invalid mode '%s'", encrypted.Mode)
@@ -66,30 +78,41 @@ func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (str
 	ciphertext, _ := Base64Decode([]byte(encrypted.Ciphertext))
 	iv, _ := Base64Decode([]byte(encrypted.Inputs["iv"]))
 	encryptedKey, _ := Base64Decode([]byte(encrypted.Keys[keyID]))
-
-	privateKey, err := PemDecodeRSAPrivate([]byte(privateKeyPem))
-	key, err := RSADecrypt(encryptedKey, privateKey)
-
+	privateKey, err = PemDecodePrivate([]byte(privateKeyPem))
+	key, err := Decrypt(encryptedKey, privateKey)
 	plaintext, err := AESDecrypt(ciphertext, iv, key)
 	return string(plaintext), err
 }
 
 func Sign(message string, privateKeyString string, signature *Signed) error {
-	privateKey, _ := PemDecodeRSAPrivate([]byte(privateKeyString))
-	sig, err := RSASign([]byte(message), privateKey)
+	privateKey, err := PemDecodePrivate([]byte(privateKeyString))
 	if err != nil {
 		return err
-	} else {
-		signature.Message = message
-		signature.Mode = SignatureMode
-		signature.Signature = string(Base64Encode(sig))
-		return nil
 	}
+
+	switch privateKey.(type) {
+	case *rsa.PrivateKey:
+		signature.Mode = SignatureModeSha256Rsa
+	case *ecdsa.PrivateKey:
+		signature.Mode = SignatureModeSha256Ecdsa
+	}
+	sig, err := SignMessage([]byte(message), privateKey)
+	if err != nil {
+		return err
+	}
+
+	signature.Message = message
+	signature.Signature = string(Base64Encode(sig))
+	return nil
 }
 
 func Verify(signed *Signed, publicKeyString string) error {
-	publicKey, _ := PemDecodeRSAPublic([]byte(publicKeyString))
 	message := []byte(signed.Message)
 	signature, _ := Base64Decode([]byte(signed.Signature))
-	return RSAVerify(message, signature, publicKey)
+	publicKey, err := PemDecodePublic([]byte(publicKeyString))
+	if err != nil {
+		return err
+	}
+
+	return VerifySignature(message, signature, publicKey)
 }

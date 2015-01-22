@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/pki-io/pki.io/crypto"
 	"github.com/pki-io/pki.io/document"
+	"crypto/rsa"
+	"crypto/ecdsa"
 )
 
 const EntityDefault string = `{
@@ -14,6 +16,7 @@ const EntityDefault string = `{
     "body": {
       "id": "",
       "name": "",
+      "key-type": "ec",
       "public-signing-key": "",
       "private-signing-key": "",
       "public-encryption-key": "",
@@ -48,7 +51,7 @@ const EntitySchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["id", "name", "public-signing-key", "private-signing-key", "public-encryption-key", "private-encryption-key"],
+          "required": ["id", "name", "key-type", "public-signing-key", "private-signing-key", "public-encryption-key", "private-encryption-key"],
           "additionalProperties": false,
           "properties": {
               "id" : {
@@ -58,6 +61,10 @@ const EntitySchema string = `{
               "name" : {
                   "description": "Entity name",
                   "type": "string"
+              },
+              "key-type": {
+				  "description": "Key type. Either rsa or ec",
+				  "type": "string"
               },
               "public-signing-key" : {
                   "description": "Public signing key",
@@ -88,6 +95,7 @@ type EntityData struct {
 	Body    struct {
 		Id                   string `json:"id"`
 		Name                 string `json:"name"`
+		KeyType				 string `json:"key-type"`
 		PublicSigningKey     string `json:"public-signing-key"`
 		PrivateSigningKey    string `json:"private-signing-key"`
 		PublicEncryptionKey  string `json:"public-encryption-key"`
@@ -129,32 +137,118 @@ func (entity *Entity) Dump() string {
 	}
 }
 
-func (entity *Entity) GenerateKeys() error {
-	signingKey := crypto.GenerateRSAKey()
-	encryptionKey := crypto.GenerateRSAKey()
+func (entity *Entity) generateRSAKeys() (*rsa.PrivateKey, *rsa.PrivateKey, error) {
+	signingKey, err := crypto.GenerateRSAKey()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	encryptionKey, err := crypto.GenerateRSAKey()
+	if err != nil {
+		return nil, nil, err
+	}
 
 	signingKey.Precompute()
 	encryptionKey.Precompute()
 
 	if err := signingKey.Validate(); err != nil {
-		return fmt.Errorf("Could not validate signing key: %s", err.Error())
+		return nil, nil, fmt.Errorf("Could not validate signing key: %s", err.Error())
 	}
 
 	if err := encryptionKey.Validate(); err != nil {
-		return fmt.Errorf("Could not validate encryption key: %s", err.Error())
+		return nil, nil, fmt.Errorf("Could not validate encryption key: %s", err.Error())
 	}
 
-	entity.Data.Body.PublicSigningKey = string(crypto.PemEncodeRSAPublic(&signingKey.PublicKey))
-	entity.Data.Body.PrivateSigningKey = string(crypto.PemEncodeRSAPrivate(signingKey))
-	entity.Data.Body.PublicEncryptionKey = string(crypto.PemEncodeRSAPublic(&encryptionKey.PublicKey))
-	entity.Data.Body.PrivateEncryptionKey = string(crypto.PemEncodeRSAPrivate(encryptionKey))
+	if pub, err := crypto.PemEncodePublic(&signingKey.PublicKey); err != nil {
+		return nil, nil, err
+	} else {
+		entity.Data.Body.PublicSigningKey = string(pub)
+	}
+
+	return signingKey, encryptionKey, nil
+}
+
+func (entity *Entity) generateECKeys() (*ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
+	signingKey, err := crypto.GenerateECKey()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	encryptionKey, err := crypto.GenerateECKey()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: Do we need to do any validation here?
+
+	return signingKey, encryptionKey, nil
+}
+
+func (entity *Entity) GenerateKeys() error {
+	var signingKey interface {}
+	var encryptionKey interface {}
+	var publicSigningKey interface {}
+	var publicEncryptionKey interface {}
+	var err error
+	switch crypto.KeyType(entity.Data.Body.KeyType) {
+	case crypto.KeyTypeRSA:
+		signingKey, encryptionKey, err = entity.generateRSAKeys()
+		if err != nil {
+			return err
+		}
+		publicSigningKey = &signingKey.(*rsa.PrivateKey).PublicKey
+		publicEncryptionKey = &encryptionKey.(*rsa.PrivateKey).PublicKey
+	case crypto.KeyTypeEC:
+		signingKey, encryptionKey, err = entity.generateECKeys()
+		if err != nil {
+			return err
+		}
+		publicSigningKey = &signingKey.(*ecdsa.PrivateKey).PublicKey
+		publicEncryptionKey = &encryptionKey.(*ecdsa.PrivateKey).PublicKey
+	default:
+		return fmt.Errorf("Invalid key type: %s", entity.Data.Body.KeyType)
+	}
+
+	if pub, err := crypto.PemEncodePublic(publicSigningKey); err != nil {
+		return err
+	} else {
+		entity.Data.Body.PublicSigningKey = string(pub)
+	}
+
+	if key, err := crypto.PemEncodePrivate(signingKey); err != nil {
+		return err
+	} else {
+		entity.Data.Body.PrivateSigningKey = string(key)
+	}
+
+	if pub, err := crypto.PemEncodePublic(publicEncryptionKey); err != nil {
+		return err
+	} else {
+		entity.Data.Body.PublicEncryptionKey = string(pub)
+	}
+
+	if key, err := crypto.PemEncodePrivate(encryptionKey); err != nil {
+		return err
+	} else {
+		entity.Data.Body.PrivateEncryptionKey = string(key)
+	}
 
 	return nil
 }
 
 func (entity *Entity) Sign(container *document.Container) error {
-	signature := crypto.NewSignature()
-	container.Data.Options.SignatureMode = signature.Mode
+	var signatureMode crypto.Mode
+	switch crypto.KeyType(entity.Data.Body.KeyType) {
+	case crypto.KeyTypeRSA:
+		signatureMode = crypto.SignatureModeSha256Rsa
+	case crypto.KeyTypeEC:
+		signatureMode = crypto.SignatureModeSha256Ecdsa
+	default:
+		return fmt.Errorf("Invalid key type: %s", entity.Data.Body.KeyType)
+	}
+
+	signature := crypto.NewSignature(signatureMode)
+	container.Data.Options.SignatureMode = string(signature.Mode)
 	// Force a clear of any existing signature values as that doesn't make sense
 	container.Data.Options.Signature = ""
 
@@ -166,11 +260,8 @@ func (entity *Entity) Sign(container *document.Container) error {
 	if signature.Message != containerJson {
 		return fmt.Errorf("Signed message doesn't match input")
 	}
-	if signature.Mode != crypto.SignatureMode {
-		// Shouldn't really need this check
-		return fmt.Errorf("Signature mode doesn't match")
-	}
 
+	container.Data.Options.SignatureMode = string(signature.Mode)
 	container.Data.Options.Signature = signature.Signature
 	return nil
 }
@@ -181,7 +272,7 @@ func (entity *Entity) Verify(container *document.Container) error {
 		return fmt.Errorf("Container isn't signed")
 	}
 
-	signature := crypto.NewSignature()
+	signature := new(crypto.Signed)
 	signature.Signature = container.Data.Options.Signature
 
 	container.Data.Options.Signature = ""

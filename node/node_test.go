@@ -25,7 +25,8 @@ func TestNodeNewRegistration(t *testing.T) {
 func TestNodeRegistrationAuthenticate(t *testing.T) {
 	reg, _ := NewRegistration(nil)
 	pairingId := uuid.TimeOrderedUUID()
-	pairingKey := hex.EncodeToString(crypto.RandomBytes(16))
+	r, _ := crypto.RandomBytes(16)
+	pairingKey := hex.EncodeToString(r)
 	err := reg.Authenticate(pairingId, pairingKey)
 	assert.Nil(t, err)
 	assert.NotEqual(t, reg.Data.Options.Signature, "")

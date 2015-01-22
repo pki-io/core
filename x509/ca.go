@@ -2,7 +2,6 @@ package x509
 
 import (
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
@@ -23,6 +22,7 @@ const CADefault string = `{
         "id": "",
         "name": "",
         "certificate": "",
+        "key-type": "ec",
         "private-key": "",
         "dn-scope": {
             "country": "",
@@ -63,7 +63,7 @@ const CASchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["id", "name", "certificate", "private-key", "dn-scope"],
+          "required": ["id", "name", "key-type", "certificate", "private-key", "dn-scope"],
           "additionalProperties": false,
           "properties": {
               "id" : {
@@ -77,6 +77,10 @@ const CASchema string = `{
               "certificate" : {
                   "description": "PEM encoded X.509 certificate",
                   "type": "string"
+              },
+              "key-type": {
+              	  "description": "the type of keys to use. Must be either rsa or ec.",
+              	  "type": "string"
               },
               "private-key" : {
                   "description": "PEM encoded private key",
@@ -141,6 +145,7 @@ type CAData struct {
 		Name        string `json:"name"`
 		Certificate string `json:"certificate"`
 		PrivateKey  string `json:"private-key"`
+		KeyType		string `json:"key-type"`
 		DNScope     struct {
 			Country            string `json:"country"`
 			Organization       string `json:"organization"`
@@ -277,11 +282,31 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 	}
-	privateKey := crypto.GenerateRSAKey()
-	publicKey := &privateKey.PublicKey
+	var privateKey interface {}
+	var publicKey interface {}
+	keyType := crypto.KeyType(ca.Data.Body.KeyType)
+
+	switch keyType {
+	case crypto.KeyTypeRSA:
+		rsaKey, err := crypto.GenerateRSAKey()
+		if err != nil {
+			return fmt.Errorf("Failed to generate RSA Key: %s", err)
+		}
+		privateKey = rsaKey
+		publicKey = &rsaKey.PublicKey
+	case crypto.KeyTypeEC:
+		ecKey, err := crypto.GenerateECKey()
+		if err != nil {
+			return fmt.Errorf("")
+		}
+		privateKey = ecKey
+		publicKey = &ecKey.PublicKey
+	default:
+		return fmt.Errorf("Invalid key type: %s", keyType)
+	}
 
 	var parent *x509.Certificate
-	var signingKey *rsa.PrivateKey
+	var signingKey interface {}
 
 	switch t := parentCA.(type) {
 	case *CA:
@@ -307,18 +332,21 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 	}
 	ca.Data.Body.Id = fmt.Sprintf("%d", template.SerialNumber)
 	ca.Data.Body.Certificate = string(PemEncodeX509CertificateDER(der))
-	ca.Data.Body.PrivateKey = string(crypto.PemEncodeRSAPrivate(privateKey))
+	enc, err := crypto.PemEncodePrivate(privateKey)
+	if err != nil {
+		return fmt.Errorf("Could not pem encode private key: %s", err)
+	}
+	ca.Data.Body.PrivateKey = string(enc)
 
 	return nil
-
 }
 
 func (ca *CA) Certificate() (*x509.Certificate, error) {
 	return PemDecodeX509Certificate([]byte(ca.Data.Body.Certificate))
 }
 
-func (ca *CA) PrivateKey() (*rsa.PrivateKey, error) {
-	if privateKey, err := crypto.PemDecodeRSAPrivate([]byte(ca.Data.Body.PrivateKey)); err != nil {
+func (ca *CA) PrivateKey() (interface {}, error) {
+	if privateKey, err := crypto.PemDecodePrivate([]byte(ca.Data.Body.PrivateKey)); err != nil {
 		return nil, fmt.Errorf("Could not decode rsa private key: %s", err.Error())
 	} else {
 		return privateKey, nil
@@ -386,5 +414,7 @@ func (ca *CA) Sign(csr *CSR) (*Certificate, error) {
 	cert.Data.Body.Id = csr.Data.Body.Id
 	cert.Data.Body.Name = csr.Data.Body.Name
 	cert.Data.Body.Certificate = string(PemEncodeX509CertificateDER(der))
+	cert.Data.Body.PrivateKey = ca.Data.Body.PrivateKey
+	cert.Data.Body.KeyType = ca.Data.Body.KeyType
 	return cert, nil
 }
