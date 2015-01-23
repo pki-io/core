@@ -41,10 +41,9 @@ func RandomBytes(size int) ([]byte, error) {
 }
 
 func RandomIntBetween(x, y *big.Int) (*big.Int, error) {
-	dupe := new(big.Int)
-	dupe.SetString(y.String(), 10)
-	dupe = dupe.Sub(dupe, x)
-	r, err := rand.Int(rand.Reader, dupe)
+	diff := new(big.Int)
+	diff.Sub(y, x)
+	r, err := rand.Int(rand.Reader, diff)
 	if err != nil {
 		return nil, err
 	}
