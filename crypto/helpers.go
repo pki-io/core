@@ -41,10 +41,9 @@ func RandomBytes(size int) ([]byte, error) {
 }
 
 func RandomIntBetween(x, y *big.Int) (*big.Int, error) {
-	dupe := new(big.Int)
-	dupe.SetString(y.String(), 10)
-	dupe = dupe.Sub(dupe, x)
-	r, err := rand.Int(rand.Reader, dupe)
+	diff := new(big.Int)
+	diff.Sub(y, x)
+	r, err := rand.Int(rand.Reader, diff)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +147,7 @@ func GenerateECKey() (*ecdsa.PrivateKey, error) {
 	}
 }
 
-func PemEncodePrivate(key interface {}) ([]byte, error) {
+func PemEncodePrivate(key crypto.PrivateKey) ([]byte, error) {
 
 	switch k := key.(type) {
 	case *rsa.PrivateKey:
@@ -170,7 +169,7 @@ func PemEncodePrivate(key interface {}) ([]byte, error) {
 
 // TODO: These PEM Encode functions should probably return a string, since everywhere (so far) that these are being used
 // TODO: Are converting them anyway...
-func PemEncodePublic(key interface {}) ([]byte, error) {
+func PemEncodePublic(key crypto.PublicKey) ([]byte, error) {
 	der, err := x509.MarshalPKIXPublicKey(key)
 	if err != nil {
 		return nil, err
@@ -190,7 +189,7 @@ func PemEncodePublic(key interface {}) ([]byte, error) {
 	return pem.EncodeToMemory(b), nil
 }
 
-func PemDecodePrivate(in []byte) (interface {}, error) {
+func PemDecodePrivate(in []byte) (crypto.PrivateKey, error) {
 	b, _ := pem.Decode(in)
 	if key, err := x509.ParsePKCS1PrivateKey(b.Bytes); err != nil {
 		if eckey, err := x509.ParseECPrivateKey(b.Bytes); err != nil {
@@ -203,7 +202,7 @@ func PemDecodePrivate(in []byte) (interface {}, error) {
 	}
 }
 
-func PemDecodePublic(in []byte) (interface {}, error) {
+func PemDecodePublic(in []byte) (crypto.PublicKey, error) {
 	b, _ := pem.Decode(in)
 	if pubKey, err := x509.ParsePKIXPublicKey(b.Bytes); err != nil {
 		return nil, fmt.Errorf("Could not parse public key: %s", err.Error())
@@ -212,7 +211,7 @@ func PemDecodePublic(in []byte) (interface {}, error) {
 	}
 }
 
-func Encrypt(plaintext []byte, publicKey interface {}) ([]byte, error) {
+func Encrypt(plaintext []byte, publicKey crypto.PublicKey) ([]byte, error) {
 	switch k := publicKey.(type) {
 	case *rsa.PublicKey:
 		return rsaEncrypt(plaintext, k)
@@ -306,7 +305,7 @@ func deriveEciesKey(rawSecret []byte, outputKeyLength int32) ([]byte, error) {
 	return results[outputKeyLength:], nil
 }
 
-func Decrypt(cipherText []byte, privateKey interface {}) ([]byte, error) {
+func Decrypt(cipherText []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 	switch k := privateKey.(type) {
 	case *rsa.PrivateKey:
 		return rsaDecrypt(cipherText, k)
@@ -364,7 +363,7 @@ func eciesDecrypt(cipherText []byte, privateKey *ecdsa.PrivateKey) ([]byte, erro
 	return AESDecrypt(encryptedMessage, iv, ke)
 }
 
-func SignMessage(message []byte, privateKey interface {}) ([]byte, error) {
+func SignMessage(message []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 	switch k := privateKey.(type) {
 	case *rsa.PrivateKey:
 		return rsaSign(message, k)
@@ -404,7 +403,7 @@ func ecdsaSign(message[]byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	}
 }
 
-func VerifySignature(message []byte, signature []byte, publicKey interface {}) error {
+func VerifySignature(message []byte, signature []byte, publicKey crypto.PublicKey) error {
 	switch k := publicKey.(type) {
 	case *rsa.PublicKey:
 		return rsaVerify(message, signature, k)
