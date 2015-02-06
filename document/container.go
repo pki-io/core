@@ -12,6 +12,7 @@ const ContainerDefault string = `{
   "options": {
     "source": "",
     "signature-mode": "",
+    "signature-inputs": {},
     "signature": "",
     "encryption-keys": {},
     "encryption-mode": "",
@@ -54,6 +55,10 @@ const ContainerSchema string = `{
                   "description": "Signature mode",
                   "type": "string"
               },
+              "signature-inputs": {
+                  "description": "Signature inputs",
+                  "type": "object"
+              },
               "signature": {
                   "description": "Base64 encoded signature",
                   "type": "string"
@@ -86,6 +91,7 @@ type ContainerData struct {
 	Options struct {
 		Source           string            `json:"source"`
 		SignatureMode    string            `json:"signature-mode"`
+		SignatureInputs  map[string]string `json:"signature-inputs"`
 		Signature        string            `json:"signature"`
 		EncryptionKeys   map[string]string `json:"encryption-keys"`
 		EncryptionMode   string            `json:"encryption-mode"`
