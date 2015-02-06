@@ -1,11 +1,12 @@
 package entity
 
 import (
+	"crypto/ecdsa"
+	"crypto/rsa"
+	"encoding/hex"
 	"fmt"
 	"github.com/pki-io/pki.io/crypto"
 	"github.com/pki-io/pki.io/document"
-	"crypto/rsa"
-	"crypto/ecdsa"
 )
 
 const EntityDefault string = `{
@@ -95,7 +96,7 @@ type EntityData struct {
 	Body    struct {
 		Id                   string `json:"id"`
 		Name                 string `json:"name"`
-		KeyType				 string `json:"key-type"`
+		KeyType              string `json:"key-type"`
 		PublicSigningKey     string `json:"public-signing-key"`
 		PrivateSigningKey    string `json:"private-signing-key"`
 		PublicEncryptionKey  string `json:"public-encryption-key"`
@@ -110,12 +111,20 @@ type Entity struct {
 
 func New(jsonString interface{}) (*Entity, error) {
 	entity := new(Entity)
+	if err := entity.New(jsonString); err != nil {
+		return nil, fmt.Errorf("Couldn't create new entity: %s", err.Error())
+	} else {
+		return entity, nil
+	}
+}
+
+func (entity *Entity) New(jsonString interface{}) error {
 	entity.Schema = EntitySchema
 	entity.Default = EntityDefault
 	if err := entity.Load(jsonString); err != nil {
-		return nil, fmt.Errorf("Could not create new Entity: %s", err.Error())
+		return fmt.Errorf("Could not create new Entity: %s", err.Error())
 	} else {
-		return entity, nil
+		return nil
 	}
 }
 
@@ -185,10 +194,10 @@ func (entity *Entity) generateECKeys() (*ecdsa.PrivateKey, *ecdsa.PrivateKey, er
 }
 
 func (entity *Entity) GenerateKeys() error {
-	var signingKey interface {}
-	var encryptionKey interface {}
-	var publicSigningKey interface {}
-	var publicEncryptionKey interface {}
+	var signingKey interface{}
+	var encryptionKey interface{}
+	var publicSigningKey interface{}
+	var publicEncryptionKey interface{}
 	var err error
 	switch crypto.KeyType(entity.Data.Body.KeyType) {
 	case crypto.KeyTypeRSA:
@@ -266,6 +275,67 @@ func (entity *Entity) Sign(container *document.Container) error {
 	return nil
 }
 
+func (entity *Entity) Authenticate(container *document.Container, id, key string) error {
+	rawKey, err := hex.DecodeString(key)
+	if err != nil {
+		return fmt.Errorf("Could not decode key: %s", err)
+	}
+
+	newKey, salt, err := crypto.ExpandKey(rawKey, nil)
+	if err != nil {
+		return fmt.Errorf("Cold not expand key: %s", err)
+	}
+
+	signature := crypto.NewSignature(crypto.SignatureModeSha256Hmac)
+	container.Data.Options.SignatureMode = string(signature.Mode)
+	signatureInputs := make(map[string]string)
+	signatureInputs["key-id"] = id
+	signatureInputs["signature-salt"] = string(crypto.Base64Encode(salt))
+	container.Data.Options.SignatureInputs = signatureInputs
+	// Force a clear of any existing signature values as that doesn't make sense
+	container.Data.Options.Signature = ""
+
+	containerJson := container.Dump()
+
+	if err := crypto.HMAC([]byte(containerJson), newKey, signature); err != nil {
+		return fmt.Errorf("Could not HMAC container: %s", err.Error())
+	}
+
+	if signature.Message != containerJson {
+		return fmt.Errorf("Authenticated message doesn't match")
+	}
+
+	container.Data.Options.Signature = signature.Signature
+	return nil
+}
+
+func (entity *Entity) VerifyAuthentication(container *document.Container, key string) error {
+	rawKey, err := hex.DecodeString(key)
+	if err != nil {
+		return fmt.Errorf("Could not decode key: %s", err)
+	}
+
+	salt, err := crypto.Base64Decode([]byte(container.Data.Options.SignatureInputs["signature-salt"]))
+	if err != nil {
+		fmt.Errorf("Could not base64 decode signature salt: %s", err)
+	}
+
+	newKey, _, err := crypto.ExpandKey(rawKey, salt)
+	if err != nil {
+		return fmt.Errorf("Could not expand key: %s", err)
+	}
+	mac := crypto.NewSignature(crypto.SignatureModeSha256Hmac)
+
+	mac.Signature = container.Data.Options.Signature
+	container.Data.Options.Signature = ""
+
+	if err := crypto.HMACVerify([]byte(container.Dump()), newKey, mac); err != nil {
+		return fmt.Errorf("Couldn't verify container: %s", err.Error())
+	} else {
+		return nil
+	}
+}
+
 func (entity *Entity) Verify(container *document.Container) error {
 
 	if container.IsSigned() == false {
@@ -325,8 +395,21 @@ func (entity *Entity) SignString(content string) (*document.Container, error) {
 	}
 }
 
-func (entity *Entity) EncryptThenSignString(content string, entities interface{}) (*document.Container, error) {
+func (entity *Entity) AuthenticateString(content, id, key string) (*document.Container, error) {
+	container, err := document.NewContainer(nil)
+	if err != nil {
+		return nil, fmt.Errorf("Could not create container: %s", err.Error())
+	}
+	container.Data.Options.Source = entity.Data.Body.Id
+	container.Data.Body = content
+	if err := entity.Authenticate(container, id, key); err != nil {
+		return nil, fmt.Errorf("Could not sign container: %s", err.Error())
+	} else {
+		return container, nil
+	}
+}
 
+func (entity *Entity) Encrypt(content string, entities interface{}) (*document.Container, error) {
 	encryptionKeys := make(map[string]string)
 
 	switch t := entities.(type) {
@@ -346,6 +429,15 @@ func (entity *Entity) EncryptThenSignString(content string, entities interface{}
 	container.Data.Options.Source = entity.Data.Body.Id
 	if err := container.Encrypt(content, encryptionKeys); err != nil {
 		return nil, fmt.Errorf("Could not encrypt container: %s", err.Error())
+	}
+	return container, nil
+}
+
+func (entity *Entity) EncryptThenSignString(content string, entities interface{}) (*document.Container, error) {
+
+	container, err := entity.Encrypt(content, entities)
+	if err != nil {
+		return nil, fmt.Errorf("Couldn't encrypt content: %s", err.Error())
 	}
 
 	if err := entity.Sign(container); err != nil {
