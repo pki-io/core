@@ -5,6 +5,8 @@ import (
 	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
@@ -12,23 +14,27 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
+	"github.com/mitchellh/packer/common/uuid"
 	"golang.org/x/crypto/pbkdf2"
 	"io"
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	"math/big"
-	"errors"
 )
 
 // https://www.socketloop.com/tutorials/golang-padding-un-padding-data
 // https://www.socketloop.com/tutorials/golang-example-for-rsa-package-functions-example
 
 type KeyType string
+
 const (
 	KeyTypeRSA KeyType = "rsa"
-	KeyTypeEC KeyType = "ec"
+	KeyTypeEC  KeyType = "ec"
 )
+
+func UUID() string {
+	return uuid.TimeOrderedUUID()
+}
 
 func RandomBytes(size int) ([]byte, error) {
 	randomBytes := make([]byte, size)
@@ -274,7 +280,7 @@ func eciesEncrypt(plaintext []byte, publicKey *ecdsa.PublicKey) ([]byte, error) 
 }
 
 func deriveEciesKey(rawSecret []byte, outputKeyLength int32) ([]byte, error) {
-	var maxOutputLength int32 =  3200
+	var maxOutputLength int32 = 3200
 	var hmacSha256ByteLength int32 = 32
 
 	if outputKeyLength > maxOutputLength {
@@ -282,21 +288,21 @@ func deriveEciesKey(rawSecret []byte, outputKeyLength int32) ([]byte, error) {
 	}
 	var n int32
 	if outputKeyLength%hmacSha256ByteLength == 0 {
-		n = outputKeyLength/hmacSha256ByteLength
+		n = outputKeyLength / hmacSha256ByteLength
 	} else {
-		n = outputKeyLength/hmacSha256ByteLength+1
+		n = outputKeyLength/hmacSha256ByteLength + 1
 	}
 	results := make([]byte, (n+1)*hmacSha256ByteLength)
 	tmpDgst := make([]byte, hmacSha256ByteLength)
 	tmpMsg := make([]byte, 32+1+4)
 
 	for i := byte(1); i <= byte(n); i++ {
-		copy(tmpMsg, []byte{i, 0x00, 32, byte(outputKeyLength*8)})
+		copy(tmpMsg, []byte{i, 0x00, 32, byte(outputKeyLength * 8)})
 		if numCopied := copy(tmpDgst, hmac256(rawSecret, tmpMsg)); int32(numCopied) < hmacSha256ByteLength {
 			return nil, errors.New("Error while producing hmac.")
 		}
 		var j int32 = 0
-		for k := (i-1)*byte(hmacSha256ByteLength); k < i*byte(hmacSha256ByteLength); k++ {
+		for k := (i - 1) * byte(hmacSha256ByteLength); k < i*byte(hmacSha256ByteLength); k++ {
 			results[k] = tmpDgst[j]
 			j++
 		}
@@ -329,7 +335,7 @@ func rsaDecrypt(ciphertext []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 func ExtractMacTag(ciphertext []byte) []byte {
 	rxEnd := ciphertext[0] + 1
 	ryEnd := rxEnd + 1 + ciphertext[rxEnd]
-	return ciphertext[ryEnd+16:ryEnd+48]
+	return ciphertext[ryEnd+16 : ryEnd+48]
 }
 
 func eciesDecrypt(cipherText []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
@@ -338,9 +344,9 @@ func eciesDecrypt(cipherText []byte, privateKey *ecdsa.PrivateKey) ([]byte, erro
 	rxEnd := cipherText[0] + 1
 	rx.SetBytes(cipherText[1:rxEnd])
 	ryEnd := rxEnd + 1 + cipherText[rxEnd]
-	ry.SetBytes(cipherText[rxEnd+1: ryEnd])
-	iv := cipherText[ryEnd:ryEnd+16]
-	macTag := cipherText[ryEnd+16:ryEnd+48]
+	ry.SetBytes(cipherText[rxEnd+1 : ryEnd])
+	iv := cipherText[ryEnd : ryEnd+16]
+	macTag := cipherText[ryEnd+16 : ryEnd+48]
 	encryptedMessage := cipherText[ryEnd+48:]
 	keyBytes, err := x509.MarshalECPrivateKey(privateKey)
 	if err != nil {
@@ -386,7 +392,7 @@ func rsaSign(message []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	}
 }
 
-func ecdsaSign(message[]byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
+func ecdsaSign(message []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	hash := sha256.New()
 	io.WriteString(hash, string(message))
 	hashed := hash.Sum(nil)
@@ -426,12 +432,12 @@ func rsaVerify(message []byte, signature []byte, publicKey *rsa.PublicKey) error
 	}
 }
 
-func ecdsaVerify(message []byte, signature []byte , publicKey *ecdsa.PublicKey) error {
+func ecdsaVerify(message []byte, signature []byte, publicKey *ecdsa.PublicKey) error {
 	hash := sha256.New()
 	io.WriteString(hash, string(message))
 	hashed := hash.Sum(nil)
 	l := int(signature[0])
-	r := new(big.Int).SetBytes(signature[1:l+1])
+	r := new(big.Int).SetBytes(signature[1 : l+1])
 	s := new(big.Int).SetBytes(signature[l+1:])
 	if ok := ecdsa.Verify(publicKey, hashed, r, s); !ok {
 		return errors.New("Could not ECDSA verify.")
@@ -451,7 +457,6 @@ func hmac256(message, key []byte) []byte {
 func HMAC(message []byte, key []byte, signature *Signed) error {
 	mac := hmac256(message, key)
 	signature.Message = string(message)
-	signature.Mode = HMACMode
 	signature.Signature = string(Base64Encode(mac))
 	return nil
 }

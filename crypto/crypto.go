@@ -1,17 +1,17 @@
 package crypto
 
 import (
-	"fmt"
-	"crypto/rsa"
 	"crypto/ecdsa"
+	"crypto/rsa"
+	"fmt"
 )
 
 type Mode string
 
 const (
-	SignatureModeSha256Rsa Mode = "sha256+rsa"
+	SignatureModeSha256Rsa   Mode = "sha256+rsa"
 	SignatureModeSha256Ecdsa Mode = "sha256+ecdsa"
-	HMACMode Mode = "hmac+sha256"
+	SignatureModeSha256Hmac  Mode = "sha256+hmac"
 )
 
 type Encrypted struct {
@@ -26,10 +26,6 @@ type Signed struct {
 	Mode    Mode
 	//Inputs map[string]string
 	Signature string
-}
-
-func NewHMAC() *Signed {
-	return &Signed{Mode: HMACMode}
 }
 
 func NewSignature(mode Mode) *Signed {
@@ -64,7 +60,7 @@ func GroupEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, e
 }
 
 func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (string, error) {
-	var privateKey interface {}
+	var privateKey interface{}
 	var err error
 
 	if encrypted.Mode != "aes-cbc-256+rsa" {
