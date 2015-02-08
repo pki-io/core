@@ -5,6 +5,8 @@ import (
 	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
@@ -12,23 +14,22 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
+	"github.com/pki-io/ecies"
 	"golang.org/x/crypto/pbkdf2"
 	"io"
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	"math/big"
-	"errors"
-	"github.com/pki-io/ecies"
 )
 
 // https://www.socketloop.com/tutorials/golang-padding-un-padding-data
 // https://www.socketloop.com/tutorials/golang-example-for-rsa-package-functions-example
 
 type KeyType string
+
 const (
 	KeyTypeRSA KeyType = "rsa"
-	KeyTypeEC KeyType = "ec"
+	KeyTypeEC  KeyType = "ec"
 )
 
 func RandomBytes(size int) ([]byte, error) {
@@ -277,7 +278,7 @@ func rsaSign(message []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	}
 }
 
-func ecdsaSign(message[]byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
+func ecdsaSign(message []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	hash := sha256.New()
 	io.WriteString(hash, string(message))
 	hashed := hash.Sum(nil)
@@ -317,12 +318,12 @@ func rsaVerify(message []byte, signature []byte, publicKey *rsa.PublicKey) error
 	}
 }
 
-func ecdsaVerify(message []byte, signature []byte , publicKey *ecdsa.PublicKey) error {
+func ecdsaVerify(message []byte, signature []byte, publicKey *ecdsa.PublicKey) error {
 	hash := sha256.New()
 	io.WriteString(hash, string(message))
 	hashed := hash.Sum(nil)
 	l := int(signature[0])
-	r := new(big.Int).SetBytes(signature[1:l+1])
+	r := new(big.Int).SetBytes(signature[1 : l+1])
 	s := new(big.Int).SetBytes(signature[l+1:])
 	if ok := ecdsa.Verify(publicKey, hashed, r, s); !ok {
 		return errors.New("Could not ECDSA verify.")

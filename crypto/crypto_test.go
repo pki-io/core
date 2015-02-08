@@ -6,35 +6,35 @@ import (
 )
 
 func TestGroupEncrypt(t *testing.T) {
-    key1, _ := GenerateRSAKey()
-    key2, _ := GenerateECKey()
-    keys := make(map[string]string)
-	k1, _ := PemEncodePublic(&key1.PublicKey)
-	k2, _ := PemEncodePublic(&key2.PublicKey)
-    keys["1"] = string(k1)
-    keys["2"] = string(k2)
-
-    plaintext := "this is a secret message"
-    e, err := GroupEncrypt(plaintext, keys)
-    assert.NoError(t, err)
-    assert.NotNil(t, e)
-}
-
-func TestGroupDecrypt(t *testing.T) {
-    key1, _ := GenerateRSAKey()
-    key2, _ := GenerateECKey()
-    keys := make(map[string]string)
+	key1, _ := GenerateRSAKey()
+	key2, _ := GenerateECKey()
+	keys := make(map[string]string)
 	k1, _ := PemEncodePublic(&key1.PublicKey)
 	k2, _ := PemEncodePublic(&key2.PublicKey)
 	keys["1"] = string(k1)
 	keys["2"] = string(k2)
 
-    plaintext := "this is a secret message"
-    e, _ := GroupEncrypt(plaintext, keys)
+	plaintext := "this is a secret message"
+	e, err := GroupEncrypt(plaintext, keys)
+	assert.NoError(t, err)
+	assert.NotNil(t, e)
+}
+
+func TestGroupDecrypt(t *testing.T) {
+	key1, _ := GenerateRSAKey()
+	key2, _ := GenerateECKey()
+	keys := make(map[string]string)
+	k1, _ := PemEncodePublic(&key1.PublicKey)
+	k2, _ := PemEncodePublic(&key2.PublicKey)
+	keys["1"] = string(k1)
+	keys["2"] = string(k2)
+
+	plaintext := "this is a secret message"
+	e, _ := GroupEncrypt(plaintext, keys)
 	pk1, _ := PemEncodePrivate(key1)
-    newPlaintext, err := GroupDecrypt(e, "1", string(pk1))
-    assert.NoError(t, err)
-    assert.Equal(t, plaintext, newPlaintext)
+	newPlaintext, err := GroupDecrypt(e, "1", string(pk1))
+	assert.NoError(t, err)
+	assert.Equal(t, plaintext, newPlaintext)
 }
 
 func TestSign(t *testing.T) {
@@ -48,7 +48,7 @@ func TestSign(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, sig.Signature)
 
-	privateKey , _ = PemEncodePrivate(eckey)
+	privateKey, _ = PemEncodePrivate(eckey)
 	sig = new(Signed)
 	err = Sign(message, string(privateKey), sig)
 	assert.NoError(t, err)
