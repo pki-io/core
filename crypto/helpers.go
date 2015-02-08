@@ -41,16 +41,6 @@ func RandomBytes(size int) ([]byte, error) {
 	return randomBytes, nil
 }
 
-func RandomIntBetween(x, y *big.Int) (*big.Int, error) {
-	diff := new(big.Int)
-	diff.Sub(y, x)
-	r, err := rand.Int(rand.Reader, diff)
-	if err != nil {
-		return nil, err
-	}
-	return r.Add(r, x), nil
-}
-
 func Pad(src []byte, blockSize int) []byte {
 	padding := blockSize - len(src)%blockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
