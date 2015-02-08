@@ -1,11 +1,11 @@
 package crypto
 
 import (
-	"testing"
+	"crypto/ecdsa"
+	"crypto/rsa"
 	"github.com/stretchr/testify/assert"
 	"strings"
-	"crypto/rsa"
-	"crypto/ecdsa"
+	"testing"
 )
 
 func TestRandomBytes(t *testing.T) {
