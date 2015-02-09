@@ -146,6 +146,15 @@ func (entity *Entity) Dump() string {
 	}
 }
 
+func (entity *Entity) DumpPublic() string {
+	public, err := entity.Public()
+	if err != nil {
+		return ""
+	} else {
+		return public.Dump()
+	}
+}
+
 func (entity *Entity) generateRSAKeys() (*rsa.PrivateKey, *rsa.PrivateKey, error) {
 	signingKey, err := crypto.GenerateRSAKey()
 	if err != nil {
@@ -414,7 +423,9 @@ func (entity *Entity) Encrypt(content string, entities interface{}) (*document.C
 
 	switch t := entities.(type) {
 	case []*Entity:
-		return nil, fmt.Errorf("Not implemented")
+		for _, e := range entities.([]*Entity) {
+			encryptionKeys[e.Data.Body.Id] = e.Data.Body.PublicEncryptionKey
+		}
 	case nil:
 		encryptionKeys[entity.Data.Body.Id] = entity.Data.Body.PublicEncryptionKey
 	default:
@@ -447,6 +458,17 @@ func (entity *Entity) EncryptThenSignString(content string, entities interface{}
 	return container, nil
 }
 
+func (entity *Entity) EncryptThenAuthenticateString(content string, entities interface{}, id, key string) (*document.Container, error) {
+	container, err := entity.Encrypt(content, entities)
+	if err != nil {
+		return nil, fmt.Errorf("Couldn't encrypt content: %s", err.Error())
+	}
+	if err := entity.Authenticate(container, id, key); err != nil {
+		return nil, fmt.Errorf("Could not authenticate container: %s", err.Error())
+	}
+	return container, nil
+}
+
 func (entity *Entity) VerifyThenDecrypt(container *document.Container) (string, error) {
 	if err := entity.Verify(container); err != nil {
 		return "", fmt.Errorf("Could not verify container: %s", err.Error())
@@ -458,4 +480,16 @@ func (entity *Entity) VerifyThenDecrypt(container *document.Container) (string, 
 	}
 	return content, nil
 
+}
+
+func (entity *Entity) VerifyAuthenticationThenDecrypt(container *document.Container, key string) (string, error) {
+	if err := entity.VerifyAuthentication(container, key); err != nil {
+		return "", fmt.Errorf("Could not verify container: %s", err.Error())
+	}
+
+	content, err := entity.Decrypt(container)
+	if err != nil {
+		return "", fmt.Errorf("Could not decrypt container: %s", err.Error())
+	}
+	return content, nil
 }
