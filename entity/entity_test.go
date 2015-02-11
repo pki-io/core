@@ -1,10 +1,11 @@
 package entity
 
 import (
+	"encoding/hex"
+	"github.com/pki-io/pki.io/crypto"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
-	"github.com/pki-io/pki.io/crypto"
 )
 
 func TestEntityNewDefault(t *testing.T) {
@@ -68,5 +69,31 @@ func TestECVerify(t *testing.T) {
 	entity.GenerateKeys()
 	container, _ := entity.SignString("this is a message")
 	err := entity.Verify(container)
+	assert.NoError(t, err)
+}
+
+func TestAuthentication(t *testing.T) {
+	entity, _ := New(nil)
+	id := crypto.UUID()
+	keyBytes, _ := crypto.RandomBytes(16)
+	key := hex.EncodeToString(keyBytes)
+
+	message := "this is a message"
+	container, err := entity.AuthenticateString(message, id, key)
+	assert.NoError(t, err)
+	assert.Equal(t, container.Data.Body, message)
+	assert.NotEqual(t, len(container.Data.Options.Signature), 0)
+	assert.True(t, container.IsSigned())
+}
+
+func TestVerifyAuthentication(t *testing.T) {
+	entity, _ := New(nil)
+	id := crypto.UUID()
+	keyBytes, _ := crypto.RandomBytes(16)
+	key := hex.EncodeToString(keyBytes)
+	message := "this is a message"
+	container, err := entity.AuthenticateString(message, id, key)
+
+	err = entity.VerifyAuthentication(container, key)
 	assert.NoError(t, err)
 }

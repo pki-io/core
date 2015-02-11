@@ -11,7 +11,7 @@ type Mode string
 const (
 	SignatureModeSha256Rsa   Mode = "sha256+rsa"
 	SignatureModeSha256Ecdsa Mode = "sha256+ecdsa"
-	HMACMode                 Mode = "hmac+sha256"
+	SignatureModeSha256Hmac  Mode = "sha256+hmac"
 )
 
 type Encrypted struct {
@@ -26,10 +26,6 @@ type Signed struct {
 	Mode    Mode
 	//Inputs map[string]string
 	Signature string
-}
-
-func NewHMAC() *Signed {
-	return &Signed{Mode: HMACMode}
 }
 
 func NewSignature(mode Mode) *Signed {

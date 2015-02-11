@@ -78,7 +78,7 @@ func TestVerify(t *testing.T) {
 }
 
 func TestNewHMAC(t *testing.T) {
-	mac := NewHMAC()
+	mac := NewSignature(SignatureModeSha256Hmac)
 	message := "message to be authenticated"
 	key, _ := RandomBytes(32)
 

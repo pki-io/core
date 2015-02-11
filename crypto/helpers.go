@@ -16,6 +16,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/mitchellh/packer/common/uuid"
 	"github.com/pki-io/ecies"
 	"golang.org/x/crypto/pbkdf2"
 	"io"
@@ -31,6 +32,10 @@ const (
 	KeyTypeRSA KeyType = "rsa"
 	KeyTypeEC  KeyType = "ec"
 )
+
+func UUID() string {
+	return uuid.TimeOrderedUUID()
+}
 
 func RandomBytes(size int) ([]byte, error) {
 	randomBytes := make([]byte, size)
@@ -343,7 +348,6 @@ func hmac256(message, key []byte) []byte {
 func HMAC(message []byte, key []byte, signature *Signed) error {
 	mac := hmac256(message, key)
 	signature.Message = string(message)
-	signature.Mode = HMACMode
 	signature.Signature = string(Base64Encode(mac))
 	return nil
 }
