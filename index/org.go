@@ -5,10 +5,10 @@ import (
 	"github.com/pki-io/pki.io/document"
 )
 
-const IndexDefault string = `{
+const OrgIndexDefault string = `{
     "scope": "pki.io",
     "version": 1,
-    "type": "index-document",
+    "type": "org-index-document",
     "options": "",
     "body": {
         "parent-id": "",
@@ -22,10 +22,10 @@ const IndexDefault string = `{
     }
 }`
 
-const IndexSchema string = `{
+const OrgIndexSchema string = `{
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "IndexDocument",
-  "description": "Index Document",
+  "title": "OrgIndexDocument",
+  "description": "Org Index Document",
   "type": "object",
   "required": ["scope","version","type","options","body"],
   "additionalProperties": false,
@@ -94,7 +94,7 @@ type PairingKey struct {
 	Tags []string `json:"tags"`
 }
 
-type IndexData struct {
+type OrgIndexData struct {
 	Scope   string `json:"scope"`
 	Version int    `json:"version"`
 	Type    string `json:"type"`
@@ -111,15 +111,15 @@ type IndexData struct {
 	} `json:"body"`
 }
 
-type Index struct {
+type OrgIndex struct {
 	document.Document
-	Data IndexData
+	Data OrgIndexData
 }
 
-func New(jsonString interface{}) (*Index, error) {
-	index := new(Index)
-	index.Schema = IndexSchema
-	index.Default = IndexDefault
+func NewOrg(jsonString interface{}) (*OrgIndex, error) {
+	index := new(OrgIndex)
+	index.Schema = OrgIndexSchema
+	index.Default = OrgIndexDefault
 	if err := index.Load(jsonString); err != nil {
 		return nil, fmt.Errorf("Could not create new Index: %s", err.Error())
 	} else {
@@ -127,17 +127,17 @@ func New(jsonString interface{}) (*Index, error) {
 	}
 }
 
-func (index *Index) Load(jsonString interface{}) error {
-	data := new(IndexData)
+func (index *OrgIndex) Load(jsonString interface{}) error {
+	data := new(OrgIndexData)
 	if data, err := index.FromJson(jsonString, data); err != nil {
 		return fmt.Errorf("Could not load Index JSON: %s", err.Error())
 	} else {
-		index.Data = *data.(*IndexData)
+		index.Data = *data.(*OrgIndexData)
 		return nil
 	}
 }
 
-func (index *Index) Dump() string {
+func (index *OrgIndex) Dump() string {
 	if jsonString, err := index.ToJson(index.Data); err != nil {
 		return ""
 	} else {
@@ -145,23 +145,7 @@ func (index *Index) Dump() string {
 	}
 }
 
-func AppendUnique(slice []string, val string) []string {
-	found := false
-	for _, v := range slice {
-		if v == val {
-			found = true
-			break
-		}
-	}
-
-	if found {
-		return slice
-	} else {
-		return append(slice, val)
-	}
-}
-
-func (index *Index) AddCATags(ca string, i interface{}) error {
+func (index *OrgIndex) AddCATags(ca string, i interface{}) error {
 	var inTags []string
 	switch t := i.(type) {
 	case string:
@@ -180,7 +164,7 @@ func (index *Index) AddCATags(ca string, i interface{}) error {
 	return nil
 }
 
-func (index *Index) AddEntityTags(entity string, i interface{}) error {
+func (index *OrgIndex) AddEntityTags(entity string, i interface{}) error {
 	var inTags []string
 	switch t := i.(type) {
 	case string:
@@ -198,7 +182,7 @@ func (index *Index) AddEntityTags(entity string, i interface{}) error {
 	return nil
 }
 
-func (index *Index) AddPairingKey(id, key string, i interface{}) error {
+func (index *OrgIndex) AddPairingKey(id, key string, i interface{}) error {
 	var inTags []string
 	switch t := i.(type) {
 	case string:
