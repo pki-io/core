@@ -11,6 +11,7 @@ const OrgIndexDefault string = `{
     "type": "org-index-document",
     "options": "",
     "body": {
+        "id": "",
         "parent-id": "",
         "tags": {
           "ca-forward": {},
@@ -18,6 +19,7 @@ const OrgIndexDefault string = `{
           "entity-forward": {},
           "entity-reverse": {}
         },
+        "nodes": {},
         "pairing-keys": {}
     }
 }`
@@ -49,15 +51,23 @@ const OrgIndexSchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["parent-id", "tags"],
+          "required": ["id", "parent-id", "pairing-keys", "nodes", "tags"],
           "additionalProperties": false,
           "properties": {
+              "id": {
+                  "description": "ID",
+                  "type": "string"
+              },
               "parent-id" : {
                   "description": "Parent ID",
                   "type": "string"
               },
               "pairing-keys": {
                   "description": "Pairing Keys",
+                  "type": "object"
+              },
+              "nodes": {
+                  "description": "Nodes name to ID map",
                   "type": "object"
               },
               "tags": {
@@ -100,8 +110,10 @@ type OrgIndexData struct {
 	Type    string `json:"type"`
 	Options string `json:"options"`
 	Body    struct {
+		Id          string                `json:"id"`
 		ParentId    string                `json:"parent-id"`
 		PairingKeys map[string]PairingKey `json:"pairing-keys"`
+		Nodes       map[string]string     `json:"nodes"`
 		Tags        struct {
 			CAForward     map[string][]string `json:"ca-forward"`
 			CAReverse     map[string][]string `json:"ca-reverse"`
@@ -201,4 +213,15 @@ func (index *OrgIndex) AddPairingKey(id, key string, i interface{}) error {
 	}
 	index.Data.Body.PairingKeys[id] = *pairingKey
 	return nil
+}
+
+func (index *OrgIndex) AddNode(name, id string) error {
+	// TODO - check for existence
+	index.Data.Body.Nodes[name] = id
+	return nil
+}
+
+func (index *OrgIndex) GetNode(name string) (string, error) {
+	// TODO - check for existence
+	return index.Data.Body.Nodes[name], nil
 }

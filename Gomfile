@@ -3,5 +3,5 @@ gom "github.com/mitchellh/packer"
 gom "github.com/stretchr/testify"
 gom "github.com/xeipuuv/gojsonschema"
 gom "golang.org/x/crypto/pbkdf2"
-
+gom "github.com/mitchellh/go-homedir"
 gom "github.com/pki-io/ecies"

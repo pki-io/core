@@ -46,9 +46,13 @@ const NodeIndexSchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["parent-id", "tags"],
+          "required": ["id", "parent-id", "tags"],
           "additionalProperties": false,
           "properties": {
+              "id" : {
+                  "description": "ID",
+                  "type": "string"
+              },
               "parent-id" : {
                   "description": "Parent ID",
                   "type": "string"
@@ -80,6 +84,7 @@ type NodeIndexData struct {
 	Type    string `json:"type"`
 	Options string `json:"options"`
 	Body    struct {
+		Id       string `json:"id"`
 		ParentId string `json:"parent-id"`
 		Tags     struct {
 			CertForward map[string][]string `json:"cert-forward"`

@@ -6,9 +6,9 @@ import (
 	"crypto/x509/pkix"
 	"fmt"
 	"github.com/mitchellh/packer/common/uuid"
-	"math/big"
 	"github.com/pki-io/pki.io/crypto"
 	"github.com/pki-io/pki.io/document"
+	"math/big"
 	"strings"
 	"time"
 )
@@ -145,7 +145,7 @@ type CAData struct {
 		Name        string `json:"name"`
 		Certificate string `json:"certificate"`
 		PrivateKey  string `json:"private-key"`
-		KeyType		string `json:"key-type"`
+		KeyType     string `json:"key-type"`
 		DNScope     struct {
 			Country            string `json:"country"`
 			Organization       string `json:"organization"`
@@ -282,8 +282,8 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 	}
-	var privateKey interface {}
-	var publicKey interface {}
+	var privateKey interface{}
+	var publicKey interface{}
 	keyType := crypto.KeyType(ca.Data.Body.KeyType)
 
 	switch keyType {
@@ -306,7 +306,7 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 	}
 
 	var parent *x509.Certificate
-	var signingKey interface {}
+	var signingKey interface{}
 
 	switch t := parentCA.(type) {
 	case *CA:
@@ -345,7 +345,7 @@ func (ca *CA) Certificate() (*x509.Certificate, error) {
 	return PemDecodeX509Certificate([]byte(ca.Data.Body.Certificate))
 }
 
-func (ca *CA) PrivateKey() (interface {}, error) {
+func (ca *CA) PrivateKey() (interface{}, error) {
 	if privateKey, err := crypto.PemDecodePrivate([]byte(ca.Data.Body.PrivateKey)); err != nil {
 		return nil, fmt.Errorf("Could not decode rsa private key: %s", err.Error())
 	} else {
@@ -414,7 +414,6 @@ func (ca *CA) Sign(csr *CSR) (*Certificate, error) {
 	cert.Data.Body.Id = csr.Data.Body.Id
 	cert.Data.Body.Name = csr.Data.Body.Name
 	cert.Data.Body.Certificate = string(PemEncodeX509CertificateDER(der))
-	cert.Data.Body.PrivateKey = ca.Data.Body.PrivateKey
 	cert.Data.Body.KeyType = ca.Data.Body.KeyType
 	return cert, nil
 }
