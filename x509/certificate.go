@@ -5,9 +5,9 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
-	"math/big"
 	"github.com/pki-io/pki.io/crypto"
 	"github.com/pki-io/pki.io/document"
+	"math/big"
 	"time"
 )
 
@@ -20,6 +20,7 @@ const CertificateDefault string = `{
         "id": "",
         "name": "",
         "key-type": "ec",
+        "tags": [],
         "certificate": "",
         "private-key": ""
     }
@@ -52,7 +53,7 @@ const CertificateSchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["id", "name", "key-type", "certificate", "private-key"],
+          "required": ["id", "name", "key-type", "tags", "certificate", "private-key"],
           "additionalProperties": false,
           "properties": {
               "id" : {
@@ -66,6 +67,10 @@ const CertificateSchema string = `{
               "key-type": {
               	  "description": "Key type. Must be either rsa or ec",
               	  "type": "string"
+              },
+              "tags": {
+                  "description": "Tags defined for cert",
+                  "type": "array"
               },
               "certificate" : {
                   "description": "PEM encoded X.509 certificate",
@@ -86,11 +91,12 @@ type CertificateData struct {
 	Type    string `json:"type"`
 	Options string `json:"options"`
 	Body    struct {
-		Id          string `json:"id"`
-		Name        string `json:"name"`
-		KeyType		string `json:"key-type"`
-		Certificate string `json:"certificate"`
-		PrivateKey  string `json:"private-key"`
+		Id          string   `json:"id"`
+		Name        string   `json:"name"`
+		KeyType     string   `json:"key-type"`
+		Tags        []string `json:"tags"`
+		Certificate string   `json:"certificate"`
+		PrivateKey  string   `json:"private-key"`
 	} `json:"body"`
 }
 
@@ -150,8 +156,8 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, notBefor
 		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 	}
 
-	var privateKey interface {}
-	var publicKey interface {}
+	var privateKey interface{}
+	var publicKey interface{}
 	var err error
 
 	switch crypto.KeyType(certificate.Data.Body.KeyType) {
@@ -172,7 +178,7 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, notBefor
 	}
 
 	var parent *x509.Certificate
-	var signingKey interface {}
+	var signingKey interface{}
 
 	switch t := parentCertificate.(type) {
 	case *Certificate:
@@ -210,7 +216,7 @@ func (certificate *Certificate) Certificate() (*x509.Certificate, error) {
 	return PemDecodeX509Certificate([]byte(certificate.Data.Body.Certificate))
 }
 
-func (certificate *Certificate) PrivateKey() (interface {}, error) {
+func (certificate *Certificate) PrivateKey() (interface{}, error) {
 	if privateKey, err := crypto.PemDecodePrivate([]byte(certificate.Data.Body.PrivateKey)); err != nil {
 		return nil, fmt.Errorf("Could not decode rsa private key: %s", err.Error())
 	} else {
