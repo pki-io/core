@@ -133,7 +133,7 @@ func NewOrg(jsonString interface{}) (*OrgIndex, error) {
 	index.Schema = OrgIndexSchema
 	index.Default = OrgIndexDefault
 	if err := index.Load(jsonString); err != nil {
-		return nil, fmt.Errorf("Could not create new Index: %s", err.Error())
+		return nil, fmt.Errorf("Could not create new Index: %s", err)
 	} else {
 		return index, nil
 	}
@@ -142,7 +142,7 @@ func NewOrg(jsonString interface{}) (*OrgIndex, error) {
 func (index *OrgIndex) Load(jsonString interface{}) error {
 	data := new(OrgIndexData)
 	if data, err := index.FromJson(jsonString, data); err != nil {
-		return fmt.Errorf("Could not load Index JSON: %s", err.Error())
+		return fmt.Errorf("Could not load Index JSON: %s", err)
 	} else {
 		index.Data = *data.(*OrgIndexData)
 		return nil

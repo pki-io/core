@@ -112,7 +112,7 @@ type Entity struct {
 func New(jsonString interface{}) (*Entity, error) {
 	entity := new(Entity)
 	if err := entity.New(jsonString); err != nil {
-		return nil, fmt.Errorf("Couldn't create new entity: %s", err.Error())
+		return nil, fmt.Errorf("Couldn't create new entity: %s", err)
 	} else {
 		return entity, nil
 	}
@@ -122,7 +122,7 @@ func (entity *Entity) New(jsonString interface{}) error {
 	entity.Schema = EntitySchema
 	entity.Default = EntityDefault
 	if err := entity.Load(jsonString); err != nil {
-		return fmt.Errorf("Could not create new Entity: %s", err.Error())
+		return fmt.Errorf("Could not create new Entity: %s", err)
 	} else {
 		return nil
 	}
@@ -131,7 +131,7 @@ func (entity *Entity) New(jsonString interface{}) error {
 func (entity *Entity) Load(jsonString interface{}) error {
 	data := new(EntityData)
 	if data, err := entity.FromJson(jsonString, data); err != nil {
-		return fmt.Errorf("Could not load entity JSON: %s", err.Error())
+		return fmt.Errorf("Could not load entity JSON: %s", err)
 	} else {
 		entity.Data = *data.(*EntityData)
 		return nil
@@ -170,11 +170,11 @@ func (entity *Entity) generateRSAKeys() (*rsa.PrivateKey, *rsa.PrivateKey, error
 	encryptionKey.Precompute()
 
 	if err := signingKey.Validate(); err != nil {
-		return nil, nil, fmt.Errorf("Could not validate signing key: %s", err.Error())
+		return nil, nil, fmt.Errorf("Could not validate signing key: %s", err)
 	}
 
 	if err := encryptionKey.Validate(); err != nil {
-		return nil, nil, fmt.Errorf("Could not validate encryption key: %s", err.Error())
+		return nil, nil, fmt.Errorf("Could not validate encryption key: %s", err)
 	}
 
 	if pub, err := crypto.PemEncodePublic(&signingKey.PublicKey); err != nil {
@@ -273,7 +273,7 @@ func (entity *Entity) Sign(container *document.Container) error {
 	containerJson := container.Dump()
 
 	if err := crypto.Sign(containerJson, entity.Data.Body.PrivateSigningKey, signature); err != nil {
-		return fmt.Errorf("Could not sign container json: %s", err.Error())
+		return fmt.Errorf("Could not sign container json: %s", err)
 	}
 	if signature.Message != containerJson {
 		return fmt.Errorf("Signed message doesn't match input")
@@ -307,7 +307,7 @@ func (entity *Entity) Authenticate(container *document.Container, id, key string
 	containerJson := container.Dump()
 
 	if err := crypto.HMAC([]byte(containerJson), newKey, signature); err != nil {
-		return fmt.Errorf("Could not HMAC container: %s", err.Error())
+		return fmt.Errorf("Could not HMAC container: %s", err)
 	}
 
 	if signature.Message != containerJson {
@@ -339,7 +339,7 @@ func (entity *Entity) VerifyAuthentication(container *document.Container, key st
 	container.Data.Options.Signature = ""
 
 	if err := crypto.HMACVerify([]byte(container.Dump()), newKey, mac); err != nil {
-		return fmt.Errorf("Couldn't verify container: %s", err.Error())
+		return fmt.Errorf("Couldn't verify container: %s", err)
 	} else {
 		return nil
 	}
@@ -359,7 +359,7 @@ func (entity *Entity) Verify(container *document.Container) error {
 	signature.Message = containerJson
 
 	if err := crypto.Verify(signature, entity.Data.Body.PublicSigningKey); err != nil {
-		return fmt.Errorf("Could not verify org container signature: %s", err.Error())
+		return fmt.Errorf("Could not verify org container signature: %s", err)
 	} else {
 		return nil
 	}
@@ -373,7 +373,7 @@ func (entity *Entity) Decrypt(container *document.Container) (string, error) {
 	id := entity.Data.Body.Id
 	key := entity.Data.Body.PrivateEncryptionKey
 	if decryptedJson, err := container.Decrypt(id, key); err != nil {
-		return "", fmt.Errorf("Could not decrypt: %s", err.Error())
+		return "", fmt.Errorf("Could not decrypt: %s", err)
 	} else {
 		return decryptedJson, nil
 	}
@@ -383,7 +383,7 @@ func (entity *Entity) Public() (*Entity, error) {
 	selfJson := entity.Dump()
 	publicEntity, err := New(selfJson)
 	if err != nil {
-		return nil, fmt.Errorf("Could not create public entity: %s", err.Error())
+		return nil, fmt.Errorf("Could not create public entity: %s", err)
 	}
 	publicEntity.Data.Body.PrivateSigningKey = ""
 	publicEntity.Data.Body.PrivateEncryptionKey = ""
@@ -393,12 +393,12 @@ func (entity *Entity) Public() (*Entity, error) {
 func (entity *Entity) SignString(content string) (*document.Container, error) {
 	container, err := document.NewContainer(nil)
 	if err != nil {
-		return nil, fmt.Errorf("Could not create container: %s", err.Error())
+		return nil, fmt.Errorf("Could not create container: %s", err)
 	}
 	container.Data.Options.Source = entity.Data.Body.Id
 	container.Data.Body = content
 	if err := entity.Sign(container); err != nil {
-		return nil, fmt.Errorf("Could not sign container: %s", err.Error())
+		return nil, fmt.Errorf("Could not sign container: %s", err)
 	} else {
 		return container, nil
 	}
@@ -407,12 +407,12 @@ func (entity *Entity) SignString(content string) (*document.Container, error) {
 func (entity *Entity) AuthenticateString(content, id, key string) (*document.Container, error) {
 	container, err := document.NewContainer(nil)
 	if err != nil {
-		return nil, fmt.Errorf("Could not create container: %s", err.Error())
+		return nil, fmt.Errorf("Could not create container: %s", err)
 	}
 	container.Data.Options.Source = entity.Data.Body.Id
 	container.Data.Body = content
 	if err := entity.Authenticate(container, id, key); err != nil {
-		return nil, fmt.Errorf("Could not sign container: %s", err.Error())
+		return nil, fmt.Errorf("Could not sign container: %s", err)
 	} else {
 		return container, nil
 	}
@@ -434,12 +434,12 @@ func (entity *Entity) Encrypt(content string, entities interface{}) (*document.C
 
 	container, err := document.NewContainer(nil)
 	if err != nil {
-		return nil, fmt.Errorf("Could not create container: %s", err.Error())
+		return nil, fmt.Errorf("Could not create container: %s", err)
 	}
 
 	container.Data.Options.Source = entity.Data.Body.Id
 	if err := container.Encrypt(content, encryptionKeys); err != nil {
-		return nil, fmt.Errorf("Could not encrypt container: %s", err.Error())
+		return nil, fmt.Errorf("Could not encrypt container: %s", err)
 	}
 	return container, nil
 }
@@ -448,11 +448,11 @@ func (entity *Entity) EncryptThenSignString(content string, entities interface{}
 
 	container, err := entity.Encrypt(content, entities)
 	if err != nil {
-		return nil, fmt.Errorf("Couldn't encrypt content: %s", err.Error())
+		return nil, fmt.Errorf("Couldn't encrypt content: %s", err)
 	}
 
 	if err := entity.Sign(container); err != nil {
-		return nil, fmt.Errorf("Could not sign container: %s", err.Error())
+		return nil, fmt.Errorf("Could not sign container: %s", err)
 	}
 
 	return container, nil
@@ -461,22 +461,22 @@ func (entity *Entity) EncryptThenSignString(content string, entities interface{}
 func (entity *Entity) EncryptThenAuthenticateString(content string, entities interface{}, id, key string) (*document.Container, error) {
 	container, err := entity.Encrypt(content, entities)
 	if err != nil {
-		return nil, fmt.Errorf("Couldn't encrypt content: %s", err.Error())
+		return nil, fmt.Errorf("Couldn't encrypt content: %s", err)
 	}
 	if err := entity.Authenticate(container, id, key); err != nil {
-		return nil, fmt.Errorf("Could not authenticate container: %s", err.Error())
+		return nil, fmt.Errorf("Could not authenticate container: %s", err)
 	}
 	return container, nil
 }
 
 func (entity *Entity) VerifyThenDecrypt(container *document.Container) (string, error) {
 	if err := entity.Verify(container); err != nil {
-		return "", fmt.Errorf("Could not verify container: %s", err.Error())
+		return "", fmt.Errorf("Could not verify container: %s", err)
 	}
 
 	content, err := entity.Decrypt(container)
 	if err != nil {
-		return "", fmt.Errorf("Could not decrypt container: %s", err.Error())
+		return "", fmt.Errorf("Could not decrypt container: %s", err)
 	}
 	return content, nil
 
@@ -484,12 +484,12 @@ func (entity *Entity) VerifyThenDecrypt(container *document.Container) (string, 
 
 func (entity *Entity) VerifyAuthenticationThenDecrypt(container *document.Container, key string) (string, error) {
 	if err := entity.VerifyAuthentication(container, key); err != nil {
-		return "", fmt.Errorf("Could not verify container: %s", err.Error())
+		return "", fmt.Errorf("Could not verify container: %s", err)
 	}
 
 	content, err := entity.Decrypt(container)
 	if err != nil {
-		return "", fmt.Errorf("Could not decrypt container: %s", err.Error())
+		return "", fmt.Errorf("Could not decrypt container: %s", err)
 	}
 	return content, nil
 }
