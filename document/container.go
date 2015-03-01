@@ -111,7 +111,7 @@ func NewContainer(jsonData interface{}) (*Container, error) {
 	doc.Schema = ContainerSchema
 	doc.Default = ContainerDefault
 	if data, err := doc.FromJson(jsonData, data); err != nil {
-		return nil, fmt.Errorf("Could not load container json: %s", err.Error())
+		return nil, fmt.Errorf("Could not load container json: %s", err)
 	} else {
 		doc.Data = *data.(*ContainerData)
 		return doc, nil
@@ -129,7 +129,7 @@ func (doc *Container) Dump() string {
 func (doc *Container) Encrypt(jsonString string, keys map[string]string) error {
 	encrypted, err := crypto.GroupEncrypt(jsonString, keys)
 	if err != nil {
-		return fmt.Errorf("Could not group encrypt: %s", err.Error())
+		return fmt.Errorf("Could not group encrypt: %s", err)
 	}
 
 	doc.Data.Options.EncryptionKeys = encrypted.Keys
@@ -148,7 +148,7 @@ func (doc *Container) Decrypt(id string, privateKey string) (string, error) {
 	encrypted.Ciphertext = doc.Data.Body
 
 	if decryptedJson, err := crypto.GroupDecrypt(encrypted, id, privateKey); err != nil {
-		return "", fmt.Errorf("Could not decrypt container: %s", err.Error())
+		return "", fmt.Errorf("Could not decrypt container: %s", err)
 	} else {
 		return decryptedJson, nil
 	}

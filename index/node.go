@@ -103,7 +103,7 @@ func NewNode(jsonString interface{}) (*NodeIndex, error) {
 	index.Schema = NodeIndexSchema
 	index.Default = NodeIndexDefault
 	if err := index.Load(jsonString); err != nil {
-		return nil, fmt.Errorf("Could not create new Index: %s", err.Error())
+		return nil, fmt.Errorf("Could not create new Index: %s", err)
 	} else {
 		return index, nil
 	}
@@ -112,7 +112,7 @@ func NewNode(jsonString interface{}) (*NodeIndex, error) {
 func (index *NodeIndex) Load(jsonString interface{}) error {
 	data := new(NodeIndexData)
 	if data, err := index.FromJson(jsonString, data); err != nil {
-		return fmt.Errorf("Could not load Index JSON: %s", err.Error())
+		return fmt.Errorf("Could not load Index JSON: %s", err)
 	} else {
 		index.Data = *data.(*NodeIndexData)
 		return nil

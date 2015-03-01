@@ -169,7 +169,7 @@ func NewSerial() (*big.Int, error) {
 	i := new(big.Int)
 	_, err := fmt.Sscanf(clean, "%x", i)
 	if err != nil {
-		return nil, fmt.Errorf("Could not scan UUID to int: %s", err.Error())
+		return nil, fmt.Errorf("Could not scan UUID to int: %s", err)
 	} else {
 		return i, nil
 	}
@@ -180,7 +180,7 @@ func NewCA(jsonString interface{}) (*CA, error) {
 	ca.Schema = CASchema
 	ca.Default = CADefault
 	if err := ca.Load(jsonString); err != nil {
-		return nil, fmt.Errorf("Could not create new CA: %s", err.Error())
+		return nil, fmt.Errorf("Could not create new CA: %s", err)
 	} else {
 		return ca, nil
 	}
@@ -189,7 +189,7 @@ func NewCA(jsonString interface{}) (*CA, error) {
 func (ca *CA) Load(jsonString interface{}) error {
 	data := new(CAData)
 	if data, err := ca.FromJson(jsonString, data); err != nil {
-		return fmt.Errorf("Could not load CA JSON: %s", err.Error())
+		return fmt.Errorf("Could not load CA JSON: %s", err)
 	} else {
 		ca.Data = *data.(*CAData)
 		return nil
@@ -267,7 +267,7 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 
 	serial, err := NewSerial()
 	if err != nil {
-		return fmt.Errorf("Could not create serial: %s", err.Error())
+		return fmt.Errorf("Could not create serial: %s", err)
 	}
 
 	template := &x509.Certificate{
@@ -312,11 +312,11 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 	case *CA:
 		parent, err = parentCA.(*CA).Certificate()
 		if err != nil {
-			return fmt.Errorf("Could not get certificate: %s", err.Error())
+			return fmt.Errorf("Could not get certificate: %s", err)
 		}
 		signingKey, err = parentCA.(*CA).PrivateKey()
 		if err != nil {
-			return fmt.Errorf("Could not get private key: %s", err.Error())
+			return fmt.Errorf("Could not get private key: %s", err)
 		}
 	case nil:
 		// Self signed
@@ -328,7 +328,7 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 
 	der, err := x509.CreateCertificate(rand.Reader, template, parent, publicKey, signingKey)
 	if err != nil {
-		return fmt.Errorf("Could not create certificate: %s", err.Error())
+		return fmt.Errorf("Could not create certificate: %s", err)
 	}
 	ca.Data.Body.Id = fmt.Sprintf("%d", template.SerialNumber)
 	ca.Data.Body.Certificate = string(PemEncodeX509CertificateDER(der))
@@ -347,7 +347,7 @@ func (ca *CA) Certificate() (*x509.Certificate, error) {
 
 func (ca *CA) PrivateKey() (interface{}, error) {
 	if privateKey, err := crypto.PemDecodePrivate([]byte(ca.Data.Body.PrivateKey)); err != nil {
-		return nil, fmt.Errorf("Could not decode rsa private key: %s", err.Error())
+		return nil, fmt.Errorf("Could not decode rsa private key: %s", err)
 	} else {
 		return privateKey, nil
 	}
@@ -381,7 +381,7 @@ func (ca *CA) Sign(csr *CSR) (*Certificate, error) {
 
 	serial, err := NewSerial()
 	if err != nil {
-		return nil, fmt.Errorf("Could not create serial: %s", err.Error())
+		return nil, fmt.Errorf("Could not create serial: %s", err)
 	}
 	template := &x509.Certificate{
 		IsCA: false,
@@ -398,18 +398,18 @@ func (ca *CA) Sign(csr *CSR) (*Certificate, error) {
 	parent, _ := ca.Certificate()
 	csrPublicKey, err := csr.PublicKey()
 	if err != nil {
-		return nil, fmt.Errorf("Could not get public key from CSR: %s", err.Error())
+		return nil, fmt.Errorf("Could not get public key from CSR: %s", err)
 	}
 	signingKey, _ := ca.PrivateKey()
 
 	der, err := x509.CreateCertificate(rand.Reader, template, parent, csrPublicKey, signingKey)
 	if err != nil {
-		return nil, fmt.Errorf("Could not create certificate der: %s", err.Error())
+		return nil, fmt.Errorf("Could not create certificate der: %s", err)
 	}
 
 	cert, err := NewCertificate(nil)
 	if err != nil {
-		return nil, fmt.Errorf("Could not create certificate: %s", err.Error())
+		return nil, fmt.Errorf("Could not create certificate: %s", err)
 	}
 	cert.Data.Body.Id = csr.Data.Body.Id
 	cert.Data.Body.Name = csr.Data.Body.Name

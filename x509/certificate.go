@@ -110,7 +110,7 @@ func NewCertificate(jsonString interface{}) (*Certificate, error) {
 	certificate.Schema = CertificateSchema
 	certificate.Default = CertificateDefault
 	if err := certificate.Load(jsonString); err != nil {
-		return nil, fmt.Errorf("Could not create new Certificate: %s", err.Error())
+		return nil, fmt.Errorf("Could not create new Certificate: %s", err)
 	} else {
 		return certificate, nil
 	}
@@ -119,7 +119,7 @@ func NewCertificate(jsonString interface{}) (*Certificate, error) {
 func (certificate *Certificate) Load(jsonString interface{}) error {
 	data := new(CertificateData)
 	if data, err := certificate.FromJson(jsonString, data); err != nil {
-		return fmt.Errorf("Could not load Certificate JSON: %s", err.Error())
+		return fmt.Errorf("Could not load Certificate JSON: %s", err)
 	} else {
 		certificate.Data = *data.(*CertificateData)
 		return nil
@@ -184,11 +184,11 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, notBefor
 	case *Certificate:
 		parent, err = parentCertificate.(*Certificate).Certificate()
 		if err != nil {
-			return fmt.Errorf("Could not get certificate: %s", err.Error())
+			return fmt.Errorf("Could not get certificate: %s", err)
 		}
 		signingKey, err = parentCertificate.(*Certificate).PrivateKey()
 		if err != nil {
-			return fmt.Errorf("Could not get private key: %s", err.Error())
+			return fmt.Errorf("Could not get private key: %s", err)
 		}
 	case nil:
 		// Self signed
@@ -200,7 +200,7 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, notBefor
 
 	der, err := x509.CreateCertificate(rand.Reader, template, parent, publicKey, signingKey)
 	if err != nil {
-		return fmt.Errorf("Could not create certificate: %s", err.Error())
+		return fmt.Errorf("Could not create certificate: %s", err)
 	}
 	certificate.Data.Body.Certificate = string(PemEncodeX509CertificateDER(der))
 	enc, err := crypto.PemEncodePrivate(privateKey)
@@ -218,7 +218,7 @@ func (certificate *Certificate) Certificate() (*x509.Certificate, error) {
 
 func (certificate *Certificate) PrivateKey() (interface{}, error) {
 	if privateKey, err := crypto.PemDecodePrivate([]byte(certificate.Data.Body.PrivateKey)); err != nil {
-		return nil, fmt.Errorf("Could not decode rsa private key: %s", err.Error())
+		return nil, fmt.Errorf("Could not decode rsa private key: %s", err)
 	} else {
 		return privateKey, nil
 	}

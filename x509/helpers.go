@@ -14,7 +14,7 @@ func PemEncodeX509CertificateDER(cert []byte) []byte {
 func PemDecodeX509Certificate(in []byte) (*x509.Certificate, error) {
 	b, _ := pem.Decode(in)
 	if certs, err := x509.ParseCertificates(b.Bytes); err != nil {
-		return nil, fmt.Errorf("Could not parse certificate: %s", err.Error())
+		return nil, fmt.Errorf("Could not parse certificate: %s", err)
 	} else {
 		return certs[0], nil
 	}
@@ -28,7 +28,7 @@ func PemEncodeX509CSRDER(cert []byte) []byte {
 func PemDecodeX509CSR(in []byte) (*x509.CertificateRequest, error) {
 	b, _ := pem.Decode(in)
 	if csr, err := x509.ParseCertificateRequest(b.Bytes); err != nil {
-		return nil, fmt.Errorf("Could not parse csr: %s", err.Error())
+		return nil, fmt.Errorf("Could not parse csr: %s", err)
 	} else {
 		return csr, nil
 	}

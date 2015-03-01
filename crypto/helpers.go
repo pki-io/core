@@ -78,7 +78,7 @@ func Base64Encode(input []byte) []byte {
 func Base64Decode(input []byte) (decoded []byte, err error) {
 	b, err := base64.StdEncoding.DecodeString(string(input))
 	if err != nil {
-		return nil, fmt.Errorf("Can't Base64 decode: %s", err.Error())
+		return nil, fmt.Errorf("Can't Base64 decode: %s", err)
 	} else {
 		return []byte(b), nil
 	}
@@ -91,7 +91,7 @@ func AESEncrypt(plaintext []byte, key []byte) ([]byte, []byte, error) {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Can't initialise cipher: %s", err.Error())
+		return nil, nil, fmt.Errorf("Can't initialise cipher: %s", err)
 	}
 
 	paddedPlaintext := Pad(plaintext, aes.BlockSize)
@@ -110,7 +110,7 @@ func AESEncrypt(plaintext []byte, key []byte) ([]byte, []byte, error) {
 func AESDecrypt(ciphertext []byte, iv []byte, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, fmt.Errorf("Can't initialise cipher: %s", err.Error())
+		return nil, fmt.Errorf("Can't initialise cipher: %s", err)
 	}
 
 	if len(ciphertext)%aes.BlockSize != 0 {
@@ -202,7 +202,7 @@ func PemDecodePrivate(in []byte) (crypto.PrivateKey, error) {
 func PemDecodePublic(in []byte) (crypto.PublicKey, error) {
 	b, _ := pem.Decode(in)
 	if pubKey, err := x509.ParsePKIXPublicKey(b.Bytes); err != nil {
-		return nil, fmt.Errorf("Could not parse public key: %s", err.Error())
+		return nil, fmt.Errorf("Could not parse public key: %s", err)
 	} else {
 		return pubKey, nil
 	}
@@ -223,7 +223,7 @@ func rsaEncrypt(plaintext []byte, publicKey *rsa.PublicKey) ([]byte, error) {
 	label := []byte("")
 	hash := sha256.New()
 	if ciphertext, err := rsa.EncryptOAEP(hash, rand.Reader, publicKey, plaintext, label); err != nil {
-		return nil, fmt.Errorf("Could not RSA encrypt: %s", err.Error())
+		return nil, fmt.Errorf("Could not RSA encrypt: %s", err)
 	} else {
 		return ciphertext, nil
 	}
@@ -249,7 +249,7 @@ func rsaDecrypt(ciphertext []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	label := []byte("")
 	hash := sha256.New()
 	if plaintext, err := rsa.DecryptOAEP(hash, rand.Reader, privateKey, ciphertext, label); err != nil {
-		return nil, fmt.Errorf("Could not RSA decrypt: %s", err.Error())
+		return nil, fmt.Errorf("Could not RSA decrypt: %s", err)
 	} else {
 		return plaintext, nil
 	}
@@ -277,7 +277,7 @@ func rsaSign(message []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	io.WriteString(hash, string(message))
 	hashed := hash.Sum(nil)
 	if signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, h, hashed); err != nil {
-		return nil, fmt.Errorf("Could not RSA sign: %s", err.Error())
+		return nil, fmt.Errorf("Could not RSA sign: %s", err)
 	} else {
 		return signature, nil
 	}
@@ -317,7 +317,7 @@ func rsaVerify(message []byte, signature []byte, publicKey *rsa.PublicKey) error
 	io.WriteString(hash, string(message))
 	hashed := hash.Sum(nil)
 	if err := rsa.VerifyPKCS1v15(publicKey, h, hashed, signature); err != nil {
-		return fmt.Errorf("Could not RSA verify: %s", err.Error())
+		return fmt.Errorf("Could not RSA verify: %s", err)
 	} else {
 		return nil
 	}
@@ -358,7 +358,7 @@ func HMACVerify(message, key []byte, signature *Signed) error {
 	newFinalMac := newMac.Sum(nil)
 	oldMac, err := Base64Decode([]byte(signature.Signature))
 	if err != nil {
-		return fmt.Errorf("Could not base64 decode mac: %s", err.Error())
+		return fmt.Errorf("Could not base64 decode mac: %s", err)
 	}
 
 	if hmac.Equal(newFinalMac, oldMac) {

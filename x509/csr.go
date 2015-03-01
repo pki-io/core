@@ -1,9 +1,9 @@
 package x509
 
 import (
-	"fmt"
 	"crypto/rand"
 	"crypto/x509"
+	"fmt"
 	"github.com/pki-io/pki.io/crypto"
 	"github.com/pki-io/pki.io/document"
 )
@@ -86,7 +86,7 @@ type CSRData struct {
 		Id         string `json:"id"`
 		Name       string `json:"name"`
 		CSR        string `json:"csr"`
-		KeyType	   string `json:"key-type"`
+		KeyType    string `json:"key-type"`
 		PrivateKey string `json:"private-key"`
 	} `json:"body"`
 }
@@ -101,7 +101,7 @@ func NewCSR(jsonString interface{}) (*CSR, error) {
 	csr.Schema = CSRSchema
 	csr.Default = CSRDefault
 	if err := csr.Load(jsonString); err != nil {
-		return nil, fmt.Errorf("Could not create new CSR: %s", err.Error())
+		return nil, fmt.Errorf("Could not create new CSR: %s", err)
 	} else {
 		return csr, nil
 	}
@@ -110,7 +110,7 @@ func NewCSR(jsonString interface{}) (*CSR, error) {
 func (csr *CSR) Load(jsonString interface{}) error {
 	data := new(CSRData)
 	if data, err := csr.FromJson(jsonString, data); err != nil {
-		return fmt.Errorf("Could not load CSR JSON: %s", err.Error())
+		return fmt.Errorf("Could not load CSR JSON: %s", err)
 	} else {
 		csr.Data = *data.(*CSRData)
 		return nil
@@ -127,7 +127,7 @@ func (csr *CSR) Dump() string {
 
 func (csr *CSR) Generate() error {
 
-	var privateKey interface {}
+	var privateKey interface{}
 	var err error
 	switch crypto.KeyType(csr.Data.Body.KeyType) {
 	case crypto.KeyTypeRSA:
@@ -141,7 +141,6 @@ func (csr *CSR) Generate() error {
 			return fmt.Errorf("Failed to generate ec key: %s", err)
 		}
 	}
-
 
 	enc, err := crypto.PemEncodePrivate(privateKey)
 	if err != nil {
@@ -192,7 +191,7 @@ func (csr *CSR) Generate() error {
 
 	der, err := x509.CreateCertificateRequest(rand.Reader, template, privateKey)
 	if err != nil {
-		return fmt.Errorf("Could not create certificate: %s", err.Error())
+		return fmt.Errorf("Could not create certificate: %s", err)
 	}
 	csr.Data.Body.CSR = string(PemEncodeX509CSRDER(der))
 	return nil
@@ -202,15 +201,15 @@ func (csr *CSR) Public() (*CSR, error) {
 	selfJson := csr.Dump()
 	publicCSR, err := NewCSR(selfJson)
 	if err != nil {
-		return nil, fmt.Errorf("Could not create public CSR: %s", err.Error())
+		return nil, fmt.Errorf("Could not create public CSR: %s", err)
 	}
 	publicCSR.Data.Body.PrivateKey = ""
 	return publicCSR, nil
 }
 
-func (csr *CSR) PublicKey() (interface {}, error) {
+func (csr *CSR) PublicKey() (interface{}, error) {
 	if rawCSR, err := PemDecodeX509CSR([]byte(csr.Data.Body.CSR)); err != nil {
-		return nil, fmt.Errorf("Could not decode csr key: %s", err.Error())
+		return nil, fmt.Errorf("Could not decode csr key: %s", err)
 	} else {
 		return rawCSR.PublicKey, nil
 	}
