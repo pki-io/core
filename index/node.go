@@ -2,7 +2,7 @@ package index
 
 import (
 	"fmt"
-	"github.com/pki-io/pki.io/document"
+	"github.com/pki-io/core/document"
 )
 
 const NodeIndexDefault string = `{

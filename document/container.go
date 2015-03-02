@@ -2,7 +2,7 @@ package document
 
 import (
 	"fmt"
-	"github.com/pki-io/pki.io/crypto"
+	"github.com/pki-io/core/crypto"
 )
 
 const ContainerDefault string = `{

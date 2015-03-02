@@ -4,8 +4,8 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"fmt"
-	"github.com/pki-io/pki.io/crypto"
-	"github.com/pki-io/pki.io/document"
+	"github.com/pki-io/core/crypto"
+	"github.com/pki-io/core/document"
 )
 
 const CSRDefault string = `{
