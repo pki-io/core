@@ -2,7 +2,7 @@ package node
 
 import (
 	"fmt"
-	"github.com/pki-io/pki.io/entity"
+	"github.com/pki-io/core/entity"
 )
 
 type Node struct {

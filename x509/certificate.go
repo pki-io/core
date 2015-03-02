@@ -5,8 +5,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
-	"github.com/pki-io/pki.io/crypto"
-	"github.com/pki-io/pki.io/document"
+	"github.com/pki-io/core/crypto"
+	"github.com/pki-io/core/document"
 	"math/big"
 	"time"
 )

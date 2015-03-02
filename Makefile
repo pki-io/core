@@ -9,8 +9,8 @@ test:
 
 dev:
 	test -d _vendor && \
-        mkdir -p _vendor/src/github.com/pki-io/pki.io && \
-        for d in $(DIRS); do (cd _vendor/src/github.com/pki-io/pki.io && ln -s ../../../../../$$d .); done
+        mkdir -p _vendor/src/github.com/pki-io/core && \
+        for d in $(DIRS); do (cd _vendor/src/github.com/pki-io/core && ln -s ../../../../../$$d .); done
 
 clean:
 	test ! -d _vendor || rm -rf _vendor/*

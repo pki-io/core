@@ -2,7 +2,7 @@ package entity
 
 import (
 	"encoding/hex"
-	"github.com/pki-io/pki.io/crypto"
+	"github.com/pki-io/core/crypto"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
