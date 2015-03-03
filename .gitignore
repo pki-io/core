@@ -6,3 +6,5 @@ _vendor/
 # intellij
 .idea
 *.iml
+
+fs/fs-test
