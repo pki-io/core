@@ -7,10 +7,10 @@ get-deps:
 test:
 	for d in $(DIRS); do (cd $$d; gom test); done
 
-dev:
-	test -d _vendor && \
-        mkdir -p _vendor/src/github.com/pki-io/core && \
-        for d in $(DIRS); do (cd _vendor/src/github.com/pki-io/core && ln -s ../../../../../$$d .); done
+dev: clean get-deps
+	mkdir -p _vendor/src/github.com/pki-io/core && \
+	for d in $(DIRS); do (cd _vendor/src/github.com/pki-io/core && ln -s ../../../../../$$d .); done && \
+	test ! -d _vendor/pkg || rm -rf _vendor/pkg
 
 clean:
 	test ! -d _vendor || rm -rf _vendor/*

@@ -22,6 +22,8 @@ const CADefault string = `{
         "id": "",
         "name": "",
         "certificate": "",
+        "ca-expiry": 1,
+        "cert-expiry": 1,
         "key-type": "ec",
         "private-key": "",
         "dn-scope": {
@@ -63,7 +65,7 @@ const CASchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["id", "name", "key-type", "certificate", "private-key", "dn-scope"],
+          "required": ["id", "name", "ca-expiry", "cert-expiry", "key-type", "certificate", "private-key", "dn-scope"],
           "additionalProperties": false,
           "properties": {
               "id" : {
@@ -73,6 +75,14 @@ const CASchema string = `{
               "name" : {
                   "description": "Entity name",
                   "type": "string"
+              },
+              "ca-expiry" : {
+                  "description": "CA expiry period in days",
+                  "type": "integer"
+              },
+              "cert-expiry" : {
+                  "description": "Cert expiry period in days",
+                  "type": "integer"
               },
               "certificate" : {
                   "description": "PEM encoded X.509 certificate",
@@ -143,6 +153,8 @@ type CAData struct {
 	Body    struct {
 		Id          string `json:"id"`
 		Name        string `json:"name"`
+		CAExpiry    int    `json:"ca-expiry"`
+		CertExpiry  int    `json:"cert-expiry"`
 		Certificate string `json:"certificate"`
 		PrivateKey  string `json:"private-key"`
 		KeyType     string `json:"key-type"`
@@ -204,11 +216,11 @@ func (ca *CA) Dump() string {
 	}
 }
 
-func (ca *CA) GenerateRoot(notBefore time.Time, notAfter time.Time) error {
-	return ca.GenerateSub(nil, notBefore, notAfter)
+func (ca *CA) GenerateRoot() error {
+	return ca.GenerateSub(nil)
 }
 
-func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter time.Time) error {
+func (ca *CA) GenerateSub(parentCA interface{}) error {
 	//https://www.socketloop.com/tutorials/golang-create-x509-certificate-private-and-public-keys
 
 	// Override from parent if necessary
@@ -269,6 +281,9 @@ func (ca *CA) GenerateSub(parentCA interface{}, notBefore time.Time, notAfter ti
 	if err != nil {
 		return fmt.Errorf("Could not create serial: %s", err)
 	}
+
+	notBefore := time.Now()
+	notAfter := notBefore.AddDate(0, 0, ca.Data.Body.CAExpiry)
 
 	template := &x509.Certificate{
 		IsCA: true,
@@ -383,14 +398,18 @@ func (ca *CA) Sign(csr *CSR) (*Certificate, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Could not create serial: %s", err)
 	}
+
+	notBefore := time.Now()
+	notAfter := notBefore.AddDate(0, 0, ca.Data.Body.CertExpiry)
+
 	template := &x509.Certificate{
 		IsCA: false,
 		BasicConstraintsValid: true,
 		SubjectKeyId:          []byte{1, 2, 3},
 		SerialNumber:          serial,
 		Subject:               *subject,
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().AddDate(5, 5, 5),
+		NotBefore:             notBefore,
+		NotAfter:              notAfter,
 		// see http://golang.org/pkg/crypto/x509/#KeyUsage
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
