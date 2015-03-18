@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/ecdsa"
 	"crypto/rsa"
+	"encoding/hex"
 	"fmt"
 )
 
@@ -14,6 +15,8 @@ const (
 	SignatureModeSha256Hmac  Mode = "sha256+hmac"
 )
 
+// TODO - encryption mode consts
+
 type Encrypted struct {
 	Ciphertext string
 	Mode       string
@@ -22,9 +25,8 @@ type Encrypted struct {
 }
 
 type Signed struct {
-	Message string
-	Mode    Mode
-	//Inputs map[string]string
+	Message   string
+	Mode      Mode
 	Signature string
 }
 
@@ -59,6 +61,31 @@ func GroupEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, e
 	return &Encrypted{Ciphertext: string(Base64Encode(ciphertext)), Mode: "aes-cbc-256+rsa", Inputs: inputs, Keys: encryptedKeys}, nil
 }
 
+func SymmetricEncrypt(plaintext, id, key string) (*Encrypted, error) {
+
+	rawKey, err := hex.DecodeString(key)
+	if err != nil {
+		return nil, fmt.Errorf("Could not decode key: %s", err)
+	}
+
+	newKey, salt, err := ExpandKey(rawKey, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Cold not expand key: %s", err)
+	}
+
+	ciphertext, iv, err := AESEncrypt([]byte(plaintext), newKey)
+	if err != nil {
+		return nil, err
+	}
+
+	inputs := make(map[string]string)
+	inputs["key-id"] = id
+	inputs["iv"] = string(Base64Encode(iv))
+	inputs["salt"] = string(Base64Encode(salt))
+
+	return &Encrypted{Ciphertext: string(Base64Encode(ciphertext)), Mode: "aes-cbc-256", Inputs: inputs}, nil
+}
+
 func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (string, error) {
 	var privateKey interface{}
 	var err error
@@ -71,6 +98,7 @@ func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (str
 		return "", fmt.Errorf("Private key pem is 0 bytes")
 	}
 
+	// TODO - check errors
 	ciphertext, _ := Base64Decode([]byte(encrypted.Ciphertext))
 	iv, _ := Base64Decode([]byte(encrypted.Inputs["iv"]))
 	encryptedKey, _ := Base64Decode([]byte(encrypted.Keys[keyID]))
@@ -78,6 +106,34 @@ func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (str
 	key, err := Decrypt(encryptedKey, privateKey)
 	plaintext, err := AESDecrypt(ciphertext, iv, key)
 	return string(plaintext), err
+}
+
+func SymmetricDecrypt(encrypted *Encrypted, key string) (string, error) {
+	if encrypted.Mode != "aes-cbc-256" {
+		return "", fmt.Errorf("Invalid mode: %s", encrypted.Mode)
+	}
+
+	// TODO - check errors
+	ciphertext, _ := Base64Decode([]byte(encrypted.Ciphertext))
+	iv, _ := Base64Decode([]byte(encrypted.Inputs["iv"]))
+	salt, _ := Base64Decode([]byte(encrypted.Inputs["salt"]))
+
+	rawKey, err := hex.DecodeString(key)
+	if err != nil {
+		return "", fmt.Errorf("Could not decode key: %s", err)
+	}
+
+	newKey, salt, err := ExpandKey(rawKey, salt)
+	if err != nil {
+		return "", fmt.Errorf("Cold not expand key: %s", err)
+	}
+
+	plaintext, err := AESDecrypt(ciphertext, iv, newKey)
+	if err != nil {
+		return "", err
+	}
+
+	return string(plaintext), nil
 }
 
 func Sign(message string, privateKeyString string, signature *Signed) error {
@@ -102,13 +158,29 @@ func Sign(message string, privateKeyString string, signature *Signed) error {
 	return nil
 }
 
-func Verify(signed *Signed, publicKeyString string) error {
-	message := []byte(signed.Message)
-	signature, _ := Base64Decode([]byte(signed.Signature))
-	publicKey, err := PemDecodePublic([]byte(publicKeyString))
-	if err != nil {
-		return err
+func Authenticate(message string, key []byte, signature *Signed) error {
+
+	if err := HMAC([]byte(message), key, signature); err != nil {
+		return fmt.Errorf("Could not HMAC container: %s", err)
 	}
 
-	return VerifySignature(message, signature, publicKey)
+	signature.Mode = SignatureModeSha256Hmac
+	return nil
+}
+
+func Verify(signed *Signed, key []byte) error {
+	message := []byte(signed.Message)
+	signature, _ := Base64Decode([]byte(signed.Signature))
+
+	if signed.Mode == SignatureModeSha256Hmac {
+		return HMACVerify(message, key, signature)
+
+	} else {
+		publicKey, err := PemDecodePublic(key)
+		if err != nil {
+			return err
+		}
+
+		return VerifySignature(message, signature, publicKey)
+	}
 }

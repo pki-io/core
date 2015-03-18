@@ -352,16 +352,12 @@ func HMAC(message []byte, key []byte, signature *Signed) error {
 	return nil
 }
 
-func HMACVerify(message, key []byte, signature *Signed) error {
+func HMACVerify(message, key, signature []byte) error {
 	newMac := hmac.New(sha256.New, key)
 	newMac.Write(message)
 	newFinalMac := newMac.Sum(nil)
-	oldMac, err := Base64Decode([]byte(signature.Signature))
-	if err != nil {
-		return fmt.Errorf("Could not base64 decode mac: %s", err)
-	}
 
-	if hmac.Equal(newFinalMac, oldMac) {
+	if hmac.Equal(newFinalMac, signature) {
 		return nil
 	} else {
 		return fmt.Errorf("MACs not equal")

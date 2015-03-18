@@ -285,6 +285,8 @@ func (entity *Entity) Sign(container *document.Container) error {
 }
 
 func (entity *Entity) Authenticate(container *document.Container, id, key string) error {
+
+	// Have to expand key here as we need to add the salt to the container before we turn it into json
 	rawKey, err := hex.DecodeString(key)
 	if err != nil {
 		return fmt.Errorf("Could not decode key: %s", err)
@@ -301,13 +303,14 @@ func (entity *Entity) Authenticate(container *document.Container, id, key string
 	signatureInputs["key-id"] = id
 	signatureInputs["signature-salt"] = string(crypto.Base64Encode(salt))
 	container.Data.Options.SignatureInputs = signatureInputs
+
 	// Force a clear of any existing signature values as that doesn't make sense
 	container.Data.Options.Signature = ""
 
 	containerJson := container.Dump()
 
-	if err := crypto.HMAC([]byte(containerJson), newKey, signature); err != nil {
-		return fmt.Errorf("Could not HMAC container: %s", err)
+	if err := crypto.Authenticate(containerJson, newKey, signature); err != nil {
+		return fmt.Errorf("Couldn't authenticate container: %s", err)
 	}
 
 	if signature.Message != containerJson {
@@ -338,7 +341,9 @@ func (entity *Entity) VerifyAuthentication(container *document.Container, key st
 	mac.Signature = container.Data.Options.Signature
 	container.Data.Options.Signature = ""
 
-	if err := crypto.HMACVerify([]byte(container.Dump()), newKey, mac); err != nil {
+	mac.Message = container.Dump()
+
+	if err := crypto.Verify(mac, newKey); err != nil {
 		return fmt.Errorf("Couldn't verify container: %s", err)
 	} else {
 		return nil
@@ -358,7 +363,7 @@ func (entity *Entity) Verify(container *document.Container) error {
 	containerJson := container.Dump()
 	signature.Message = containerJson
 
-	if err := crypto.Verify(signature, entity.Data.Body.PublicSigningKey); err != nil {
+	if err := crypto.Verify(signature, []byte(entity.Data.Body.PublicSigningKey)); err != nil {
 		return fmt.Errorf("Could not verify org container signature: %s", err)
 	} else {
 		return nil
@@ -366,6 +371,7 @@ func (entity *Entity) Verify(container *document.Container) error {
 }
 
 func (entity *Entity) Decrypt(container *document.Container) (string, error) {
+
 	if container.IsEncrypted() == false {
 		return "", fmt.Errorf("Container isn't encrypted")
 	}
@@ -373,6 +379,16 @@ func (entity *Entity) Decrypt(container *document.Container) (string, error) {
 	id := entity.Data.Body.Id
 	key := entity.Data.Body.PrivateEncryptionKey
 	if decryptedJson, err := container.Decrypt(id, key); err != nil {
+		return "", fmt.Errorf("Could not decrypt: %s", err)
+	} else {
+		return decryptedJson, nil
+	}
+}
+
+func (entity *Entity) SymmetricDecrypt(container *document.Container, key string) (string, error) {
+
+	// TODO - check container is encrypted
+	if decryptedJson, err := container.SymmetricDecrypt(key); err != nil {
 		return "", fmt.Errorf("Could not decrypt: %s", err)
 	} else {
 		return decryptedJson, nil
@@ -444,6 +460,21 @@ func (entity *Entity) Encrypt(content string, entities interface{}) (*document.C
 	return container, nil
 }
 
+func (entity *Entity) SymmetricEncrypt(content, id, key string) (*document.Container, error) {
+
+	container, err := document.NewContainer(nil)
+	if err != nil {
+		return nil, fmt.Errorf("Could not create container: %s", err)
+	}
+
+	container.Data.Options.Source = entity.Data.Body.Id
+	if err := container.SymmetricEncrypt(content, id, key); err != nil {
+		return nil, fmt.Errorf("Could not symmetric encrypt container: %s", err)
+	}
+
+	return container, nil
+}
+
 func (entity *Entity) EncryptThenSignString(content string, entities interface{}) (*document.Container, error) {
 
 	container, err := entity.Encrypt(content, entities)
@@ -458,8 +489,10 @@ func (entity *Entity) EncryptThenSignString(content string, entities interface{}
 	return container, nil
 }
 
-func (entity *Entity) EncryptThenAuthenticateString(content string, entities interface{}, id, key string) (*document.Container, error) {
-	container, err := entity.Encrypt(content, entities)
+// This shouldn't use public keys - should only be symmetric!
+func (entity *Entity) EncryptThenAuthenticateString(content, id, key string) (*document.Container, error) {
+
+	container, err := entity.SymmetricEncrypt(content, id, key)
 	if err != nil {
 		return nil, fmt.Errorf("Couldn't encrypt content: %s", err)
 	}
@@ -487,7 +520,7 @@ func (entity *Entity) VerifyAuthenticationThenDecrypt(container *document.Contai
 		return "", fmt.Errorf("Could not verify container: %s", err)
 	}
 
-	content, err := entity.Decrypt(container)
+	content, err := entity.SymmetricDecrypt(container, key)
 	if err != nil {
 		return "", fmt.Errorf("Could not decrypt container: %s", err)
 	}

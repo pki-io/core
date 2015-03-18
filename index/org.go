@@ -20,7 +20,9 @@ const OrgIndexDefault string = `{
           "entity-reverse": {}
         },
         "nodes": {},
-        "pairing-keys": {}
+        "admins": {},
+        "pairing-keys": {},
+        "invite-keys": {}
     }
 }`
 
@@ -51,7 +53,7 @@ const OrgIndexSchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["id", "parent-id", "pairing-keys", "nodes", "tags"],
+          "required": ["id", "parent-id", "invite-keys", "pairing-keys", "nodes", "tags"],
           "additionalProperties": false,
           "properties": {
               "id": {
@@ -66,8 +68,16 @@ const OrgIndexSchema string = `{
                   "description": "Pairing Keys",
                   "type": "object"
               },
+              "invite-keys": {
+                  "description": "Invite Keys",
+                  "type": "object"
+              },
               "nodes": {
                   "description": "Nodes name to ID map",
+                  "type": "object"
+              },
+              "admins": {
+                  "description": "Admins name to ID map",
                   "type": "object"
               },
               "tags": {
@@ -104,16 +114,23 @@ type PairingKey struct {
 	Tags []string `json:"tags"`
 }
 
+type InviteKey struct {
+	Name string `json:"name"`
+	Key  string `json:"key"`
+}
+
 type OrgIndexData struct {
 	Scope   string `json:"scope"`
 	Version int    `json:"version"`
 	Type    string `json:"type"`
 	Options string `json:"options"`
 	Body    struct {
-		Id          string                `json:"id"`
-		ParentId    string                `json:"parent-id"`
-		PairingKeys map[string]PairingKey `json:"pairing-keys"`
-		Nodes       map[string]string     `json:"nodes"`
+		Id          string                 `json:"id"`
+		ParentId    string                 `json:"parent-id"`
+		PairingKeys map[string]*PairingKey `json:"pairing-keys"`
+		InviteKeys  map[string]*InviteKey  `json:"invite-keys"`
+		Nodes       map[string]string      `json:"nodes"`
+		Admins      map[string]string      `json:"admins"`
 		Tags        struct {
 			CAForward     map[string][]string `json:"ca-forward"`
 			CAReverse     map[string][]string `json:"ca-reverse"`
@@ -211,8 +228,21 @@ func (index *OrgIndex) AddPairingKey(id, key string, i interface{}) error {
 	for _, tag := range inTags {
 		pairingKey.Tags = AppendUnique(pairingKey.Tags, tag)
 	}
-	index.Data.Body.PairingKeys[id] = *pairingKey
+	index.Data.Body.PairingKeys[id] = pairingKey
 	return nil
+}
+
+func (index *OrgIndex) AddInviteKey(id, key, name string) error {
+	inviteKey := new(InviteKey)
+	inviteKey.Name = name
+	inviteKey.Key = key
+	index.Data.Body.InviteKeys[id] = inviteKey
+	return nil
+}
+
+func (index *OrgIndex) GetInviteKey(id string) (*InviteKey, error) {
+	// TODO - check existence
+	return index.Data.Body.InviteKeys[id], nil
 }
 
 func (index *OrgIndex) AddNode(name, id string) error {
@@ -224,4 +254,20 @@ func (index *OrgIndex) AddNode(name, id string) error {
 func (index *OrgIndex) GetNode(name string) (string, error) {
 	// TODO - check for existence
 	return index.Data.Body.Nodes[name], nil
+}
+
+func (index *OrgIndex) AddAdmin(name, id string) error {
+	// TODO - check for existence
+	index.Data.Body.Admins[name] = id
+	return nil
+}
+
+func (index *OrgIndex) GetAdmin(name string) (string, error) {
+	// TODO - check for existence
+	return index.Data.Body.Admins[name], nil
+}
+
+func (index *OrgIndex) GetAdmins() (map[string]string, error) {
+	// TODO - check something?
+	return index.Data.Body.Admins, nil
 }

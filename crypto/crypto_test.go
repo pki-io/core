@@ -1,9 +1,42 @@
 package crypto
 
 import (
+	"encoding/hex"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
+
+func TestSymmetricEncryptDecrypt(t *testing.T) {
+	rawId, _ := RandomBytes(16)
+	rawKey, _ := RandomBytes(16)
+
+	id := hex.EncodeToString(rawId)
+	key := hex.EncodeToString(rawKey)
+
+	message := "this is a secret"
+	encrypted, err := SymmetricEncrypt(message, id, key)
+	assert.Nil(t, err)
+	assert.NotNil(t, encrypted.Ciphertext)
+	assert.NotEqual(t, len(encrypted.Ciphertext), 0)
+	assert.NotEqual(t, encrypted.Ciphertext, message)
+
+	newMessage, err := SymmetricDecrypt(encrypted, key)
+	assert.Nil(t, err)
+	assert.Equal(t, message, newMessage)
+}
+
+func TestAuthenticateVerify(t *testing.T) {
+	key, _ := RandomBytes(16)
+
+	message := "auth this"
+	sig := new(Signed)
+
+	err := Authenticate(message, key, sig)
+	assert.Nil(t, err)
+
+	err = Verify(sig, key)
+	assert.Nil(t, err)
+}
 
 func TestGroupEncrypt(t *testing.T) {
 	key1, _ := GenerateRSAKey()
@@ -65,7 +98,7 @@ func TestVerify(t *testing.T) {
 	Sign(message, string(privateKey), sig)
 
 	publicKey, _ := PemEncodePublic(&rsakey.PublicKey)
-	err := Verify(sig, string(publicKey))
+	err := Verify(sig, publicKey)
 	assert.NoError(t, err)
 
 	privateKey, _ = PemEncodePrivate(eckey)
@@ -73,7 +106,7 @@ func TestVerify(t *testing.T) {
 	Sign(message, string(privateKey), sig)
 
 	publicKey, _ = PemEncodePublic(&eckey.PublicKey)
-	err = Verify(sig, string(publicKey))
+	err = Verify(sig, publicKey)
 	assert.NoError(t, err)
 }
 
@@ -84,6 +117,7 @@ func TestNewHMAC(t *testing.T) {
 
 	HMAC([]byte(message), key, mac)
 
-	err := HMACVerify([]byte(message), key, mac)
+	signature, _ := Base64Decode([]byte(mac.Signature))
+	err := HMACVerify([]byte(message), key, signature)
 	assert.Nil(t, err)
 }
