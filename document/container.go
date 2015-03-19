@@ -140,6 +140,19 @@ func (doc *Container) Encrypt(jsonString string, keys map[string]string) error {
 	return nil
 }
 
+func (doc *Container) SymmetricEncrypt(jsonString, id, key string) error {
+	encrypted, err := crypto.SymmetricEncrypt(jsonString, id, key)
+	if err != nil {
+		return fmt.Errorf("Couldn't symmetric encrypt content: %s", err)
+	}
+
+	doc.Data.Options.EncryptionMode = encrypted.Mode
+	doc.Data.Options.EncryptionInputs = encrypted.Inputs
+	doc.Data.Body = encrypted.Ciphertext
+
+	return nil
+}
+
 func (doc *Container) Decrypt(id string, privateKey string) (string, error) {
 	encrypted := new(crypto.Encrypted)
 	encrypted.Keys = doc.Data.Options.EncryptionKeys
@@ -149,6 +162,20 @@ func (doc *Container) Decrypt(id string, privateKey string) (string, error) {
 
 	if decryptedJson, err := crypto.GroupDecrypt(encrypted, id, privateKey); err != nil {
 		return "", fmt.Errorf("Could not decrypt container: %s", err)
+	} else {
+		return decryptedJson, nil
+	}
+}
+
+func (doc *Container) SymmetricDecrypt(key string) (string, error) {
+	encrypted := new(crypto.Encrypted)
+	encrypted.Keys = doc.Data.Options.EncryptionKeys
+	encrypted.Mode = doc.Data.Options.EncryptionMode
+	encrypted.Inputs = doc.Data.Options.EncryptionInputs
+	encrypted.Ciphertext = doc.Data.Body
+
+	if decryptedJson, err := crypto.SymmetricDecrypt(encrypted, key); err != nil {
+		return "", fmt.Errorf("Couldn't decrypt container: %s", err)
 	} else {
 		return decryptedJson, nil
 	}

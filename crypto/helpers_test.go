@@ -213,7 +213,8 @@ func TestHMACVerifyHelper(t *testing.T) {
 
 	HMAC([]byte(message), key, mac)
 
-	err := HMACVerify([]byte(message), key, mac)
+	signature, _ := Base64Decode([]byte(mac.Signature))
+	err := HMACVerify([]byte(message), key, signature)
 	assert.Nil(t, err)
 }
 
