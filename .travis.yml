@@ -9,6 +9,7 @@ before_install:
   - go get github.com/mattn/goveralls
   - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
 script:
+  - make get-deps
   - gom test -coverprofile=config.coverprofile ./config
   - gom test -coverprofile=crypto.coverprofile ./crypto
   - gom test -coverprofile=document.coverprofile ./document
