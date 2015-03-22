@@ -26,7 +26,7 @@ func TestSymmetricEncryptDecrypt(t *testing.T) {
 	err := container.SymmetricEncrypt(message, id, key)
 	assert.Nil(t, err)
 
-	newMessage, err := container.SymmetricDecrypt(id, key)
+	newMessage, err := container.SymmetricDecrypt(key)
 	assert.Nil(t, err)
 	assert.NotNil(t, newMessage)
 	assert.Equal(t, newMessage, message)

@@ -5,7 +5,7 @@ default: get-deps test
 get-deps:
 	gom install
 test:
-	for d in $(DIRS); do (cd $$d; gom test); done
+	gom test ./...
 
 dev: clean get-deps
 	mkdir -p _vendor/src/github.com/pki-io/core && \
