@@ -2,9 +2,9 @@ package x509
 
 import (
 	//"fmt"
+	"crypto/x509/pkix"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"time"
 )
 
 func TestX509NewCertificate(t *testing.T) {
@@ -21,8 +21,12 @@ func TestX509CertificateDump(t *testing.T) {
 }
 
 func TestX509CertificateGenerateSelfSigned(t *testing.T) {
-	certficiate, _ := NewCertificate(nil)
-	err := certficiate.Generate(nil, time.Now(), time.Now().AddDate(5, 5, 5))
+	certificate, _ := NewCertificate(nil)
+
+	subject := &pkix.Name{CommonName: "Test"}
+	certificate.Data.Body.Expiry = 10
+
+	err := certificate.Generate(nil, subject)
 	assert.Nil(t, err)
-	assert.NotEqual(t, certficiate.Data.Body.Certificate, "")
+	assert.NotEqual(t, certificate.Data.Body.Certificate, "")
 }
