@@ -54,7 +54,7 @@ const OrgIndexSchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["id", "parent-id", "invite-keys", "pairing-keys", "nodes", "tags"],
+          "required": ["id", "parent-id", "invite-keys", "pairing-keys", "nodes", "admins", "cas", "tags"],
           "additionalProperties": false,
           "properties": {
               "id": {
