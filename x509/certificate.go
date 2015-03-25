@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/pki-io/core/crypto"
 	"github.com/pki-io/core/document"
-	"math/big"
 	"time"
 )
 
@@ -20,6 +19,7 @@ const CertificateDefault string = `{
         "id": "",
         "name": "",
         "key-type": "ec",
+        "expiry": 0,
         "tags": [],
         "certificate": "",
         "private-key": ""
@@ -64,6 +64,10 @@ const CertificateSchema string = `{
                   "description": "Entity name",
                   "type": "string"
               },
+              "expiry": {
+                  "description": "Expiry period in days",
+                  "type": "integer"
+              },
               "key-type": {
               	  "description": "Key type. Must be either rsa or ec",
               	  "type": "string"
@@ -93,6 +97,7 @@ type CertificateData struct {
 	Body    struct {
 		Id          string   `json:"id"`
 		Name        string   `json:"name"`
+		Expiry      int      `json:"expiry"`
 		KeyType     string   `json:"key-type"`
 		Tags        []string `json:"tags"`
 		Certificate string   `json:"certificate"`
@@ -134,20 +139,21 @@ func (certificate *Certificate) Dump() string {
 	}
 }
 
-func (certificate *Certificate) Generate(parentCertificate interface{}, notBefore time.Time, notAfter time.Time) error {
+func (certificate *Certificate) Generate(parentCertificate interface{}, subject *pkix.Name) error {
 	//https://www.socketloop.com/tutorials/golang-create-x509-certificate-private-and-public-keys
 
-	//subject := certificate.BuildSubject(parentCertificate)
-	subject := &pkix.Name{
-		Country:      []string{"Earth"},
-		Organization: []string{"Mother Nature"},
+	serial, err := NewSerial()
+	if err != nil {
+		return fmt.Errorf("Could not create serial: %s", err)
 	}
+
+	notBefore := time.Now()
+	notAfter := notBefore.AddDate(0, 0, certificate.Data.Body.Expiry)
 
 	template := &x509.Certificate{
 		IsCA: false,
 		BasicConstraintsValid: true,
-		SubjectKeyId:          []byte{1, 2, 3},
-		SerialNumber:          big.NewInt(1234),
+		SerialNumber:          serial,
 		Subject:               *subject,
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
@@ -158,7 +164,6 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, notBefor
 
 	var privateKey interface{}
 	var publicKey interface{}
-	var err error
 
 	switch crypto.KeyType(certificate.Data.Body.KeyType) {
 	case crypto.KeyTypeRSA:
@@ -181,12 +186,12 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, notBefor
 	var signingKey interface{}
 
 	switch t := parentCertificate.(type) {
-	case *Certificate:
-		parent, err = parentCertificate.(*Certificate).Certificate()
+	case *CA:
+		parent, err = parentCertificate.(*CA).Certificate()
 		if err != nil {
 			return fmt.Errorf("Could not get certificate: %s", err)
 		}
-		signingKey, err = parentCertificate.(*Certificate).PrivateKey()
+		signingKey, err = parentCertificate.(*CA).PrivateKey()
 		if err != nil {
 			return fmt.Errorf("Could not get private key: %s", err)
 		}

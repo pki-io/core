@@ -22,7 +22,8 @@ const OrgIndexDefault string = `{
         "nodes": {},
         "admins": {},
         "pairing-keys": {},
-        "invite-keys": {}
+        "invite-keys": {},
+        "cas": {}
     }
 }`
 
@@ -53,7 +54,7 @@ const OrgIndexSchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["id", "parent-id", "invite-keys", "pairing-keys", "nodes", "tags"],
+          "required": ["id", "parent-id", "invite-keys", "pairing-keys", "nodes", "admins", "cas", "tags"],
           "additionalProperties": false,
           "properties": {
               "id": {
@@ -78,6 +79,10 @@ const OrgIndexSchema string = `{
               },
               "admins": {
                   "description": "Admins name to ID map",
+                  "type": "object"
+              },
+              "cas": {
+                  "description": "CAs name to ID map",
                   "type": "object"
               },
               "tags": {
@@ -131,6 +136,7 @@ type OrgIndexData struct {
 		InviteKeys  map[string]*InviteKey  `json:"invite-keys"`
 		Nodes       map[string]string      `json:"nodes"`
 		Admins      map[string]string      `json:"admins"`
+		CAs         map[string]string      `json:"cas"`
 		Tags        struct {
 			CAForward     map[string][]string `json:"ca-forward"`
 			CAReverse     map[string][]string `json:"ca-reverse"`
@@ -270,4 +276,15 @@ func (index *OrgIndex) GetAdmin(name string) (string, error) {
 func (index *OrgIndex) GetAdmins() (map[string]string, error) {
 	// TODO - check something?
 	return index.Data.Body.Admins, nil
+}
+
+func (index *OrgIndex) AddCA(name, id string) error {
+	// TODO - check for existence
+	index.Data.Body.CAs[name] = id
+	return nil
+}
+
+func (index *OrgIndex) GetCA(name string) (string, error) {
+	// TODO - check existence
+	return index.Data.Body.CAs[name], nil
 }

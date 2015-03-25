@@ -5,11 +5,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
-	"github.com/mitchellh/packer/common/uuid"
 	"github.com/pki-io/core/crypto"
 	"github.com/pki-io/core/document"
-	"math/big"
-	"strings"
 	"time"
 )
 
@@ -173,18 +170,6 @@ type CAData struct {
 type CA struct {
 	document.Document
 	Data CAData
-}
-
-func NewSerial() (*big.Int, error) {
-	uuid := uuid.TimeOrderedUUID()
-	clean := strings.Replace(uuid, "-", "", -1)
-	i := new(big.Int)
-	_, err := fmt.Sscanf(clean, "%x", i)
-	if err != nil {
-		return nil, fmt.Errorf("Could not scan UUID to int: %s", err)
-	} else {
-		return i, nil
-	}
 }
 
 func NewCA(jsonString interface{}) (*CA, error) {
