@@ -9,6 +9,7 @@ import (
 	"github.com/pki-io/core/document"
 )
 
+// EntityDefault provides default values for Entity.
 const EntityDefault string = `{
     "scope": "pki.io",
     "version": 1,
@@ -25,6 +26,7 @@ const EntityDefault string = `{
     }
 }`
 
+// EntitySchema defines the JSON Schema for Entity.
 const EntitySchema string = `{
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "EntityDocument",
@@ -88,6 +90,7 @@ const EntitySchema string = `{
   }
 }`
 
+// EntityData represents parsed Entity JSON data.
 type EntityData struct {
 	Scope   string `json:"scope"`
 	Version int    `json:"version"`
@@ -104,11 +107,13 @@ type EntityData struct {
 	} `json:"body"`
 }
 
+// Entity participates in cryptographic operations, sending and receiving secured data.
 type Entity struct {
 	document.Document
 	Data EntityData
 }
 
+// New returns a new Entity.
 func New(jsonString interface{}) (*Entity, error) {
 	entity := new(Entity)
 	if err := entity.New(jsonString); err != nil {
@@ -118,6 +123,7 @@ func New(jsonString interface{}) (*Entity, error) {
 	}
 }
 
+// New initializes the entity.
 func (entity *Entity) New(jsonString interface{}) error {
 	entity.Schema = EntitySchema
 	entity.Default = EntityDefault
@@ -128,6 +134,7 @@ func (entity *Entity) New(jsonString interface{}) error {
 	}
 }
 
+// Load takes a JSON string and sets the entity data.
 func (entity *Entity) Load(jsonString interface{}) error {
 	data := new(EntityData)
 	if data, err := entity.FromJson(jsonString, data); err != nil {
@@ -138,6 +145,7 @@ func (entity *Entity) Load(jsonString interface{}) error {
 	}
 }
 
+// Dump serializes the entity, returning a JSON string.
 func (entity *Entity) Dump() string {
 	if jsonString, err := entity.ToJson(entity.Data); err != nil {
 		return ""
@@ -146,6 +154,7 @@ func (entity *Entity) Dump() string {
 	}
 }
 
+// DumpPublic serializes the public entity data, returning a JSON string.
 func (entity *Entity) DumpPublic() string {
 	public, err := entity.Public()
 	if err != nil {
@@ -155,6 +164,7 @@ func (entity *Entity) DumpPublic() string {
 	}
 }
 
+// generateRSAKeys generates RSA keys.
 func (entity *Entity) generateRSAKeys() (*rsa.PrivateKey, *rsa.PrivateKey, error) {
 	signingKey, err := crypto.GenerateRSAKey()
 	if err != nil {
@@ -186,6 +196,7 @@ func (entity *Entity) generateRSAKeys() (*rsa.PrivateKey, *rsa.PrivateKey, error
 	return signingKey, encryptionKey, nil
 }
 
+// generateECKeys generates EC keys.
 func (entity *Entity) generateECKeys() (*ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
 	signingKey, err := crypto.GenerateECKey()
 	if err != nil {
@@ -202,6 +213,7 @@ func (entity *Entity) generateECKeys() (*ecdsa.PrivateKey, *ecdsa.PrivateKey, er
 	return signingKey, encryptionKey, nil
 }
 
+// GenerateKeys generates RSA or EC keys for the entity, depending on the KeyType set.
 func (entity *Entity) GenerateKeys() error {
 	var signingKey interface{}
 	var encryptionKey interface{}
@@ -254,6 +266,7 @@ func (entity *Entity) GenerateKeys() error {
 	return nil
 }
 
+// Sign takes a Container and signs it using its private signing key.
 func (entity *Entity) Sign(container *document.Container) error {
 	var signatureMode crypto.Mode
 	switch crypto.KeyType(entity.Data.Body.KeyType) {
@@ -284,6 +297,7 @@ func (entity *Entity) Sign(container *document.Container) error {
 	return nil
 }
 
+// Authenticate takes a Container and MACs it using the provided key.
 func (entity *Entity) Authenticate(container *document.Container, id, key string) error {
 
 	// Have to expand key here as we need to add the salt to the container before we turn it into json
@@ -321,6 +335,7 @@ func (entity *Entity) Authenticate(container *document.Container, id, key string
 	return nil
 }
 
+// VerifyAuthentication takes a Container and verifies the MAC for the given key.
 func (entity *Entity) VerifyAuthentication(container *document.Container, key string) error {
 	rawKey, err := hex.DecodeString(key)
 	if err != nil {
@@ -350,6 +365,7 @@ func (entity *Entity) VerifyAuthentication(container *document.Container, key st
 	}
 }
 
+// Verify takes a Container and verifies the signature using the entities public key.
 func (entity *Entity) Verify(container *document.Container) error {
 
 	if container.IsSigned() == false {
@@ -370,6 +386,8 @@ func (entity *Entity) Verify(container *document.Container) error {
 	}
 }
 
+// Decrypt takes a Container and decrypts the content using the entities private decryption key.
+// It returns a plaintext string.
 func (entity *Entity) Decrypt(container *document.Container) (string, error) {
 
 	if container.IsEncrypted() == false {
@@ -385,6 +403,8 @@ func (entity *Entity) Decrypt(container *document.Container) (string, error) {
 	}
 }
 
+// SymmetricDecrypt takes a Container and decrypts the content using the provided key.
+// It returns a plaintext string.
 func (entity *Entity) SymmetricDecrypt(container *document.Container, key string) (string, error) {
 
 	// TODO - check container is encrypted
@@ -395,6 +415,7 @@ func (entity *Entity) SymmetricDecrypt(container *document.Container, key string
 	}
 }
 
+// Public returns the public entity data.
 func (entity *Entity) Public() (*Entity, error) {
 	selfJson := entity.Dump()
 	publicEntity, err := New(selfJson)
@@ -406,6 +427,7 @@ func (entity *Entity) Public() (*Entity, error) {
 	return publicEntity, nil
 }
 
+// SignString takes a message string and signs it.
 func (entity *Entity) SignString(content string) (*document.Container, error) {
 	container, err := document.NewContainer(nil)
 	if err != nil {
@@ -420,6 +442,7 @@ func (entity *Entity) SignString(content string) (*document.Container, error) {
 	}
 }
 
+// AuthenticateString takes a message string and key and MACs the message using the provided key.
 func (entity *Entity) AuthenticateString(content, id, key string) (*document.Container, error) {
 	container, err := document.NewContainer(nil)
 	if err != nil {
@@ -434,6 +457,7 @@ func (entity *Entity) AuthenticateString(content, id, key string) (*document.Con
 	}
 }
 
+// Encrypt takes a plaintext string and encrypts it for each provided entity.
 func (entity *Entity) Encrypt(content string, entities interface{}) (*document.Container, error) {
 	encryptionKeys := make(map[string]string)
 
@@ -460,6 +484,7 @@ func (entity *Entity) Encrypt(content string, entities interface{}) (*document.C
 	return container, nil
 }
 
+// SymmetricEncrypt takes a plaintext string and encrypts it with the given key.
 func (entity *Entity) SymmetricEncrypt(content, id, key string) (*document.Container, error) {
 
 	container, err := document.NewContainer(nil)
@@ -475,6 +500,7 @@ func (entity *Entity) SymmetricEncrypt(content, id, key string) (*document.Conta
 	return container, nil
 }
 
+// EncryptThenSignString takes a plaintext string, encrypts it then signs the ciphertext.
 func (entity *Entity) EncryptThenSignString(content string, entities interface{}) (*document.Container, error) {
 
 	container, err := entity.Encrypt(content, entities)
@@ -489,7 +515,9 @@ func (entity *Entity) EncryptThenSignString(content string, entities interface{}
 	return container, nil
 }
 
-// This shouldn't use public keys - should only be symmetric!
+// EncryptThenAuthenticateString takes a plaintext string, encrypts it using the key and the MACs the ciphertext using they key.
+//
+// Note: under the hood, the key is expanded into two separate keys, one for encryption and one for signing.
 func (entity *Entity) EncryptThenAuthenticateString(content, id, key string) (*document.Container, error) {
 
 	container, err := entity.SymmetricEncrypt(content, id, key)
@@ -502,6 +530,7 @@ func (entity *Entity) EncryptThenAuthenticateString(content, id, key string) (*d
 	return container, nil
 }
 
+// VerifyThenDecrypt takes a container, verifies the signature then decrypts, returning a plaintext string.
 func (entity *Entity) VerifyThenDecrypt(container *document.Container) (string, error) {
 	if err := entity.Verify(container); err != nil {
 		return "", fmt.Errorf("Could not verify container: %s", err)
@@ -515,6 +544,9 @@ func (entity *Entity) VerifyThenDecrypt(container *document.Container) (string, 
 
 }
 
+// VerifyAuthenticationThenDecrypt takes a container and verifies the MAC using the given key, then decrypts using the key, returning a plaintext string.
+//
+// Note: under the hood, the key is expanded into two separate keys, one for encryption and one for signing.
 func (entity *Entity) VerifyAuthenticationThenDecrypt(container *document.Container, key string) (string, error) {
 	if err := entity.VerifyAuthentication(container, key); err != nil {
 		return "", fmt.Errorf("Could not verify container: %s", err)
