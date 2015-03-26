@@ -5,6 +5,7 @@ import (
 	"github.com/pki-io/core/crypto"
 )
 
+// ContainerDefault sets default values for a Container.
 const ContainerDefault string = `{
   "scope": "pki.io",
   "version": 1,
@@ -21,6 +22,7 @@ const ContainerDefault string = `{
   "body": ""
 }`
 
+// ContainerSchema defines the JSON schema for a Container.
 const ContainerSchema string = `{
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Container",
@@ -84,6 +86,7 @@ const ContainerSchema string = `{
   }
 }`
 
+// ContainerData stores the parsed JSON data.
 type ContainerData struct {
 	Scope   string `json:"scope"`
 	Version int    `json:"version"`
@@ -100,11 +103,13 @@ type ContainerData struct {
 	Body string `json:"body"`
 }
 
+// Container is a cryptographic document that can be signed and/or encrypted.
 type Container struct {
 	Document
 	Data ContainerData
 }
 
+// NewContainer creates a new Container.
 func NewContainer(jsonData interface{}) (*Container, error) {
 	doc := new(Container)
 	data := new(ContainerData)
@@ -118,6 +123,7 @@ func NewContainer(jsonData interface{}) (*Container, error) {
 	}
 }
 
+// Dump serializes the Container to JSON.
 func (doc *Container) Dump() string {
 	if jsonString, err := doc.ToJson(doc.Data); err != nil {
 		return ""
@@ -126,6 +132,7 @@ func (doc *Container) Dump() string {
 	}
 }
 
+// Encrypt takes a plaintext string and group encrypts for the given public keys and updates its data to the ciphertext and inputs.
 func (doc *Container) Encrypt(jsonString string, keys map[string]string) error {
 	encrypted, err := crypto.GroupEncrypt(jsonString, keys)
 	if err != nil {
@@ -140,6 +147,7 @@ func (doc *Container) Encrypt(jsonString string, keys map[string]string) error {
 	return nil
 }
 
+// SymmetricEncrypt takes a plaintext string and encrypts with the given key. It updates its data to the ciphertext and inputs.
 func (doc *Container) SymmetricEncrypt(jsonString, id, key string) error {
 	encrypted, err := crypto.SymmetricEncrypt(jsonString, id, key)
 	if err != nil {
@@ -153,6 +161,7 @@ func (doc *Container) SymmetricEncrypt(jsonString, id, key string) error {
 	return nil
 }
 
+// Decrypt takes a private key and decrypts the Container body, return a plaintext string.
 func (doc *Container) Decrypt(id string, privateKey string) (string, error) {
 	encrypted := new(crypto.Encrypted)
 	encrypted.Keys = doc.Data.Options.EncryptionKeys
@@ -167,6 +176,7 @@ func (doc *Container) Decrypt(id string, privateKey string) (string, error) {
 	}
 }
 
+// SymmetricDecrypt takes a key and decrypts the Container body, returning a plaintext string.
 func (doc *Container) SymmetricDecrypt(key string) (string, error) {
 	encrypted := new(crypto.Encrypted)
 	encrypted.Keys = doc.Data.Options.EncryptionKeys
@@ -181,6 +191,7 @@ func (doc *Container) SymmetricDecrypt(key string) (string, error) {
 	}
 }
 
+// IsEncrypted checks whether the Container is encrypted.
 func (doc *Container) IsEncrypted() bool {
 	if len(doc.Data.Options.EncryptionKeys) == 0 ||
 		len(doc.Data.Options.EncryptionMode) == 0 ||
@@ -191,6 +202,7 @@ func (doc *Container) IsEncrypted() bool {
 	}
 }
 
+// IsSigned checks whether the Container is signed.
 func (doc *Container) IsSigned() bool {
 	if len(doc.Data.Options.SignatureMode) == 0 ||
 		len(doc.Data.Options.Signature) == 0 {
