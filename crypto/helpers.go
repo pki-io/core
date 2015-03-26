@@ -23,9 +23,9 @@ import (
 	"math/big"
 )
 
-// https://www.socketloop.com/tutorials/golang-padding-un-padding-data
 // https://www.socketloop.com/tutorials/golang-example-for-rsa-package-functions-example
 
+// KeyType represents a supported public key pair type
 type KeyType string
 
 const (
@@ -33,10 +33,17 @@ const (
 	KeyTypeEC  KeyType = "ec"
 )
 
+// UUID is an opinionated helper function that generate a 128 bit time-ordered UUID string.
+//
+// Documentation for the TimeOrderedUUID function is available here:
+// TODO
+//
+// From the source docs: Top 32 bits are a timestamp, bottom 96 bytes are random.
 func UUID() string {
 	return uuid.TimeOrderedUUID()
 }
 
+// RandomBytes generates and returns size number of random bytes.
 func RandomBytes(size int) ([]byte, error) {
 	randomBytes := make([]byte, size)
 	_, err := rand.Read(randomBytes)
@@ -47,18 +54,30 @@ func RandomBytes(size int) ([]byte, error) {
 	return randomBytes, nil
 }
 
+// Pad takes the src byte array and PKCS5 pads it to blockSize, returning the padded byte array.
+//
+// Taken from the tutorial available here:
+// https://www.socketloop.com/tutorials/golang-padding-un-padding-data
 func Pad(src []byte, blockSize int) []byte {
 	padding := blockSize - len(src)%blockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(src, padtext...)
 }
 
+// UnPad takes the src byte array and PKCS5 unpads it.
+//
+// Taken from the tutorial available here:
+// https://www.socketloop.com/tutorials/golang-padding-un-padding-data
 func UnPad(src []byte) []byte {
 	length := len(src)
 	unpadding := int(src[length-1])
 	return src[:(length - unpadding)]
 }
 
+// ExpandKey is an opinionated helper function to cryptographically expand a key using a 128 bit salt and PBKDF2.
+// If the salt is of 0 length, it generates a new salt, and returns the expanded key and salt as byte arrays.
+//
+// A salt should only be provided as part of a decryption or verification process. When using ExpandKey to create a new key, let ExpandKey generate the salt. This is to lessen the risk of a weak or non-unique salt being used.
 func ExpandKey(key, salt []byte) ([]byte, []byte, error) {
 	if len(salt) == 0 {
 		var err error
@@ -71,10 +90,12 @@ func ExpandKey(key, salt []byte) ([]byte, []byte, error) {
 	return newKey, salt, nil
 }
 
+// Base64Encode returns the base64 encoding of the input.
 func Base64Encode(input []byte) []byte {
 	return []byte(base64.StdEncoding.EncodeToString(input))
 }
 
+// Base64Decode returns the base64 decoded input.
 func Base64Decode(input []byte) (decoded []byte, err error) {
 	b, err := base64.StdEncoding.DecodeString(string(input))
 	if err != nil {
@@ -84,7 +105,9 @@ func Base64Decode(input []byte) (decoded []byte, err error) {
 	}
 }
 
-func AESEncrypt(plaintext []byte, key []byte) ([]byte, []byte, error) {
+// AESEncrypt is an opinionated helper function that implements 256 bit AES in CBC mode.
+// It creates a random 128 bit IV which is returned along with the ciphertext.
+func AESEncrypt(plaintext, key []byte) (ciphertext []byte, iv []byte, err error) {
 	if len(plaintext) == 0 {
 		return nil, nil, fmt.Errorf("Plaintext can't be empty")
 	}
@@ -95,8 +118,8 @@ func AESEncrypt(plaintext []byte, key []byte) ([]byte, []byte, error) {
 	}
 
 	paddedPlaintext := Pad(plaintext, aes.BlockSize)
-	ciphertext := make([]byte, len(paddedPlaintext))
-	iv, err := RandomBytes(aes.BlockSize)
+	ciphertext = make([]byte, len(paddedPlaintext))
+	iv, err = RandomBytes(aes.BlockSize)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -107,7 +130,9 @@ func AESEncrypt(plaintext []byte, key []byte) ([]byte, []byte, error) {
 	return ciphertext, iv, nil
 }
 
-func AESDecrypt(ciphertext []byte, iv []byte, key []byte) ([]byte, error) {
+// AESDecrypt is an opinionated helper function that decryptes a ciphertext encrypted
+// with 256 bit AES in CBC mode and returns the plaintext.
+func AESDecrypt(ciphertext, iv, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, fmt.Errorf("Can't initialise cipher: %s", err)
@@ -128,6 +153,7 @@ func AESDecrypt(ciphertext []byte, iv []byte, key []byte) ([]byte, error) {
 	return UnPad(paddedPlaintext), nil
 }
 
+// GenerateRSAKey is an opinionated helper function to generate a 2048 bit RSA key pair
 func GenerateRSAKey() (*rsa.PrivateKey, error) {
 	if key, err := rsa.GenerateKey(rand.Reader, 2048); err != nil {
 		return nil, fmt.Errorf("Can't create RSA keys: %s", err)
@@ -136,6 +162,7 @@ func GenerateRSAKey() (*rsa.PrivateKey, error) {
 	}
 }
 
+// GenerateECKey is an opinionated helper function to generate a P256 ECDSA key pair.
 func GenerateECKey() (*ecdsa.PrivateKey, error) {
 	if key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader); err != nil {
 		return nil, fmt.Errorf("Can't create ECDSA keys: %s", err)
@@ -144,6 +171,7 @@ func GenerateECKey() (*ecdsa.PrivateKey, error) {
 	}
 }
 
+// PemEncodePrivate PEM encodes a private key. It supports RSA and ECDSA key types.
 func PemEncodePrivate(key crypto.PrivateKey) ([]byte, error) {
 
 	switch k := key.(type) {
@@ -164,8 +192,7 @@ func PemEncodePrivate(key crypto.PrivateKey) ([]byte, error) {
 
 }
 
-// TODO: These PEM Encode functions should probably return a string, since everywhere (so far) that these are being used
-// TODO: Are converting them anyway...
+// PemEncodePublic PEM encodes a public key. It supports RSA and ECDSA.
 func PemEncodePublic(key crypto.PublicKey) ([]byte, error) {
 	der, err := x509.MarshalPKIXPublicKey(key)
 	if err != nil {
@@ -186,6 +213,7 @@ func PemEncodePublic(key crypto.PublicKey) ([]byte, error) {
 	return pem.EncodeToMemory(b), nil
 }
 
+// PemDecodePrivate decodes a PEM encoded private key. It supports PKCS1 and EC private keys.
 func PemDecodePrivate(in []byte) (crypto.PrivateKey, error) {
 	b, _ := pem.Decode(in)
 	if key, err := x509.ParsePKCS1PrivateKey(b.Bytes); err != nil {
@@ -199,6 +227,7 @@ func PemDecodePrivate(in []byte) (crypto.PrivateKey, error) {
 	}
 }
 
+// PemDecodePublic decodes a PEM encoded public key. It supports any PKIX public key.
 func PemDecodePublic(in []byte) (crypto.PublicKey, error) {
 	b, _ := pem.Decode(in)
 	if pubKey, err := x509.ParsePKIXPublicKey(b.Bytes); err != nil {
@@ -208,6 +237,8 @@ func PemDecodePublic(in []byte) (crypto.PublicKey, error) {
 	}
 }
 
+// Encrypt is a wrapper function that will encrypt a plaintext using the provided public key,
+// and returns the ciphertext. It supports RSA and ECDSA public keys.
 func Encrypt(plaintext []byte, publicKey crypto.PublicKey) ([]byte, error) {
 	switch k := publicKey.(type) {
 	case *rsa.PublicKey:
@@ -219,6 +250,8 @@ func Encrypt(plaintext []byte, publicKey crypto.PublicKey) ([]byte, error) {
 	}
 }
 
+// rsaEncrypt is an opinionated helper function that encryptes a plaintext using an RSA public key,
+// and returns the ciphertext. It uses OAEP with SHA-256.
 func rsaEncrypt(plaintext []byte, publicKey *rsa.PublicKey) ([]byte, error) {
 	label := []byte("")
 	hash := sha256.New()
@@ -229,11 +262,18 @@ func rsaEncrypt(plaintext []byte, publicKey *rsa.PublicKey) ([]byte, error) {
 	}
 }
 
+// rsaEncrypt is an opinionated helper function that encryptes a plaintext using an EC DSA public key,
+// and returns the ciphertext.
+//
+// it uses ecies (integrated encryption scheme) provided by an external library, documentation of which is available here:
+// https://github.com/obscuren/ecies
 func eciesEncrypt(plaintext []byte, publicKey *ecdsa.PublicKey) ([]byte, error) {
 	pub := ecies.ImportECDSAPublic(publicKey)
 	return ecies.Encrypt(rand.Reader, pub, plaintext, nil, nil)
 }
 
+// Decrypt is a wrapper function that will decrypt a ciphertext using the provided private key,
+// and returns the plaintext. It supports RSA and ECDSA private keys.
 func Decrypt(cipherText []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 	switch k := privateKey.(type) {
 	case *rsa.PrivateKey:
@@ -245,6 +285,8 @@ func Decrypt(cipherText []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 	}
 }
 
+// rsaDecrypt is an opinionated helper function that decryptes a ciphertext using an RSA private key.
+// It uses OAEP with SHA-256.
 func rsaDecrypt(ciphertext []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	label := []byte("")
 	hash := sha256.New()
@@ -255,11 +297,16 @@ func rsaDecrypt(ciphertext []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	}
 }
 
+// eciesDecrypt is an opinionated helper function that decryptes a ciphertext using an ECDSA private key.
+//
+// it uses ecies (integrated encryption scheme) provided by an external library, documentation of which is available here:
+// https://github.com/obscuren/ecies
 func eciesDecrypt(cipherText []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	pri := ecies.ImportECDSA(privateKey)
 	return pri.Decrypt(rand.Reader, cipherText, nil, nil)
 }
 
+// SignMessage signs a message using the provided private key. It supports RSA and ECDSA and returns the message signature.
 func SignMessage(message []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 	switch k := privateKey.(type) {
 	case *rsa.PrivateKey:
@@ -271,6 +318,7 @@ func SignMessage(message []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 	}
 }
 
+// rsaSign is an opinionated helper function that signs a message using an RSA private key. It uses PKCS1v15 with SHA-256, and returns the message signature.
 func rsaSign(message []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	var h crypto.Hash
 	hash := sha256.New()
@@ -283,6 +331,7 @@ func rsaSign(message []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	}
 }
 
+// ecdsaSign is an opinionated helper function that signs a message using an ECDSA private key, and returns the message signature. It uses SHA-256 for hashing.
 func ecdsaSign(message []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	hash := sha256.New()
 	io.WriteString(hash, string(message))
@@ -300,6 +349,7 @@ func ecdsaSign(message []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	}
 }
 
+// VerifySignature verifies a message for a given signature and public key. If verified, the function returns nil, otherwise it returns an error. It supports RSA and ECDSA public keys.
 func VerifySignature(message []byte, signature []byte, publicKey crypto.PublicKey) error {
 	switch k := publicKey.(type) {
 	case *rsa.PublicKey:
@@ -311,6 +361,7 @@ func VerifySignature(message []byte, signature []byte, publicKey crypto.PublicKe
 	}
 }
 
+// rsaVerify is an opinionated helper function that verifies a message for a given signature and RSA public key. If verified, the function returns nil, otherwise it returns an error. It uses PKCS1v15 with SHA-256.
 func rsaVerify(message []byte, signature []byte, publicKey *rsa.PublicKey) error {
 	var h crypto.Hash
 	hash := sha256.New()
@@ -323,6 +374,7 @@ func rsaVerify(message []byte, signature []byte, publicKey *rsa.PublicKey) error
 	}
 }
 
+// ecdsaVerify is an opinionated helper function that verifies a message for a given signature and ECDSA public key. If verified, the function returns nil, otherwise it returns an error. It uses SHA-256 for hashing.
 func ecdsaVerify(message []byte, signature []byte, publicKey *ecdsa.PublicKey) error {
 	hash := sha256.New()
 	io.WriteString(hash, string(message))
@@ -337,6 +389,7 @@ func ecdsaVerify(message []byte, signature []byte, publicKey *ecdsa.PublicKey) e
 	}
 }
 
+// hmac256 is an opinionated helper function that generates a HMAC for the given message using SHA-256.
 func hmac256(message, key []byte) []byte {
 	mac := hmac.New(sha256.New, key)
 	mac.Write(message)
@@ -344,7 +397,7 @@ func hmac256(message, key []byte) []byte {
 	return mac.Sum(nil)
 }
 
-// Should really be moved into Sign method then case on mode (with nice consts)
+// HMAC is a wrapper function that calculates a HMAC for a given message and symmetric key.
 func HMAC(message []byte, key []byte, signature *Signed) error {
 	mac := hmac256(message, key)
 	signature.Message = string(message)
@@ -352,6 +405,7 @@ func HMAC(message []byte, key []byte, signature *Signed) error {
 	return nil
 }
 
+// HMACVerify verifies the HMAC of the given message. If verified, the function returns nil, otherwise it returns an error.
 func HMACVerify(message, key, signature []byte) error {
 	newMac := hmac.New(sha256.New, key)
 	newMac.Write(message)

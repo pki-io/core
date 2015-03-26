@@ -7,6 +7,7 @@ import (
 	"fmt"
 )
 
+// Signature or encryption mode
 type Mode string
 
 const (
@@ -17,6 +18,7 @@ const (
 
 // TODO - encryption mode consts
 
+// Encrypted represents a ciphertext with related inputs
 type Encrypted struct {
 	Ciphertext string
 	Mode       string
@@ -24,16 +26,19 @@ type Encrypted struct {
 	Keys       map[string]string
 }
 
+// Signed represents a signature and related inputs
 type Signed struct {
 	Message   string
 	Mode      Mode
 	Signature string
 }
 
+// NewSignature returns a new Signed
 func NewSignature(mode Mode) *Signed {
 	return &Signed{Mode: mode}
 }
 
+// GroupEncrypt takes a plaintext and encrypts with one or more public keys.
 func GroupEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, error) {
 
 	keySize := 32
@@ -61,6 +66,7 @@ func GroupEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, e
 	return &Encrypted{Ciphertext: string(Base64Encode(ciphertext)), Mode: "aes-cbc-256+rsa", Inputs: inputs, Keys: encryptedKeys}, nil
 }
 
+// SymmetricEncrypt takes a plaintext and symmetrically encrypts using the given key.
 func SymmetricEncrypt(plaintext, id, key string) (*Encrypted, error) {
 
 	rawKey, err := hex.DecodeString(key)
@@ -86,6 +92,7 @@ func SymmetricEncrypt(plaintext, id, key string) (*Encrypted, error) {
 	return &Encrypted{Ciphertext: string(Base64Encode(ciphertext)), Mode: "aes-cbc-256", Inputs: inputs}, nil
 }
 
+// GroupDecrypt takes an Encrypted struct and decrypts for the given private key, returning a plaintext string.
 func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (string, error) {
 	var privateKey interface{}
 	var err error
@@ -108,6 +115,7 @@ func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (str
 	return string(plaintext), err
 }
 
+// SymmetricDecrypt takes an Encrypted struct and decrypts with the given symmetric key, returning a plaintext string.
 func SymmetricDecrypt(encrypted *Encrypted, key string) (string, error) {
 	if encrypted.Mode != "aes-cbc-256" {
 		return "", fmt.Errorf("Invalid mode: %s", encrypted.Mode)
@@ -136,6 +144,7 @@ func SymmetricDecrypt(encrypted *Encrypted, key string) (string, error) {
 	return string(plaintext), nil
 }
 
+// Sign takes a message string and signs using the given private key. The signature and inputs are added to the provided Signed input.
 func Sign(message string, privateKeyString string, signature *Signed) error {
 	privateKey, err := PemDecodePrivate([]byte(privateKeyString))
 	if err != nil {
@@ -158,6 +167,7 @@ func Sign(message string, privateKeyString string, signature *Signed) error {
 	return nil
 }
 
+// Authenticate takes a message and MACs using the given key. The signature and inputs are added to the provided Signed input.
 func Authenticate(message string, key []byte, signature *Signed) error {
 
 	if err := HMAC([]byte(message), key, signature); err != nil {
@@ -168,6 +178,7 @@ func Authenticate(message string, key []byte, signature *Signed) error {
 	return nil
 }
 
+// Verify takes a Signed struct and verifies the signature using the given key. It supports both symmetric (MAC) and public key signatures.
 func Verify(signed *Signed, key []byte) error {
 	message := []byte(signed.Message)
 	signature, _ := Base64Decode([]byte(signed.Signature))
