@@ -22,7 +22,8 @@ const CertificateDefault string = `{
         "expiry": 0,
         "tags": [],
         "certificate": "",
-        "private-key": ""
+        "private-key": "",
+        "ca-certificate": ""
     }
 }`
 
@@ -53,7 +54,7 @@ const CertificateSchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["id", "name", "key-type", "tags", "certificate", "private-key"],
+          "required": ["id", "name", "key-type", "tags", "certificate", "private-key", "ca-certificate"],
           "additionalProperties": false,
           "properties": {
               "id" : {
@@ -83,6 +84,10 @@ const CertificateSchema string = `{
               "private-key" : {
                   "description": "PEM encoded private key",
                   "type": "string"
+              },
+              "ca-certificate" : {
+                  "description": "PEM encoded CA certificate",
+                  "type": "string"
               }
           }
       }
@@ -95,13 +100,14 @@ type CertificateData struct {
 	Type    string `json:"type"`
 	Options string `json:"options"`
 	Body    struct {
-		Id          string   `json:"id"`
-		Name        string   `json:"name"`
-		Expiry      int      `json:"expiry"`
-		KeyType     string   `json:"key-type"`
-		Tags        []string `json:"tags"`
-		Certificate string   `json:"certificate"`
-		PrivateKey  string   `json:"private-key"`
+		Id            string   `json:"id"`
+		Name          string   `json:"name"`
+		Expiry        int      `json:"expiry"`
+		KeyType       string   `json:"key-type"`
+		Tags          []string `json:"tags"`
+		Certificate   string   `json:"certificate"`
+		PrivateKey    string   `json:"private-key"`
+		CACertificate string   `json:"ca-certificate"`
 	} `json:"body"`
 }
 
@@ -195,6 +201,7 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, subject 
 		if err != nil {
 			return fmt.Errorf("Could not get private key: %s", err)
 		}
+		certificate.Data.Body.CACertificate = parentCertificate.(*CA).Data.Body.Certificate
 	case nil:
 		// Self signed
 		parent = template

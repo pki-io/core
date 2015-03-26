@@ -419,5 +419,6 @@ func (ca *CA) Sign(csr *CSR) (*Certificate, error) {
 	cert.Data.Body.Name = csr.Data.Body.Name
 	cert.Data.Body.Certificate = string(PemEncodeX509CertificateDER(der))
 	cert.Data.Body.KeyType = ca.Data.Body.KeyType
+	cert.Data.Body.CACertificate = ca.Data.Body.Certificate
 	return cert, nil
 }
