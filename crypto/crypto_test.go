@@ -7,10 +7,10 @@ import (
 )
 
 func TestSymmetricEncryptDecrypt(t *testing.T) {
-	rawId, _ := RandomBytes(16)
+	rawID, _ := RandomBytes(16)
 	rawKey, _ := RandomBytes(16)
 
-	id := hex.EncodeToString(rawId)
+	id := hex.EncodeToString(rawID)
 	key := hex.EncodeToString(rawKey)
 
 	message := "this is a secret"

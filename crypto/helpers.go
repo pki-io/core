@@ -28,6 +28,7 @@ import (
 // KeyType represents a supported public key pair type
 type KeyType string
 
+// Key types
 const (
 	KeyTypeRSA KeyType = "rsa"
 	KeyTypeEC  KeyType = "ec"
@@ -100,9 +101,8 @@ func Base64Decode(input []byte) (decoded []byte, err error) {
 	b, err := base64.StdEncoding.DecodeString(string(input))
 	if err != nil {
 		return nil, fmt.Errorf("Can't Base64 decode: %s", err)
-	} else {
-		return []byte(b), nil
 	}
+	return []byte(b), nil
 }
 
 // AESEncrypt is an opinionated helper function that implements 256 bit AES in CBC mode.
@@ -155,20 +155,20 @@ func AESDecrypt(ciphertext, iv, key []byte) ([]byte, error) {
 
 // GenerateRSAKey is an opinionated helper function to generate a 2048 bit RSA key pair
 func GenerateRSAKey() (*rsa.PrivateKey, error) {
-	if key, err := rsa.GenerateKey(rand.Reader, 2048); err != nil {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
 		return nil, fmt.Errorf("Can't create RSA keys: %s", err)
-	} else {
-		return key, nil
 	}
+	return key, nil
 }
 
 // GenerateECKey is an opinionated helper function to generate a P256 ECDSA key pair.
 func GenerateECKey() (*ecdsa.PrivateKey, error) {
-	if key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader); err != nil {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
 		return nil, fmt.Errorf("Can't create ECDSA keys: %s", err)
-	} else {
-		return key, nil
 	}
+	return key, nil
 }
 
 // PemEncodePrivate PEM encodes a private key. It supports RSA and ECDSA key types.
@@ -180,12 +180,12 @@ func PemEncodePrivate(key crypto.PrivateKey) ([]byte, error) {
 		b := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: der}
 		return pem.EncodeToMemory(b), nil
 	case *ecdsa.PrivateKey:
-		if der, err := x509.MarshalECPrivateKey(k); err != nil {
+		der, err := x509.MarshalECPrivateKey(k)
+		if err != nil {
 			return nil, fmt.Errorf("Can't marshal ECDSA key: %s", err)
-		} else {
-			b := &pem.Block{Type: "ECDSA PRIVATE KEY", Bytes: der}
-			return pem.EncodeToMemory(b), nil
 		}
+		b := &pem.Block{Type: "ECDSA PRIVATE KEY", Bytes: der}
+		return pem.EncodeToMemory(b), nil
 	default:
 		return nil, errors.New("Unsupported private key type")
 	}
@@ -216,25 +216,25 @@ func PemEncodePublic(key crypto.PublicKey) ([]byte, error) {
 // PemDecodePrivate decodes a PEM encoded private key. It supports PKCS1 and EC private keys.
 func PemDecodePrivate(in []byte) (crypto.PrivateKey, error) {
 	b, _ := pem.Decode(in)
-	if key, err := x509.ParsePKCS1PrivateKey(b.Bytes); err != nil {
-		if eckey, err := x509.ParseECPrivateKey(b.Bytes); err != nil {
+	key, err := x509.ParsePKCS1PrivateKey(b.Bytes)
+	if err != nil {
+		eckey, err := x509.ParseECPrivateKey(b.Bytes)
+		if err != nil {
 			return nil, fmt.Errorf("Could not parse private key: %s", err)
-		} else {
-			return eckey, nil
 		}
-	} else {
-		return key, nil
+		return eckey, nil
 	}
+	return key, nil
 }
 
 // PemDecodePublic decodes a PEM encoded public key. It supports any PKIX public key.
 func PemDecodePublic(in []byte) (crypto.PublicKey, error) {
 	b, _ := pem.Decode(in)
-	if pubKey, err := x509.ParsePKIXPublicKey(b.Bytes); err != nil {
+	pubKey, err := x509.ParsePKIXPublicKey(b.Bytes)
+	if err != nil {
 		return nil, fmt.Errorf("Could not parse public key: %s", err)
-	} else {
-		return pubKey, nil
 	}
+	return pubKey, nil
 }
 
 // Encrypt is a wrapper function that will encrypt a plaintext using the provided public key,
@@ -255,11 +255,11 @@ func Encrypt(plaintext []byte, publicKey crypto.PublicKey) ([]byte, error) {
 func rsaEncrypt(plaintext []byte, publicKey *rsa.PublicKey) ([]byte, error) {
 	label := []byte("")
 	hash := sha256.New()
-	if ciphertext, err := rsa.EncryptOAEP(hash, rand.Reader, publicKey, plaintext, label); err != nil {
+	ciphertext, err := rsa.EncryptOAEP(hash, rand.Reader, publicKey, plaintext, label)
+	if err != nil {
 		return nil, fmt.Errorf("Could not RSA encrypt: %s", err)
-	} else {
-		return ciphertext, nil
 	}
+	return ciphertext, nil
 }
 
 // rsaEncrypt is an opinionated helper function that encryptes a plaintext using an EC DSA public key,
@@ -290,11 +290,11 @@ func Decrypt(cipherText []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 func rsaDecrypt(ciphertext []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	label := []byte("")
 	hash := sha256.New()
-	if plaintext, err := rsa.DecryptOAEP(hash, rand.Reader, privateKey, ciphertext, label); err != nil {
+	plaintext, err := rsa.DecryptOAEP(hash, rand.Reader, privateKey, ciphertext, label)
+	if err != nil {
 		return nil, fmt.Errorf("Could not RSA decrypt: %s", err)
-	} else {
-		return plaintext, nil
 	}
+	return plaintext, nil
 }
 
 // eciesDecrypt is an opinionated helper function that decryptes a ciphertext using an ECDSA private key.
@@ -322,31 +322,49 @@ func SignMessage(message []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 func rsaSign(message []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	var h crypto.Hash
 	hash := sha256.New()
-	io.WriteString(hash, string(message))
-	hashed := hash.Sum(nil)
-	if signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, h, hashed); err != nil {
-		return nil, fmt.Errorf("Could not RSA sign: %s", err)
-	} else {
-		return signature, nil
+	_, err := io.WriteString(hash, string(message))
+	if err != nil {
+		return nil, fmt.Errorf("Could not write to hash: %s", err)
 	}
+
+	hashed := hash.Sum(nil)
+	signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, h, hashed)
+	if err != nil {
+		return nil, fmt.Errorf("Could not RSA sign: %s", err)
+	}
+	return signature, nil
 }
 
 // ecdsaSign is an opinionated helper function that signs a message using an ECDSA private key, and returns the message signature. It uses SHA-256 for hashing.
 func ecdsaSign(message []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	hash := sha256.New()
-	io.WriteString(hash, string(message))
-	hashed := hash.Sum(nil)
-	if r, s, err := ecdsa.Sign(rand.Reader, privateKey, hashed); err != nil {
-		return nil, fmt.Errorf("Could not ECDSA sign: %s", err)
-	} else {
-
-		buf := new(bytes.Buffer)
-		buf.Write([]byte{byte(len(r.Bytes()))})
-		buf.Write(r.Bytes())
-		buf.Write(s.Bytes())
-
-		return buf.Bytes(), nil
+	_, err := io.WriteString(hash, string(message))
+	if err != nil {
+		return nil, fmt.Errorf("Could not write to hash: %s", err)
 	}
+
+	hashed := hash.Sum(nil)
+	r, s, err := ecdsa.Sign(rand.Reader, privateKey, hashed)
+	if err != nil {
+		return nil, fmt.Errorf("Could not ECDSA sign: %s", err)
+	}
+
+	// TODO - this bit is ugly
+	buf := new(bytes.Buffer)
+	_, err = buf.Write([]byte{byte(len(r.Bytes()))})
+	if err != nil {
+		return nil, fmt.Errorf("Could not write to buffer: %s", err)
+	}
+	_, err = buf.Write(r.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("Could not write to buffer: %s", err)
+	}
+	_, err = buf.Write(s.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("Could not write to buffer: %s", err)
+	}
+
+	return buf.Bytes(), nil
 }
 
 // VerifySignature verifies a message for a given signature and public key. If verified, the function returns nil, otherwise it returns an error. It supports RSA and ECDSA public keys.
@@ -365,41 +383,56 @@ func VerifySignature(message []byte, signature []byte, publicKey crypto.PublicKe
 func rsaVerify(message []byte, signature []byte, publicKey *rsa.PublicKey) error {
 	var h crypto.Hash
 	hash := sha256.New()
-	io.WriteString(hash, string(message))
-	hashed := hash.Sum(nil)
-	if err := rsa.VerifyPKCS1v15(publicKey, h, hashed, signature); err != nil {
-		return fmt.Errorf("Could not RSA verify: %s", err)
-	} else {
-		return nil
+	_, err := io.WriteString(hash, string(message))
+	if err != nil {
+		return fmt.Errorf("Could not write to hash: %s", err)
 	}
+
+	hashed := hash.Sum(nil)
+	err = rsa.VerifyPKCS1v15(publicKey, h, hashed, signature)
+	if err != nil {
+		return fmt.Errorf("Could not RSA verify: %s", err)
+	}
+	return nil
 }
 
 // ecdsaVerify is an opinionated helper function that verifies a message for a given signature and ECDSA public key. If verified, the function returns nil, otherwise it returns an error. It uses SHA-256 for hashing.
 func ecdsaVerify(message []byte, signature []byte, publicKey *ecdsa.PublicKey) error {
 	hash := sha256.New()
-	io.WriteString(hash, string(message))
+	_, err := io.WriteString(hash, string(message))
+	if err != nil {
+		return fmt.Errorf("Could not write to hash: %s", err)
+	}
+
 	hashed := hash.Sum(nil)
 	l := int(signature[0])
 	r := new(big.Int).SetBytes(signature[1 : l+1])
 	s := new(big.Int).SetBytes(signature[l+1:])
-	if ok := ecdsa.Verify(publicKey, hashed, r, s); !ok {
+	ok := ecdsa.Verify(publicKey, hashed, r, s)
+	if !ok {
 		return errors.New("Could not ECDSA verify.")
-	} else {
-		return nil
 	}
+	return nil
 }
 
 // hmac256 is an opinionated helper function that generates a HMAC for the given message using SHA-256.
-func hmac256(message, key []byte) []byte {
+func hmac256(message, key []byte) ([]byte, error) {
 	mac := hmac.New(sha256.New, key)
-	mac.Write(message)
+	_, err := mac.Write(message)
+	if err != nil {
+		return nil, fmt.Errorf("Could not write to mac: %s", err)
+	}
 
-	return mac.Sum(nil)
+	return mac.Sum(nil), nil
 }
 
 // HMAC is a wrapper function that calculates a HMAC for a given message and symmetric key.
 func HMAC(message []byte, key []byte, signature *Signed) error {
-	mac := hmac256(message, key)
+	mac, err := hmac256(message, key)
+	if err != nil {
+		return fmt.Errorf("Could not get mac: %s", err)
+	}
+
 	signature.Message = string(message)
 	signature.Signature = string(Base64Encode(mac))
 	return nil
@@ -408,12 +441,15 @@ func HMAC(message []byte, key []byte, signature *Signed) error {
 // HMACVerify verifies the HMAC of the given message. If verified, the function returns nil, otherwise it returns an error.
 func HMACVerify(message, key, signature []byte) error {
 	newMac := hmac.New(sha256.New, key)
-	newMac.Write(message)
+	_, err := newMac.Write(message)
+	if err != nil {
+		return fmt.Errorf("Could not write to mac: %s", err)
+	}
+
 	newFinalMac := newMac.Sum(nil)
 
 	if hmac.Equal(newFinalMac, signature) {
 		return nil
-	} else {
-		return fmt.Errorf("MACs not equal")
 	}
+	return fmt.Errorf("MACs not equal")
 }
