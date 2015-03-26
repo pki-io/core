@@ -7,9 +7,10 @@ import (
 	"fmt"
 )
 
-// Signature or encryption mode
+// Mode of signature or encryption
 type Mode string
 
+// Signature modes
 const (
 	SignatureModeSha256Rsa   Mode = "sha256+rsa"
 	SignatureModeSha256Ecdsa Mode = "sha256+ecdsa"
@@ -131,7 +132,7 @@ func SymmetricDecrypt(encrypted *Encrypted, key string) (string, error) {
 		return "", fmt.Errorf("Could not decode key: %s", err)
 	}
 
-	newKey, salt, err := ExpandKey(rawKey, salt)
+	newKey, _, err := ExpandKey(rawKey, salt)
 	if err != nil {
 		return "", fmt.Errorf("Cold not expand key: %s", err)
 	}
@@ -185,13 +186,12 @@ func Verify(signed *Signed, key []byte) error {
 
 	if signed.Mode == SignatureModeSha256Hmac {
 		return HMACVerify(message, key, signature)
-
-	} else {
-		publicKey, err := PemDecodePublic(key)
-		if err != nil {
-			return err
-		}
-
-		return VerifySignature(message, signature, publicKey)
 	}
+
+	publicKey, err := PemDecodePublic(key)
+	if err != nil {
+		return err
+	}
+
+	return VerifySignature(message, signature, publicKey)
 }
