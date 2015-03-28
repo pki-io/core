@@ -47,9 +47,13 @@ func UUID() string {
 // RandomBytes generates and returns size number of random bytes.
 func RandomBytes(size int) ([]byte, error) {
 	randomBytes := make([]byte, size)
-	_, err := rand.Read(randomBytes)
+	numBytesRead, err := rand.Read(randomBytes)
 	if err != nil {
 		return nil, fmt.Errorf("Could not generate random bytes: %s", err)
+	}
+
+	if numBytesRead != size {
+		return nil, fmt.Errorf("Wrong number of random bytes read: %i vs %i", size, numBytesRead)
 	}
 
 	return randomBytes, nil
