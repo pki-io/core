@@ -44,6 +44,9 @@ func UUID() string {
 	return uuid.TimeOrderedUUID()
 }
 
+// ThreatSpec TMv0.1 for RandomBytes
+// Mitigates cryptography against Weak PRNG with standard package which uses secure implementation
+
 // RandomBytes generates and returns size number of random bytes.
 func RandomBytes(size int) ([]byte, error) {
 	randomBytes := make([]byte, size)
