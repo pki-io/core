@@ -27,6 +27,10 @@ func TestRandomBytesSize(t *testing.T) {
 	assert.Equal(t, size, len(random), "they should be equal")
 }
 
+// ThreatSpec TMv0.1 for TestRandomBytesNotEqual
+// Tests TestRandomBytesNotEqual for Weak PRNG
+// Note that this isn't a very good test
+
 // TestRandomBytesNotEqual tests that two random byte arrays aren't the same.
 // This should protect against basic problems like all 0s etc but is very basic.
 func TestRandomBytesNotEqual(t *testing.T) {
