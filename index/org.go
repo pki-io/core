@@ -218,6 +218,11 @@ func (index *OrgIndex) AddEntityTags(entity string, i interface{}) error {
 }
 
 func (index *OrgIndex) AddPairingKey(id, key string, i interface{}) error {
+	_, ok := index.Data.Body.PairingKeys[id]
+	if ok {
+		return fmt.Errorf("key %s already exists", id)
+	}
+
 	var inTags []string
 	switch t := i.(type) {
 	case string:
@@ -239,6 +244,10 @@ func (index *OrgIndex) AddPairingKey(id, key string, i interface{}) error {
 }
 
 func (index *OrgIndex) AddInviteKey(id, key, name string) error {
+	_, ok := index.Data.Body.InviteKeys[id]
+	if ok {
+		return fmt.Errorf("key %s already exists", id)
+	}
 	inviteKey := new(InviteKey)
 	inviteKey.Name = name
 	inviteKey.Key = key
@@ -247,44 +256,73 @@ func (index *OrgIndex) AddInviteKey(id, key, name string) error {
 }
 
 func (index *OrgIndex) GetInviteKey(id string) (*InviteKey, error) {
-	// TODO - check existence
+	_, ok := index.Data.Body.InviteKeys[id]
+	if !ok {
+		return nil, fmt.Errorf("key %s does not exist", id)
+	}
 	return index.Data.Body.InviteKeys[id], nil
 }
 
 func (index *OrgIndex) AddNode(name, id string) error {
-	// TODO - check for existence
+	_, ok := index.Data.Body.Nodes[name]
+	if ok {
+		return fmt.Errorf("key %s already exists", name)
+	}
 	index.Data.Body.Nodes[name] = id
 	return nil
 }
 
 func (index *OrgIndex) GetNode(name string) (string, error) {
-	// TODO - check for existence
+	_, ok := index.Data.Body.Nodes[name]
+	if !ok {
+		return "", fmt.Errorf("key %s does not exist", name)
+	}
 	return index.Data.Body.Nodes[name], nil
 }
 
 func (index *OrgIndex) AddAdmin(name, id string) error {
-	// TODO - check for existence
+	_, ok := index.Data.Body.Admins[name]
+	if ok {
+		return fmt.Errorf("key %s already exists", name)
+	}
 	index.Data.Body.Admins[name] = id
 	return nil
 }
 
+func (index *OrgIndex) RemoveAdmin(name string) error {
+	_, ok := index.Data.Body.Admins[name]
+	if !ok {
+		return fmt.Errorf("key %s does not exist", name)
+	}
+	delete(index.Data.Body.Admins, name)
+	return nil
+}
+
 func (index *OrgIndex) GetAdmin(name string) (string, error) {
-	// TODO - check for existence
+	_, ok := index.Data.Body.Admins[name]
+	if !ok {
+		return "", fmt.Errorf("key %s does not exist", name)
+	}
 	return index.Data.Body.Admins[name], nil
 }
 
 func (index *OrgIndex) GetAdmins() (map[string]string, error) {
-	// TODO - check something?
 	return index.Data.Body.Admins, nil
 }
 
 func (index *OrgIndex) AddCA(name, id string) error {
-	// TODO - check for existence
+	_, ok := index.Data.Body.CAs[name]
+	if ok {
+		return fmt.Errorf("key %s already exists", name)
+	}
 	index.Data.Body.CAs[name] = id
 	return nil
 }
 
 func (index *OrgIndex) GetCA(name string) (string, error) {
-	// TODO - check existence
+	_, ok := index.Data.Body.CAs[name]
+	if !ok {
+		return "", fmt.Errorf("key %s does not exist", name)
+	}
 	return index.Data.Body.CAs[name], nil
 }
