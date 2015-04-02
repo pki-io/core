@@ -84,7 +84,8 @@ func UnPad(src []byte) []byte {
 
 // ThreatSpec TMv0.1 for ExpandKey
 // Mitigates cryptography against Use of Password Hash With Insufficient Computational Effort (CWE-916) with PBKDF2 provided by standard package
-// Mitigates cryptography against Use of a One-Way Hash without a Salt with secure generation of salt using strong PRNG
+// Mitigates cryptography against Use of a One-Way Hash without a Salt (CWE-759) with salt create by function
+// Mitigates cryptography against Use of a One-Way Hash with a Predictable Salt (CWE-760) with salt created with good PRNG
 
 // ExpandKey is an opinionated helper function to cryptographically expand a key using a 128 bit salt and PBKDF2.
 // If the salt is of 0 length, it generates a new salt, and returns the expanded key and salt as byte arrays.
@@ -467,6 +468,9 @@ func HMAC(message []byte, key []byte, signature *Signed) error {
 	signature.Signature = string(Base64Encode(mac))
 	return nil
 }
+
+// ThreatSpec TMv0.1 for HMACVerify
+// Mitigates cryptography against side-channel attack with use of time-constant comparison provided by standard package
 
 // HMACVerify verifies the HMAC of the given message. If verified, the function returns nil, otherwise it returns an error.
 func HMACVerify(message, key, signature []byte) error {
