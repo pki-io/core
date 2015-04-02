@@ -288,3 +288,16 @@ func (index *OrgIndex) GetCA(name string) (string, error) {
 	// TODO - check existence
 	return index.Data.Body.CAs[name], nil
 }
+
+func (index *OrgIndex) GetCAs() (map[string]string, error) {
+	return index.Data.Body.CAs, nil
+}
+
+func (index *OrgIndex) RemoveCA(name string) error {
+	_, ok := index.Data.Body.CAs[name]
+	if !ok {
+		return fmt.Errorf("CA %s does not exist", name)
+	}
+	delete(index.Data.Body.CAs, name)
+	return nil
+}
