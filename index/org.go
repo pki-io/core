@@ -289,8 +289,8 @@ func (index *OrgIndex) GetCA(name string) (string, error) {
 	return index.Data.Body.CAs[name], nil
 }
 
-func (index *OrgIndex) GetCAs() (map[string]string, error) {
-	return index.Data.Body.CAs, nil
+func (index *OrgIndex) GetCAs() map[string]string {
+	return index.Data.Body.CAs
 }
 
 func (index *OrgIndex) RemoveCA(name string) error {
