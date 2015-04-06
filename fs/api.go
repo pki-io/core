@@ -89,6 +89,19 @@ func (fs *Api) StorePrivate(name string, content string) error {
 	return fs.SendPrivate(fs.Id, name, content)
 }
 
+func (fs *Api) DeletePrivate(name string) error {
+	if len(fs.Id) == 0 {
+		return fmt.Errorf("Id cannot be empty")
+	}
+
+	filename := filepath.Join(fs.Path, fs.Id, privatePath, name)
+
+	if err := os.Remove(filename); err != nil {
+		return fmt.Errorf("Couldn't remove file: %s", err)
+	}
+	return nil
+}
+
 func (fs *Api) LoadPrivate(name string) (string, error) {
 	if len(fs.Id) == 0 {
 		return "", fmt.Errorf("Id cannot be empty")
