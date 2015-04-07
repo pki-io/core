@@ -280,6 +280,19 @@ func (index *OrgIndex) GetNode(name string) (string, error) {
 	return index.Data.Body.Nodes[name], nil
 }
 
+func (index *OrgIndex) RemoveNode(name string) error {
+	_, ok := index.Data.Body.Nodes[name]
+	if !ok {
+		return fmt.Errorf("key %s does not exist", name)
+	}
+	delete(index.Data.Body.Nodes, name)
+	return nil
+}
+
+func (index *OrgIndex) GetNodes() map[string]string {
+	return index.Data.Body.Nodes
+}
+
 func (index *OrgIndex) AddAdmin(name, id string) error {
 	_, ok := index.Data.Body.Admins[name]
 	if ok {
