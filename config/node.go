@@ -60,3 +60,13 @@ func (conf *NodeConfig) GetNode(name string) (*NodeData, error) {
 	}
 	return nil, fmt.Errorf("Couldn't find node: %s", name)
 }
+
+func (conf *NodeConfig) RemoveNode(name string) error {
+	for i, node := range conf.Data.Node {
+		if node.Name == name {
+			conf.Data.Node = append(conf.Data.Node[:i], conf.Data.Node[i+1:]...)
+			return nil
+		}
+	}
+	return fmt.Errorf("key %s does not exist: %s", name)
+}
