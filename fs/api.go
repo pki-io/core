@@ -2,7 +2,7 @@ package fs
 
 import (
 	"fmt"
-	"github.com/mitchellh/packer/common/uuid"
+	"github.com/pki-io/core/crypto"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -115,7 +115,7 @@ func (fs *Api) Push(dstId, name, queue, content string) error {
 	if err := os.MkdirAll(path, privateDirMode); err != nil {
 		return fmt.Errorf("Could not create path '%s': %s", path, err)
 	}
-	filename := filepath.Join(path, uuid.TimeOrderedUUID())
+	filename := filepath.Join(path, crypto.TimeOrderedUUID())
 	if err := ioutil.WriteFile(filename, []byte(content), privateFileMode); err != nil {
 		return fmt.Errorf("Could not write file '%s': %s", filename, err)
 	}
