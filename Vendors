@@ -1,0 +1,15 @@
+vendor "github.com/pki-io/objx" "github.com/stretchr/objx"
+vendor "github.com/pki-io/testify" "github.com/stretchr/testify"
+
+vendor "github.com/pki-io/toml" "github.com/BurntSushi/toml"
+
+vendor "github.com/pki-io/gojsonpointer" "github.com/xeipuuv/gojsonpointer"
+vendor "github.com/pki-io/gojsonreference" "github.com/xeipuuv/gojsonreference"
+vendor "github.com/pki-io/gojsonschema" "github.com/xeipuuv/gojsonschema"
+
+vendor_clone "github.com/pki-io/crypto" "golang.org/x/crypto"
+vendor_build "github.com/pki-io/crypto" "golang.org/x/crypto" "golang.org/x/crypto/pbkdf2"
+
+vendor "github.com/pki-io/go-homedir" "github.com/mitchellh/go-homedir"
+
+vendor "github.com/pki-io/ecies" "obscuren/ecies"

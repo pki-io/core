@@ -16,11 +16,11 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/mitchellh/packer/common/uuid"
 	"github.com/pki-io/ecies"
 	"golang.org/x/crypto/pbkdf2"
 	"io"
 	"math/big"
+	"time"
 )
 
 // https://www.socketloop.com/tutorials/golang-example-for-rsa-package-functions-example
@@ -34,6 +34,22 @@ const (
 	KeyTypeEC  KeyType = "ec"
 )
 
+// TimeOrderedUUID taken directly from https://github.com/mitchellh/packer/blob/master/common/uuid/uuid.go
+func TimeOrderedUUID() string {
+	unix := uint32(time.Now().UTC().Unix())
+
+	b := make([]byte, 12)
+	n, err := rand.Read(b)
+	if n != len(b) {
+		err = fmt.Errorf("Not enough entropy available")
+	}
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%08x-%04x-%04x-%04x-%04x%08x",
+		unix, b[0:2], b[2:4], b[4:6], b[6:8], b[8:])
+}
+
 // UUID is an opinionated helper function that generate a 128 bit time-ordered UUID string.
 //
 // Documentation for the TimeOrderedUUID function is available here:
@@ -41,7 +57,7 @@ const (
 //
 // From the source docs: Top 32 bits are a timestamp, bottom 96 bytes are random.
 func UUID() string {
-	return uuid.TimeOrderedUUID()
+	return TimeOrderedUUID()
 }
 
 // ThreatSpec TMv0.1 for RandomBytes

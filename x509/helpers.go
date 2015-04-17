@@ -4,7 +4,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"github.com/mitchellh/packer/common/uuid"
+	"github.com/pki-io/core/crypto"
 	"math/big"
 	"strings"
 )
@@ -38,7 +38,7 @@ func PemDecodeX509CSR(in []byte) (*x509.CertificateRequest, error) {
 }
 
 func NewSerial() (*big.Int, error) {
-	uuid := uuid.TimeOrderedUUID()
+	uuid := crypto.TimeOrderedUUID()
 	clean := strings.Replace(uuid, "-", "", -1)
 	i := new(big.Int)
 	_, err := fmt.Sscanf(clean, "%x", i)
