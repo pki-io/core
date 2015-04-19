@@ -28,7 +28,7 @@ func TestRandomBytesSize(t *testing.T) {
 }
 
 // ThreatSpec TMv0.1 for TestRandomBytesNotEqual
-// Tests TestRandomBytesNotEqual for Weak PRNG
+// Tests RandomBytes for Use of Insufficiently Random Values (CWE-330)
 // Note that this isn't a very good test
 
 // TestRandomBytesNotEqual tests that two random byte arrays aren't the same.
