@@ -224,7 +224,7 @@ func PemEncodePrivate(key crypto.PrivateKey) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("Can't marshal ECDSA key: %s", err)
 		}
-		b := &pem.Block{Type: "ECDSA PRIVATE KEY", Bytes: der}
+		b := &pem.Block{Type: "EC PRIVATE KEY", Bytes: der}
 		return pem.EncodeToMemory(b), nil
 	default:
 		return nil, errors.New("Unsupported private key type")
