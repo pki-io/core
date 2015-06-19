@@ -190,7 +190,7 @@ func TestPemEncodePublic(t *testing.T) {
 	pemKey, err = PemEncodePublic(&eckey.PublicKey)
 	assert.NoError(t, err)
 	assert.NotNil(t, pemKey)
-	assert.Equal(t, strings.Contains(string(pemKey), "ECDSA PUBLIC KEY"), true)
+	assert.Equal(t, strings.Contains(string(pemKey), "EC PUBLIC KEY"), true)
 }
 
 func TestPemEncodePublicRepeat(t *testing.T) {
