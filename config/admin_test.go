@@ -23,6 +23,14 @@ func TestAdminConfigDumpLoad(t *testing.T) {
 	assert.Equal(t, conf.Data, newConf.Data)
 }
 
+func TestAdminDuplicateOrg(t *testing.T) {
+	conf, _ := NewAdmin()
+	err := conf.AddOrg("org1", "000", "123")
+	assert.NoError(t, err)
+	err = conf.AddOrg("org1", "666", "777")
+	assert.Error(t, err)
+}
+
 func TestAdminConfigGetOrg(t *testing.T) {
 	conf, _ := NewAdmin()
 	conf.AddOrg("org1", "000", "111")
