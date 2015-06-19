@@ -145,7 +145,7 @@ func TestPemEncodePrivate(t *testing.T) {
 	pemKey, err = PemEncodePrivate(eckey)
 	assert.NoError(t, err)
 	assert.NotNil(t, pemKey)
-	assert.Equal(t, strings.Contains(string(pemKey), "ECDSA PRIVATE KEY"), true)
+	assert.Equal(t, strings.Contains(string(pemKey), "EC PRIVATE KEY"), true)
 }
 
 // TestPemEncodePrivateRepeat tests that two different keys don't encode to the same thing

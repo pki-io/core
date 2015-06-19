@@ -244,7 +244,7 @@ func PemEncodePublic(key crypto.PublicKey) ([]byte, error) {
 	case *rsa.PublicKey:
 		t = "RSA PUBLIC KEY"
 	case *ecdsa.PublicKey:
-		t = "ECDSA PUBLIC KEY"
+		t = "EC PUBLIC KEY"
 	default:
 		return nil, errors.New("Unsupported public key type")
 	}
