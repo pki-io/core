@@ -52,7 +52,7 @@ func (local *Local) Write(name, content string) error {
 }
 
 func (local *Local) Read(name string) (string, error) {
-	if content, err := ioutil.ReadFile(local.FullPath(name)); err != nil {
+	if content, err := ReadFile(local.FullPath(name)); err != nil {
 		return "", fmt.Errorf("Could not read file: %s", err)
 	} else {
 		return string(content), nil

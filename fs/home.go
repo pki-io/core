@@ -47,7 +47,7 @@ func (home *Home) Write(name, content string) error {
 }
 
 func (home *Home) Read(name string) (string, error) {
-	if content, err := ioutil.ReadFile(home.FullPath(name)); err != nil {
+	if content, err := ReadFile(home.FullPath(name)); err != nil {
 		return "", fmt.Errorf("Could not read file: %s", err)
 	} else {
 		return string(content), nil

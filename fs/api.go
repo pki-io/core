@@ -40,7 +40,7 @@ func (fs *Api) SendPublic(dstId string, name string, content string) error {
 
 func (fs *Api) GetPublic(dstId string, name string) (string, error) {
 	filename := filepath.Join(fs.Path, dstId, publicPath, name)
-	if content, err := ioutil.ReadFile(filename); err != nil {
+	if content, err := ReadFile(filename); err != nil {
 		return "", fmt.Errorf("Could not read file '%s': %s", filename, err)
 	} else {
 		return string(content), nil
@@ -61,7 +61,7 @@ func (fs *Api) SendPrivate(dstId string, name string, content string) error {
 
 func (fs *Api) GetPrivate(dstId string, name string) (string, error) {
 	filename := filepath.Join(fs.Path, dstId, privatePath, name)
-	if content, err := ioutil.ReadFile(filename); err != nil {
+	if content, err := ReadFile(filename); err != nil {
 		return "", fmt.Errorf("Could not read file '%s': %s", filename, err)
 	} else {
 		return string(content), nil
@@ -145,7 +145,7 @@ func (fs *Api) Pop(srcId, name, queue string) (string, error) {
 	}
 
 	filename := files[0]
-	if content, err := ioutil.ReadFile(filename); err != nil {
+	if content, err := ReadFile(filename); err != nil {
 		return "", fmt.Errorf("Could not read file '%s': %s", filename, err)
 	} else {
 		if err := os.Remove(filename); err != nil {
