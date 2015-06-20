@@ -47,7 +47,11 @@ func (conf *NodeConfig) Load(tomlString string) error {
 }
 
 func (conf *NodeConfig) AddNode(name, id, indexId string) error {
-	// TODO - Check for uniqueness
+	for _, node := range conf.Data.Node {
+		if node.Name == name {
+			return fmt.Errorf("Could not add node '%s' as one with that name already exists", name)
+		}
+	}
 	conf.Data.Node = append(conf.Data.Node, NodeData{name, id, indexId})
 	return nil
 }
