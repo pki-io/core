@@ -26,8 +26,8 @@ func TestGenerateKeys(t *testing.T) {
 	entity.Data.Body.KeyType = string(crypto.KeyTypeEC)
 	err = entity.GenerateKeys()
 	assert.NoError(t, err)
-	assert.Equal(t, strings.Contains(entity.Data.Body.PublicSigningKey, "ECDSA PUBLIC KEY"), true)
-	assert.Equal(t, strings.Contains(entity.Data.Body.PublicEncryptionKey, "ECDSA PUBLIC KEY"), true)
+	assert.Equal(t, strings.Contains(entity.Data.Body.PublicSigningKey, "EC PUBLIC KEY"), true)
+	assert.Equal(t, strings.Contains(entity.Data.Body.PublicEncryptionKey, "EC PUBLIC KEY"), true)
 }
 
 func TestRSASignString(t *testing.T) {

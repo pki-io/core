@@ -23,6 +23,14 @@ func TestNodeConfigDumpLoad(t *testing.T) {
 	assert.Equal(t, conf.Data, newConf.Data)
 }
 
+func TestDuplicateAddNode(t *testing.T) {
+	conf, _ := NewNode()
+	err := conf.AddNode("node1", "000", "123")
+	assert.NoError(t, err)
+	err = conf.AddNode("node1", "666", "777")
+	assert.Error(t, err)
+}
+
 func TestNodeConfigGetNode(t *testing.T) {
 	conf, _ := NewNode()
 	conf.AddNode("node1", "000", "111")

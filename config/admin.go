@@ -44,9 +44,14 @@ func (conf *AdminConfig) Load(tomlString string) error {
 	return nil
 }
 
-func (conf *AdminConfig) AddOrg(name, id, adminId string) {
-	// TODO - check for uniqueness
+func (conf *AdminConfig) AddOrg(name, id, adminId string) error {
+	for _, org := range conf.Data.Org {
+		if org.Name == name {
+			return fmt.Errorf("Could not add org '%s' as one with that name already exists", name)
+		}
+	}
 	conf.Data.Org = append(conf.Data.Org, AdminOrgData{name, id, adminId})
+	return nil
 }
 
 func (conf *AdminConfig) GetOrg(name string) (*AdminOrgData, error) {
