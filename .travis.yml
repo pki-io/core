@@ -7,6 +7,7 @@ before_install:
   - wget https://raw.githubusercontent.com/pki-io/fdm/master/fdm -O /tmp/fdm/fdm
   - chmod +x /tmp/fdm/fdm
   - export PATH=$PATH:/tmp/fdm
+  - go get github.com/stretchr/testify
   - go get github.com/modocache/gover
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
@@ -21,5 +22,5 @@ script:
   - fdm test -coverprofile=index.coverprofile ./index
   - fdm test -coverprofile=node.coverprofile ./node
   - fdm test -coverprofile=x509.coverprofile ./x509
-  - fdm exec gover
-  - fdm exec goveralls -coverprofile=gover.coverprofile -service travis-ci
+  - gover
+  - goveralls -coverprofile=gover.coverprofile -service travis-ci

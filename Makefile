@@ -15,7 +15,7 @@ dev: clean get-deps
 	fdm
 
 lint:
-	fdm exec gometalinter ./...
+	fdm --exec gometalinter ./...
 
 clean:
 	test ! -d _vendor || rm -rf _vendor/*

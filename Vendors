@@ -1,15 +1,12 @@
-vendor "github.com/pki-io/objx" "github.com/stretchr/objx"
-vendor "github.com/pki-io/testify" "github.com/stretchr/testify"
+vendor -f "github.com/pki-io/docopt.go" -r "github.com/docopt/docopt-go"
+vendor -f "github.com/pki-io/seelog" -r "github.com/cihub/seelog"
+vendor -f "github.com/pki-io/toml" -r "github.com/BurntSushi/toml"
+vendor -f "github.com/pki-io/go-homedir" -r "github.com/mitchellh/go-homedir"
+vendor -f "github.com/pki-io/ecies" -r "github.com/obscuren/ecies"
 
-vendor "github.com/pki-io/toml" "github.com/BurntSushi/toml"
+vendor -f "github.com/pki-io/gojsonpointer" -r "github.com/xeipuuv/gojsonpointer"
+vendor -f "github.com/pki-io/gojsonreference" -r "github.com/xeipuuv/gojsonreference"
+vendor -f "github.com/pki-io/gojsonschema" -r "github.com/xeipuuv/gojsonschema"
 
-vendor "github.com/pki-io/gojsonpointer" "github.com/xeipuuv/gojsonpointer"
-vendor "github.com/pki-io/gojsonreference" "github.com/xeipuuv/gojsonreference"
-vendor "github.com/pki-io/gojsonschema" "github.com/xeipuuv/gojsonschema"
-
-vendor_clone "github.com/pki-io/crypto" "golang.org/x/crypto"
-vendor_build "github.com/pki-io/crypto" "golang.org/x/crypto" "golang.org/x/crypto/pbkdf2"
-
-vendor "github.com/pki-io/go-homedir" "github.com/mitchellh/go-homedir"
-
-vendor "github.com/pki-io/ecies" "obscuren/ecies"
+vendor --clone -f "github.com/pki-io/crypto" -r "golang.org/x/crypto"
+vendor --build -f "github.com/pki-io/crypto" -r "golang.org/x/crypto" -p "pbkdf2"
