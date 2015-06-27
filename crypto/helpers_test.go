@@ -108,6 +108,19 @@ func TestAESDecrypt(t *testing.T) {
 	assert.Equal(t, string(plaintext), string(newPlaintext), "new plaintext must equal old plaintext")
 }
 
+func TestGetKeyType(t *testing.T) {
+	rsakey, _ := GenerateRSAKey()
+	eckey, _ := GenerateECKey()
+
+	rsaKeyType, err := GetKeyType(rsakey)
+	assert.NoError(t, err)
+	assert.Equal(t, rsaKeyType, KeyTypeRSA)
+
+	ecKeyType, err := GetKeyType(eckey)
+	assert.NoError(t, err)
+	assert.Equal(t, ecKeyType, KeyTypeEC)
+}
+
 func TestGenerateRSAKey(t *testing.T) {
 	key, err := GenerateRSAKey()
 	assert.NoError(t, err)
