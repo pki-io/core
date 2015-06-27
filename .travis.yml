@@ -22,5 +22,5 @@ script:
   - fdm test -coverprofile=index.coverprofile ./index
   - fdm test -coverprofile=node.coverprofile ./node
   - fdm test -coverprofile=x509.coverprofile ./x509
-  - fdm --exec gover
-  - fdm --exec goveralls -coverprofile=gover.coverprofile -service travis-ci
+  - gover
+  - goveralls -coverprofile=gover.coverprofile -service travis-ci
