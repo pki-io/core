@@ -186,6 +186,18 @@ func AESDecrypt(ciphertext, iv, key []byte) ([]byte, error) {
 	return UnPad(paddedPlaintext), nil
 }
 
+// GetKeyType returns the key type for a given key
+func GetKeyType(key interface{}) (KeyType, error) {
+	switch t := key.(type) {
+	case *rsa.PrivateKey:
+		return KeyTypeRSA, nil
+	case *ecdsa.PrivateKey:
+		return KeyTypeEC, nil
+	default:
+		return "", fmt.Errorf("Unknown key type: %T", t)
+	}
+}
+
 // ThreatSpec TMv0.1 for GenerateRSAKey
 // Mitigates cryptography against weak private key with RSA key generated using standard package
 // Mitigates cryptography against weak private key with sufficient RSa key size of 2048 bits
