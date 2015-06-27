@@ -1,5 +1,3 @@
-vendor -f "github.com/pki-io/objx" -r "github.com/stretchr/objx"
-vendor -f "github.com/pki-io/testify" -r "github.com/stretchr/testify"
 vendor -f "github.com/pki-io/docopt.go" -r "github.com/docopt/docopt-go"
 vendor -f "github.com/pki-io/seelog" -r "github.com/cihub/seelog"
 vendor -f "github.com/pki-io/toml" -r "github.com/BurntSushi/toml"
