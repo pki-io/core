@@ -1,3 +1,4 @@
+// ThreatSpec package github.com/pki-io/core/x509 as x509
 package x509
 
 import (
@@ -172,6 +173,9 @@ type CA struct {
 	Data CAData
 }
 
+// ThreatSpec TMv0.1 for NewCA
+// Does new CA creation for App:X509
+
 func NewCA(jsonString interface{}) (*CA, error) {
 	ca := new(CA)
 	ca.Schema = CASchema
@@ -183,6 +187,9 @@ func NewCA(jsonString interface{}) (*CA, error) {
 	}
 }
 
+// ThreatSpec TMv0.1 for CA.Load
+// Does CA JSON loading for App:X509
+
 func (ca *CA) Load(jsonString interface{}) error {
 	data := new(CAData)
 	if data, err := ca.FromJson(jsonString, data); err != nil {
@@ -193,6 +200,9 @@ func (ca *CA) Load(jsonString interface{}) error {
 	}
 }
 
+// ThreatSpec TMv0.1 for CA.Dump
+// Does CA JSON dumping for App:X509
+
 func (ca *CA) Dump() string {
 	if jsonString, err := ca.ToJson(ca.Data); err != nil {
 		return ""
@@ -201,10 +211,15 @@ func (ca *CA) Dump() string {
 	}
 }
 
+// ThreatSpec TMv0.1 for CA.GenerateRoot
+// Does Root CA certificate generation for App:X509
+
 func (ca *CA) GenerateRoot() error {
 	return ca.GenerateSub(nil)
 }
 
+// ThreatSpec TMv0.1 for CA.GenerateSub
+// Does Sub-CA certificate generation for App:X509
 func (ca *CA) GenerateSub(parentCA interface{}) error {
 	//https://www.socketloop.com/tutorials/golang-create-x509-certificate-private-and-public-keys
 
@@ -341,9 +356,15 @@ func (ca *CA) GenerateSub(parentCA interface{}) error {
 	return nil
 }
 
+// ThreatSpec TMv0.1 for CA.Certificate
+// Returns CA certificate for App:X509
+
 func (ca *CA) Certificate() (*x509.Certificate, error) {
 	return PemDecodeX509Certificate([]byte(ca.Data.Body.Certificate))
 }
+
+// ThreatSpec TMv0.1 for CA.PrivateKey
+// Returns CA private key for App:X509
 
 func (ca *CA) PrivateKey() (interface{}, error) {
 	if privateKey, err := crypto.PemDecodePrivate([]byte(ca.Data.Body.PrivateKey)); err != nil {
@@ -353,6 +374,8 @@ func (ca *CA) PrivateKey() (interface{}, error) {
 	}
 }
 
+// ThreatSpec TMv0.1 for CA.Sign
+// Does CSR signing by CA for App:X509
 func (ca *CA) Sign(csr *CSR) (*Certificate, error) {
 
 	subject := new(pkix.Name)

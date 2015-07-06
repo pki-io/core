@@ -34,10 +34,16 @@ type Signed struct {
 	Signature string
 }
 
+// ThreatSpec TMv0.1 for NewSignature
+// Does new signature creation for App:Crypto
+
 // NewSignature returns a new Signed
 func NewSignature(mode Mode) *Signed {
 	return &Signed{Mode: mode}
 }
+
+// ThreatSpec TMv0.1 for GroupEncrypt
+// Does hybrid encryption with one or more public keys fore App:Crypto
 
 // GroupEncrypt takes a plaintext and encrypts with one or more public keys.
 func GroupEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, error) {
@@ -67,6 +73,9 @@ func GroupEncrypt(plaintext string, publicKeys map[string]string) (*Encrypted, e
 	return &Encrypted{Ciphertext: string(Base64Encode(ciphertext)), Mode: "aes-cbc-256+rsa", Inputs: inputs, Keys: encryptedKeys}, nil
 }
 
+// ThreatSpec TMv0.1 for SymmetricEncrypt
+// Does symmetric encryption with a shared key for App:Crypto
+
 // SymmetricEncrypt takes a plaintext and symmetrically encrypts using the given key.
 func SymmetricEncrypt(plaintext, id, key string) (*Encrypted, error) {
 
@@ -93,6 +102,9 @@ func SymmetricEncrypt(plaintext, id, key string) (*Encrypted, error) {
 	return &Encrypted{Ciphertext: string(Base64Encode(ciphertext)), Mode: "aes-cbc-256", Inputs: inputs}, nil
 }
 
+// ThreatSpec TMv0.1 for GroupDecrypt
+// Does hybrid decryption with a private key for App:Crypto
+
 // GroupDecrypt takes an Encrypted struct and decrypts for the given private key, returning a plaintext string.
 func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (string, error) {
 	var privateKey interface{}
@@ -115,6 +127,9 @@ func GroupDecrypt(encrypted *Encrypted, keyID string, privateKeyPem string) (str
 	plaintext, err := AESDecrypt(ciphertext, iv, key)
 	return string(plaintext), err
 }
+
+// ThreatSpec TMv0.1 for SymmetricDecrypt
+// Does symmetric decryption with a shared key for App:Crypto
 
 // SymmetricDecrypt takes an Encrypted struct and decrypts with the given symmetric key, returning a plaintext string.
 func SymmetricDecrypt(encrypted *Encrypted, key string) (string, error) {
@@ -145,6 +160,9 @@ func SymmetricDecrypt(encrypted *Encrypted, key string) (string, error) {
 	return string(plaintext), nil
 }
 
+// ThreatSpec TMv0.1 for Sign
+// Does message signing for App:Crypto
+
 // Sign takes a message string and signs using the given private key. The signature and inputs are added to the provided Signed input.
 func Sign(message string, privateKeyString string, signature *Signed) error {
 	privateKey, err := PemDecodePrivate([]byte(privateKeyString))
@@ -168,6 +186,9 @@ func Sign(message string, privateKeyString string, signature *Signed) error {
 	return nil
 }
 
+// ThreatSpec TMv0.1 for Authenticate
+// Does message authentication for App:Crypto
+
 // Authenticate takes a message and MACs using the given key. The signature and inputs are added to the provided Signed input.
 func Authenticate(message string, key []byte, signature *Signed) error {
 
@@ -178,6 +199,9 @@ func Authenticate(message string, key []byte, signature *Signed) error {
 	signature.Mode = SignatureModeSha256Hmac
 	return nil
 }
+
+// ThreatSpec TMv0.1 for Verify
+// Does signature verification for App:Crypto
 
 // Verify takes a Signed struct and verifies the signature using the given key. It supports both symmetric (MAC) and public key signatures.
 func Verify(signed *Signed, key []byte) error {

@@ -1,3 +1,4 @@
+// ThreatSpec package github.com/pki-io/core/fs as fs
 package fs
 
 import (
@@ -10,6 +11,9 @@ import (
 type Local struct {
 	Path string
 }
+
+// ThreatSpec TMv0.1 for NewLocal
+// Creates new local environment for App:FileSystem
 
 func NewLocal(path string) (*Local, error) {
 	local := new(Local)
@@ -28,6 +32,10 @@ func NewLocal(path string) (*Local, error) {
 	return local, nil
 }
 
+// ThreatSpec TMv0.1 for Local.CreateDirectory
+// Creates filesystem directory for App:FileSystem
+// Sends mkdir from App:FileSystem to OS:FileSystem
+
 func (local *Local) CreateDirectory(dir string) error {
 	if err := os.MkdirAll(filepath.Join(local.Path, dir), privateDirMode); err != nil {
 		return fmt.Errorf("Could not create path: %s", err)
@@ -35,10 +43,16 @@ func (local *Local) CreateDirectory(dir string) error {
 	return nil
 }
 
+// ThreatSpec TMv0.1 for Local.ChangeToDirectiory
+// Does a change of working directory for App:FileSystem
+
 func (local *Local) ChangeToDirectory(dir string) error {
 	local.Path = filepath.Join(local.Path, dir)
 	return nil
 }
+
+// ThreatSpec TMv0.1 for Local.FullPath
+// Returns full local path for App:FileSystem
 
 func (local *Local) FullPath(name string) string {
 	return filepath.Join(local.Path, name)
