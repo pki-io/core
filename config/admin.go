@@ -47,7 +47,7 @@ func (conf *AdminConfig) Load(tomlString string) error {
 func (conf *AdminConfig) AddOrg(name, id, adminId string) error {
 	for _, org := range conf.Data.Org {
 		if org.Name == name {
-			return fmt.Errorf("Could not add org '%s' as one with that name already exists", name)
+			return fmt.Errorf("Org '%s' already exists", name)
 		}
 	}
 	conf.Data.Org = append(conf.Data.Org, AdminOrgData{name, id, adminId})
@@ -61,4 +61,13 @@ func (conf *AdminConfig) GetOrg(name string) (*AdminOrgData, error) {
 		}
 	}
 	return nil, fmt.Errorf("Could not find org %s", name)
+}
+
+func (conf *AdminConfig) OrgExists(name string) bool {
+	for _, org := range conf.Data.Org {
+		if org.Name == name {
+			return true
+		}
+	}
+	return false
 }

@@ -1,7 +1,6 @@
 package fs
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 )
@@ -26,7 +25,7 @@ func Exists(path string) (bool, error) {
 
 func ReadFile(path string) (string, error) {
 	if content, err := ioutil.ReadFile(path); err != nil {
-		return "", fmt.Errorf("Could not read file: %s", err)
+		return "", err
 	} else {
 		return string(content), nil
 	}
