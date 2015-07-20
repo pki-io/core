@@ -17,13 +17,19 @@ const OrgIndexDefault string = `{
           "ca-forward": {},
           "ca-reverse": {},
           "entity-forward": {},
-          "entity-reverse": {}
+          "entity-reverse": {},
+          "cert-forward": {},
+          "cert-reverse": {},
+          "csr-forward": {},
+          "csr-reverse": {}
         },
         "nodes": {},
         "admins": {},
         "pairing-keys": {},
         "invite-keys": {},
-        "cas": {}
+        "cas": {},
+        "certs": {},
+        "csrs": {}
     }
 }`
 
@@ -54,7 +60,7 @@ const OrgIndexSchema string = `{
       "body": {
           "description": "Body data",
           "type": "object",
-          "required": ["id", "parent-id", "invite-keys", "pairing-keys", "nodes", "admins", "cas", "tags"],
+          "required": ["id", "parent-id", "invite-keys", "pairing-keys", "nodes", "admins", "cas", "certs", "tags"],
           "additionalProperties": false,
           "properties": {
               "id": {
@@ -85,10 +91,18 @@ const OrgIndexSchema string = `{
                   "description": "CAs name to ID map",
                   "type": "object"
               },
+              "certs": {
+                  "description": "Certs name to ID map",
+                  "type": "object"
+              },
+              "csrs": {
+                  "description": "CSRs name to ID map",
+                  "type": "object"
+              },
               "tags": {
                   "description": "Tags",
                   "type": "object",
-                  "required": ["ca-forward","ca-reverse","entity-forward","entity-reverse"],
+                  "required": ["ca-forward","ca-reverse","entity-forward","entity-reverse", "cert-forward", "cert-reverse", "csr-forward", "csr-reverse"],
                   "additionalProperties": false,
                   "properties": {
                       "ca-forward": {
@@ -106,7 +120,23 @@ const OrgIndexSchema string = `{
                       "entity-reverse": {
                           "description": "Entities to tags",
                           "type": "object"
-                      }
+                      },
+                      "cert-forward": {
+                          "description": "Tags to Certs",
+                          "type": "object"
+                      },
+                      "cert-reverse": {
+                          "description": "Cert to tags",
+                          "type": "object"
+                      },
+                      "csr-forward": {
+                          "description": "Tags to CSRs",
+                          "type": "object"
+                      },
+                      "csr-reverse": {
+                          "description": "CSRs to tags",
+                          "type": "object"
+                      } 
                   }
               }
           }
@@ -137,11 +167,17 @@ type OrgIndexData struct {
 		Nodes       map[string]string      `json:"nodes"`
 		Admins      map[string]string      `json:"admins"`
 		CAs         map[string]string      `json:"cas"`
+		Certs       map[string]string      `json:"certs"`
+		CSRs        map[string]string      `json:"csrs"`
 		Tags        struct {
 			CAForward     map[string][]string `json:"ca-forward"`
 			CAReverse     map[string][]string `json:"ca-reverse"`
 			EntityForward map[string][]string `json:"entity-forward"`
 			EntityReverse map[string][]string `json:"entity-reverse"`
+			CertForward   map[string][]string `json:"cert-forward"`
+			CertReverse   map[string][]string `json:"cert-reverse"`
+			CSRForward    map[string][]string `json:"csr-forward"`
+			CSRReverse    map[string][]string `json:"csr-reverse"`
 		} `json:"tags"`
 	} `json:"body"`
 }
@@ -350,5 +386,103 @@ func (index *OrgIndex) RemoveCA(name string) error {
 		return fmt.Errorf("CA %s does not exist", name)
 	}
 	delete(index.Data.Body.CAs, name)
+	return nil
+}
+
+func (index *OrgIndex) AddCertTags(cert string, i interface{}) error {
+	var inTags []string
+	switch t := i.(type) {
+	case string:
+		inTags = []string{i.(string)}
+	case []string:
+		inTags = i.([]string)
+	default:
+		return fmt.Errorf("Could not add Cert tags. Wrong data type for tags: %T", t)
+	}
+
+	for _, tag := range inTags {
+		index.Data.Body.Tags.CertForward[tag] = AppendUnique(index.Data.Body.Tags.CertForward[tag], cert)
+		index.Data.Body.Tags.CertReverse[cert] = AppendUnique(index.Data.Body.Tags.CertReverse[cert], tag)
+	}
+
+	return nil
+}
+
+func (index *OrgIndex) AddCert(name, id string) error {
+	_, ok := index.Data.Body.Certs[name]
+	if ok {
+		return fmt.Errorf("key %s already exists", name)
+	}
+	index.Data.Body.Certs[name] = id
+	return nil
+}
+
+func (index *OrgIndex) GetCert(name string) (string, error) {
+	_, ok := index.Data.Body.Certs[name]
+	if !ok {
+		return "", fmt.Errorf("key %s does not exist", name)
+	}
+	return index.Data.Body.Certs[name], nil
+}
+
+func (index *OrgIndex) GetCerts() map[string]string {
+	return index.Data.Body.Certs
+}
+
+func (index *OrgIndex) RemoveCert(name string) error {
+	_, ok := index.Data.Body.Certs[name]
+	if !ok {
+		return fmt.Errorf("Cert %s does not exist", name)
+	}
+	delete(index.Data.Body.Certs, name)
+	return nil
+}
+
+func (index *OrgIndex) AddCSRTags(csr string, i interface{}) error {
+	var inTags []string
+	switch t := i.(type) {
+	case string:
+		inTags = []string{i.(string)}
+	case []string:
+		inTags = i.([]string)
+	default:
+		return fmt.Errorf("Could not add CSR tags. Wrong data type for tags: %T", t)
+	}
+
+	for _, tag := range inTags {
+		index.Data.Body.Tags.CSRForward[tag] = AppendUnique(index.Data.Body.Tags.CSRForward[tag], csr)
+		index.Data.Body.Tags.CSRReverse[csr] = AppendUnique(index.Data.Body.Tags.CSRReverse[csr], tag)
+	}
+
+	return nil
+}
+
+func (index *OrgIndex) AddCSR(name, id string) error {
+	_, ok := index.Data.Body.CSRs[name]
+	if ok {
+		return fmt.Errorf("key %s already exists", name)
+	}
+	index.Data.Body.CSRs[name] = id
+	return nil
+}
+
+func (index *OrgIndex) GetCSR(name string) (string, error) {
+	_, ok := index.Data.Body.CSRs[name]
+	if !ok {
+		return "", fmt.Errorf("key %s does not exist", name)
+	}
+	return index.Data.Body.CSRs[name], nil
+}
+
+func (index *OrgIndex) GetCSRs() map[string]string {
+	return index.Data.Body.CSRs
+}
+
+func (index *OrgIndex) RemoveCSR(name string) error {
+	_, ok := index.Data.Body.CSRs[name]
+	if !ok {
+		return fmt.Errorf("Cert %s does not exist", name)
+	}
+	delete(index.Data.Body.CSRs, name)
 	return nil
 }

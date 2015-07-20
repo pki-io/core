@@ -201,6 +201,7 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, subject 
 		if err != nil {
 			return fmt.Errorf("Could not get private key: %s", err)
 		}
+		// TODO - Should probably track CA by name and load cert if required.
 		certificate.Data.Body.CACertificate = parentCertificate.(*CA).Data.Body.Certificate
 	case nil:
 		// Self signed
@@ -215,6 +216,7 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, subject 
 		return fmt.Errorf("Could not create certificate: %s", err)
 	}
 	certificate.Data.Body.Certificate = string(PemEncodeX509CertificateDER(der))
+	certificate.Data.Body.Id = fmt.Sprintf("%d", template.SerialNumber)
 	enc, err := crypto.PemEncodePrivate(privateKey)
 	if err != nil {
 		return fmt.Errorf("Failed to pem encode private key: %s", err)
