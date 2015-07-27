@@ -235,6 +235,21 @@ func (index *OrgIndex) AddCATags(ca string, i interface{}) error {
 	return nil
 }
 
+func (index *OrgIndex) ClearCATags(ca string) error {
+	_, ok := index.Data.Body.Tags.CAReverse[ca]
+	if ok {
+		delete(index.Data.Body.Tags.CAReverse, ca)
+	}
+	for tag, _ := range index.Data.Body.Tags.CAForward {
+		for i, taggedCA := range index.Data.Body.Tags.CAForward[tag] {
+			if taggedCA == ca {
+				index.Data.Body.Tags.CAForward[tag] = append(index.Data.Body.Tags.CAForward[tag][:i], index.Data.Body.Tags.CAForward[tag][i+1:]...)
+			}
+		}
+	}
+	return nil
+}
+
 func (index *OrgIndex) AddEntityTags(entity string, i interface{}) error {
 	var inTags []string
 	switch t := i.(type) {
