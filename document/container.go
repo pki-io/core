@@ -1,3 +1,4 @@
+// ThreatSpec package github.com/pki-io/core/document as document
 package document
 
 import (
@@ -109,6 +110,9 @@ type Container struct {
 	Data ContainerData
 }
 
+// ThreatSpec TMv0.1 for NewContainer
+// Creates new container for App:Document
+
 // NewContainer creates a new Container.
 func NewContainer(jsonData interface{}) (*Container, error) {
 	doc := new(Container)
@@ -123,6 +127,9 @@ func NewContainer(jsonData interface{}) (*Container, error) {
 	}
 }
 
+// ThreatSpec TMv0.1 for Container.Dump
+// Does container dumping for App:Document
+
 // Dump serializes the Container to JSON.
 func (doc *Container) Dump() string {
 	if jsonString, err := doc.ToJson(doc.Data); err != nil {
@@ -131,6 +138,9 @@ func (doc *Container) Dump() string {
 		return jsonString
 	}
 }
+
+// ThreatSpec TMv0.1 for Container.Encrypt
+// Does container hybdrid encryption for App:Document
 
 // Encrypt takes a plaintext string and group encrypts for the given public keys and updates its data to the ciphertext and inputs.
 func (doc *Container) Encrypt(jsonString string, keys map[string]string) error {
@@ -147,6 +157,9 @@ func (doc *Container) Encrypt(jsonString string, keys map[string]string) error {
 	return nil
 }
 
+// ThreatSpec TMv0.1 for Container.SymmetricEncrypt
+// Does symmetric encryption of container for App:Document
+
 // SymmetricEncrypt takes a plaintext string and encrypts with the given key. It updates its data to the ciphertext and inputs.
 func (doc *Container) SymmetricEncrypt(jsonString, id, key string) error {
 	encrypted, err := crypto.SymmetricEncrypt(jsonString, id, key)
@@ -160,6 +173,9 @@ func (doc *Container) SymmetricEncrypt(jsonString, id, key string) error {
 
 	return nil
 }
+
+// ThreatSpec TMv0.1 for Container.Decrypt
+// Does hybdrid decryption of container for App:Document
 
 // Decrypt takes a private key and decrypts the Container body, return a plaintext string.
 func (doc *Container) Decrypt(id string, privateKey string) (string, error) {
@@ -176,6 +192,9 @@ func (doc *Container) Decrypt(id string, privateKey string) (string, error) {
 	}
 }
 
+// ThreatSpec TMv0.1 for Container.SymmetricDecrypt
+// Does symmetric decryption of container for App:Document
+
 // SymmetricDecrypt takes a key and decrypts the Container body, returning a plaintext string.
 func (doc *Container) SymmetricDecrypt(key string) (string, error) {
 	encrypted := new(crypto.Encrypted)
@@ -191,6 +210,9 @@ func (doc *Container) SymmetricDecrypt(key string) (string, error) {
 	}
 }
 
+// ThreatSpec TMv0.1 for Container.IsEncrypted
+// Returns whether container is encrypted for App:Document
+
 // IsEncrypted checks whether the Container is encrypted.
 func (doc *Container) IsEncrypted() bool {
 	if len(doc.Data.Options.EncryptionKeys) == 0 ||
@@ -201,6 +223,9 @@ func (doc *Container) IsEncrypted() bool {
 		return true
 	}
 }
+
+// ThreatSpec TMv0.1 for Container.IsSigned
+// Returns whether container is signed for App:Document
 
 // IsSigned checks whether the Container is signed.
 func (doc *Container) IsSigned() bool {

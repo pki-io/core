@@ -1,3 +1,4 @@
+// ThreatSpec package github.com/pki-io/core/document as document
 package document
 
 import (
@@ -17,6 +18,9 @@ type Document struct {
 	Schema  string
 	Default string
 }
+
+// ThreatSpec TMv0.1 for Document.FromJson
+// Creates document from JSON for App:Document
 
 // FromJson parses the provided data after verifying the schema. If the data is nil, it uses the default values set for the document.
 func (doc *Document) FromJson(data interface{}, target interface{}) (interface{}, error) {
@@ -62,6 +66,9 @@ func (doc *Document) FromJson(data interface{}, target interface{}) (interface{}
 		}
 	}
 }
+
+// ThreatSpec TMv0.1 for Document.ToJson
+// Returns document as JSON for App:Document
 
 // ToJson serializes the document to JSON.
 func (doc *Document) ToJson(data interface{}) (string, error) {

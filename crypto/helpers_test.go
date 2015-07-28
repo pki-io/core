@@ -1,3 +1,4 @@
+// ThreatSpec package github.com/pki-io/core/crypto as crypto
 package crypto
 
 import (
@@ -8,17 +9,25 @@ import (
 	"testing"
 )
 
+// ThreatSpec TMv0.1 for TestUUID
+// Tests UUID for correct output size
+
 func TestUUID(t *testing.T) {
 	uuid := UUID()
 	assert.Equal(t, 36, len(uuid), "incorrect size")
 }
 
-// TestUUIDNotEqual tests that two UUIDs aren't the same.
+// ThreatSpec TMv0.1 for TestUUIDNotEqual
+// Tests UUID for two outputs not being the same
+
 func TestUUIDNotEqual(t *testing.T) {
 	uuid1 := UUID()
 	uuid2 := UUID()
 	assert.NotEqual(t, uuid1, uuid2, "can't be the same")
 }
+
+// ThreatSpec TMv0.1 for TestRandomBytesSize
+// Tests RandomBytes for correct size
 
 func TestRandomBytesSize(t *testing.T) {
 	size := 10
@@ -42,6 +51,9 @@ func TestRandomBytesNotEqual(t *testing.T) {
 	assert.NotEqual(t, rand1, rand2, "can't be the same")
 }
 
+// ThreatSpec TMv0.1 for TestPad
+// Tests Pad for correct output size
+
 func TestPad(t *testing.T) {
 	size := 10
 	msg := []byte("012345")
@@ -54,6 +66,9 @@ func TestPad(t *testing.T) {
 	assert.Equal(t, len(padded), expectedSize, "not a full block of padding")
 }
 
+// ThreatSpec TMv0.1 for TestUnpad
+// Tests Unpad for correct output size
+
 func TestUnpad(t *testing.T) {
 	size := 10
 	expectedSize := 5
@@ -63,12 +78,18 @@ func TestUnpad(t *testing.T) {
 	assert.Equal(t, len(msg), expectedSize)
 }
 
+// ThreatSpec TMv0.1 for TestBase64Encode
+// Tests Base64Encode for matching output
+
 func TestBase64Encode(t *testing.T) {
 	in := []byte("an input")
 	expectedOut := []byte("YW4gaW5wdXQ=") // echo -n "an input" | base64
 	out := Base64Encode(in)
 	assert.Equal(t, out, expectedOut, "output should match")
 }
+
+// ThreatSpec TMv0.1 for TestBase64Decode
+// Tests Base64Decode for matching output
 
 func TestBase64Decode(t *testing.T) {
 	in := []byte("YW4gaW5wdXQ=") // echo -n "an input" | base64
@@ -77,6 +98,9 @@ func TestBase64Decode(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, out, expectedOut, "output should match")
 }
+
+// ThreatSpec TMv0.1 for TestAESEncrypt
+// Tests AESEncrypt for difference between plaintext and ciphertext
 
 func TestAESEncrypt(t *testing.T) {
 	plaintext := []byte("secret message")

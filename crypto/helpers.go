@@ -1,3 +1,4 @@
+// ThreatSpec package github.com/pki-io/core/crypto as crypto
 package crypto
 
 import (
@@ -34,6 +35,9 @@ const (
 	KeyTypeEC  KeyType = "ec"
 )
 
+// ThreatSpec TMv0.1 for TimeOrderedUUID
+// Does time-ordered UUID generation for App:Crypto
+
 // TimeOrderedUUID taken directly from https://github.com/mitchellh/packer/blob/master/common/uuid/uuid.go
 func TimeOrderedUUID() string {
 	unix := uint32(time.Now().UTC().Unix())
@@ -50,6 +54,9 @@ func TimeOrderedUUID() string {
 		unix, b[0:2], b[2:4], b[4:6], b[6:8], b[8:])
 }
 
+// ThreatSpec TMv0.1 for UUID
+// Does UUID generation for App:Crypto
+
 // UUID is an opinionated helper function that generate a 128 bit time-ordered UUID string.
 //
 // Documentation for the TimeOrderedUUID function is available here:
@@ -61,7 +68,7 @@ func UUID() string {
 }
 
 // ThreatSpec TMv0.1 for RandomBytes
-// Mitigates cryptography against Use of Insufficiently Random Values (CWE-330) with standard package which uses secure implementation
+// Mitigates App:Crypto against Use of Insufficiently Random Values (CWE-330) with standard package which uses secure implementation
 
 // RandomBytes generates and returns size number of random bytes.
 func RandomBytes(size int) ([]byte, error) {
@@ -78,6 +85,9 @@ func RandomBytes(size int) ([]byte, error) {
 	return randomBytes, nil
 }
 
+// ThreatSpec TMv0.1 for Pad
+// Does PKCS5 padding for App:Crypto
+
 // Pad takes the src byte array and PKCS5 pads it to blockSize, returning the padded byte array.
 //
 // Taken from the tutorial available here:
@@ -87,6 +97,9 @@ func Pad(src []byte, blockSize int) []byte {
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(src, padtext...)
 }
+
+// ThreatSpec TMv0.1 for Unpad
+// Does PKCS5 unpadding for App:Crypto
 
 // UnPad takes the src byte array and PKCS5 unpads it.
 //
@@ -99,9 +112,9 @@ func UnPad(src []byte) []byte {
 }
 
 // ThreatSpec TMv0.1 for ExpandKey
-// Mitigates cryptography against Use of Password Hash With Insufficient Computational Effort (CWE-916) with PBKDF2 provided by standard package
-// Mitigates cryptography against Use of a One-Way Hash without a Salt (CWE-759) with salt create by function
-// Mitigates cryptography against Use of a One-Way Hash with a Predictable Salt (CWE-760) with salt created with good PRNG
+// Mitigates App:Crypto against Use of Password Hash With Insufficient Computational Effort (CWE-916) with PBKDF2 provided by standard package
+// Mitigates App:Crypto against Use of a One-Way Hash without a Salt (CWE-759) with salt create by function
+// Mitigates App:Crypto against Use of a One-Way Hash with a Predictable Salt (CWE-760) with salt created with good PRNG
 
 // ExpandKey is an opinionated helper function to cryptographically expand a key using a 128 bit salt and PBKDF2.
 // If the salt is of 0 length, it generates a new salt, and returns the expanded key and salt as byte arrays.
@@ -119,10 +132,16 @@ func ExpandKey(key, salt []byte) ([]byte, []byte, error) {
 	return newKey, salt, nil
 }
 
+// ThreatSpec TMv0.1 for Base64Encode
+// Does base64 encoding for App:Crypto
+
 // Base64Encode returns the base64 encoding of the input.
 func Base64Encode(input []byte) []byte {
 	return []byte(base64.StdEncoding.EncodeToString(input))
 }
+
+// ThreatSpec TMv0.1 for Base64Decode
+// Does base64 decoding for App:Crypto
 
 // Base64Decode returns the base64 decoded input.
 func Base64Decode(input []byte) (decoded []byte, err error) {
@@ -134,9 +153,10 @@ func Base64Decode(input []byte) (decoded []byte, err error) {
 }
 
 // ThreatSpec TMv0.1 for AESEncrypt
-// Mitigates cryptography against weak cipher with strong encryption cipher in CBC mode
-// Mitigates cryptography against weak cipher with sufficient key size
-// Mitigates cryptography against failure to use a random IV in CBC mode with generated random IV
+// Does symmetric encryption for App:Crypto
+// Mitigates App:Crypto against weak cipher with strong encryption cipher in CBC mode
+// Mitigates App:Crypto against weak cipher with sufficient key size
+// Mitigates App:Crypto against failure to use a random IV in CBC mode with generated random IV
 
 // AESEncrypt is an opinionated helper function that implements 256 bit AES in CBC mode.
 // It creates a random 128 bit IV which is returned along with the ciphertext.
@@ -163,6 +183,9 @@ func AESEncrypt(plaintext, key []byte) (ciphertext []byte, iv []byte, err error)
 	return ciphertext, iv, nil
 }
 
+// ThreatSpec TMv0.1 for AESDecrypt
+// Does symmetric decryption for App:Crypto
+
 // AESDecrypt is an opinionated helper function that decryptes a ciphertext encrypted
 // with 256 bit AES in CBC mode and returns the plaintext.
 func AESDecrypt(ciphertext, iv, key []byte) ([]byte, error) {
@@ -186,6 +209,9 @@ func AESDecrypt(ciphertext, iv, key []byte) ([]byte, error) {
 	return UnPad(paddedPlaintext), nil
 }
 
+// TheatSpec TMv0.1 for GetKeyType
+// Does key type identification for App:Crypto
+
 // GetKeyType returns the key type for a given key
 func GetKeyType(key interface{}) (KeyType, error) {
 	switch t := key.(type) {
@@ -199,8 +225,9 @@ func GetKeyType(key interface{}) (KeyType, error) {
 }
 
 // ThreatSpec TMv0.1 for GenerateRSAKey
-// Mitigates cryptography against weak private key with RSA key generated using standard package
-// Mitigates cryptography against weak private key with sufficient RSa key size of 2048 bits
+// Does RSA key generation for App:Crypto
+// Mitigates App:Crypto against weak private key with RSA key generated using standard package
+// Mitigates App:Crypto against weak private key with sufficient RSa key size of 2048 bits
 
 // GenerateRSAKey is an opinionated helper function to generate a 2048 bit RSA key pair
 func GenerateRSAKey() (*rsa.PrivateKey, error) {
@@ -212,7 +239,8 @@ func GenerateRSAKey() (*rsa.PrivateKey, error) {
 }
 
 // ThreatSpec TMv0.1 for GenerateECKey
-// Exposes cryptography to weak private key with EC key generated by third-party package
+// Does Elliptic Curve key generation for App:Crypto
+// Exposes App:Crypto to weak private key with EC key generated by third-party package
 
 // GenerateECKey is an opinionated helper function to generate a P256 ECDSA key pair.
 func GenerateECKey() (*ecdsa.PrivateKey, error) {
@@ -222,6 +250,9 @@ func GenerateECKey() (*ecdsa.PrivateKey, error) {
 	}
 	return key, nil
 }
+
+// ThreatSpec TMv0.1 for PemEncodePrivate
+// Does PEM encoding of private keys for App:Crypto
 
 // PemEncodePrivate PEM encodes a private key. It supports RSA and ECDSA key types.
 func PemEncodePrivate(key crypto.PrivateKey) ([]byte, error) {
@@ -244,6 +275,9 @@ func PemEncodePrivate(key crypto.PrivateKey) ([]byte, error) {
 
 }
 
+// ThreatSpec TMv0.1 for PemEncodePublic
+// Does PEM encoding of public keys for App:Crypto
+
 // PemEncodePublic PEM encodes a public key. It supports RSA and ECDSA.
 func PemEncodePublic(key crypto.PublicKey) ([]byte, error) {
 	der, err := x509.MarshalPKIXPublicKey(key)
@@ -265,6 +299,9 @@ func PemEncodePublic(key crypto.PublicKey) ([]byte, error) {
 	return pem.EncodeToMemory(b), nil
 }
 
+// ThreatSpec TMv0.1 for PemDecodePrivate
+// Does PEM decoding of private keys for App:Crypto
+
 // PemDecodePrivate decodes a PEM encoded private key. It supports PKCS1 and EC private keys.
 func PemDecodePrivate(in []byte) (crypto.PrivateKey, error) {
 	b, _ := pem.Decode(in)
@@ -279,6 +316,9 @@ func PemDecodePrivate(in []byte) (crypto.PrivateKey, error) {
 	return key, nil
 }
 
+// ThreatSpec TMv0.1 for PemDecodePublic
+// Does PEM decodimg of public keys for App:Crypto
+
 // PemDecodePublic decodes a PEM encoded public key. It supports any PKIX public key.
 func PemDecodePublic(in []byte) (crypto.PublicKey, error) {
 	b, _ := pem.Decode(in)
@@ -288,6 +328,9 @@ func PemDecodePublic(in []byte) (crypto.PublicKey, error) {
 	}
 	return pubKey, nil
 }
+
+// ThreatSpec TMv0.1 for Encrypt
+// Does asymmetric encryption for App:Crypto
 
 // Encrypt is a wrapper function that will encrypt a plaintext using the provided public key,
 // and returns the ciphertext. It supports RSA and ECDSA public keys.
@@ -303,7 +346,8 @@ func Encrypt(plaintext []byte, publicKey crypto.PublicKey) ([]byte, error) {
 }
 
 // ThreatSpec TMv0.1 for rsaEncrypt
-// Mitigates cryptography against Use of RSA Algorithm without OAEP (CWE-780) with RSA encryption using OAEP with SHA-256
+// Does RSA encryption for App:Crypto
+// Mitigates App:Crypto against Use of RSA Algorithm without OAEP (CWE-780) with RSA encryption using OAEP with SHA-256
 
 // rsaEncrypt is an opinionated helper function that encryptes a plaintext using an RSA public key,
 // and returns the ciphertext. It uses OAEP with SHA-256.
@@ -318,8 +362,9 @@ func rsaEncrypt(plaintext []byte, publicKey *rsa.PublicKey) ([]byte, error) {
 }
 
 // ThreatSpec TMv0.1 for eciesEncrypt
-// Mitigates cryptography against something else with Elliptic Curve Integrated Encryption Scheme
-// Exposes cryptography to something bleh with encryption performed by third-party package
+// Does EC IES encryption for App:Crypto
+// Mitigates App:Crypto against something else with Elliptic Curve Integrated Encryption Scheme
+// Exposes App:Crypto to something bleh with encryption performed by third-party package
 
 // eciesEncrypt is an opinionated helper function that encryptes a plaintext using an EC DSA public key,
 // and returns the ciphertext.
@@ -330,6 +375,9 @@ func eciesEncrypt(plaintext []byte, publicKey *ecdsa.PublicKey) ([]byte, error) 
 	pub := ecies.ImportECDSAPublic(publicKey)
 	return ecies.Encrypt(rand.Reader, pub, plaintext, nil, nil)
 }
+
+// ThreatSpec TMv0.1 for Decrypt
+// Does asymmetric decryption for App:Crypto
 
 // Decrypt is a wrapper function that will decrypt a ciphertext using the provided private key,
 // and returns the plaintext. It supports RSA and ECDSA private keys.
@@ -344,6 +392,9 @@ func Decrypt(cipherText []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 	}
 }
 
+// ThreatSpec TMv0.1 for rsaDecrypt
+// Does RSA decryption for App:Crypto
+
 // rsaDecrypt is an opinionated helper function that decryptes a ciphertext using an RSA private key.
 // It uses OAEP with SHA-256.
 func rsaDecrypt(ciphertext []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
@@ -356,6 +407,9 @@ func rsaDecrypt(ciphertext []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	return plaintext, nil
 }
 
+// ThreatSpec TMv0.1 for eciesDecrypt
+// Does EC IES decryption for App:Crypto
+
 // eciesDecrypt is an opinionated helper function that decryptes a ciphertext using an ECDSA private key.
 //
 // it uses ecies (integrated encryption scheme) provided by an external library, documentation of which is available here:
@@ -364,6 +418,9 @@ func eciesDecrypt(cipherText []byte, privateKey *ecdsa.PrivateKey) ([]byte, erro
 	pri := ecies.ImportECDSA(privateKey)
 	return pri.Decrypt(rand.Reader, cipherText, nil, nil)
 }
+
+// ThreatSpec TMv0.1 for SignMessage
+// Does asymmetric message signing for App:Crypto
 
 // SignMessage signs a message using the provided private key. It supports RSA and ECDSA and returns the message signature.
 func SignMessage(message []byte, privateKey crypto.PrivateKey) ([]byte, error) {
@@ -376,6 +433,9 @@ func SignMessage(message []byte, privateKey crypto.PrivateKey) ([]byte, error) {
 		return nil, errors.New("Unsupported private key type.")
 	}
 }
+
+// ThreatSpec TMv0.1 for rsaSign
+// Does RSA message signing for App:Crypto
 
 // rsaSign is an opinionated helper function that signs a message using an RSA private key. It uses PKCS1v15 with SHA-256, and returns the message signature.
 func rsaSign(message []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
@@ -393,6 +453,9 @@ func rsaSign(message []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	}
 	return signature, nil
 }
+
+// ThreatSpec TMv0.1 for ecdsaSign
+// Does EC DSA message signing for App:Crypto
 
 // ecdsaSign is an opinionated helper function that signs a message using an ECDSA private key, and returns the message signature. It uses SHA-256 for hashing.
 func ecdsaSign(message []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
@@ -426,6 +489,9 @@ func ecdsaSign(message []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// ThreatSpec TMv0.1 for VerifySignature
+// Does asymmetric signature verification for App:Crypto
+
 // VerifySignature verifies a message for a given signature and public key. If verified, the function returns nil, otherwise it returns an error. It supports RSA and ECDSA public keys.
 func VerifySignature(message []byte, signature []byte, publicKey crypto.PublicKey) error {
 	switch k := publicKey.(type) {
@@ -437,6 +503,9 @@ func VerifySignature(message []byte, signature []byte, publicKey crypto.PublicKe
 		return errors.New("Unsupported public key type.")
 	}
 }
+
+// ThreatSpec TMv0.1 for rsaVerify
+// Does RSA signature verification for App:Crypto
 
 // rsaVerify is an opinionated helper function that verifies a message for a given signature and RSA public key. If verified, the function returns nil, otherwise it returns an error. It uses PKCS1v15 with SHA-256.
 func rsaVerify(message []byte, signature []byte, publicKey *rsa.PublicKey) error {
@@ -454,6 +523,9 @@ func rsaVerify(message []byte, signature []byte, publicKey *rsa.PublicKey) error
 	}
 	return nil
 }
+
+// ThreatSpec TMv0.1 for ecdsaVerify
+// Does EC DSA signature verification for App:Crypto
 
 // ecdsaVerify is an opinionated helper function that verifies a message for a given signature and ECDSA public key. If verified, the function returns nil, otherwise it returns an error. It uses SHA-256 for hashing.
 func ecdsaVerify(message []byte, signature []byte, publicKey *ecdsa.PublicKey) error {
@@ -474,6 +546,9 @@ func ecdsaVerify(message []byte, signature []byte, publicKey *ecdsa.PublicKey) e
 	return nil
 }
 
+// ThreatSpec TMv0.1 for hmac256
+// Does SHA-256  message authentication for App:Crypto
+
 // hmac256 is an opinionated helper function that generates a HMAC for the given message using SHA-256.
 func hmac256(message, key []byte) ([]byte, error) {
 	mac := hmac.New(sha256.New, key)
@@ -484,6 +559,9 @@ func hmac256(message, key []byte) ([]byte, error) {
 
 	return mac.Sum(nil), nil
 }
+
+// ThreatSpec TMv0.1 for HMAC
+// Does symmetric message authentication for App:Crypto
 
 // HMAC is a wrapper function that calculates a HMAC for a given message and symmetric key.
 func HMAC(message []byte, key []byte, signature *Signed) error {
@@ -498,7 +576,8 @@ func HMAC(message []byte, key []byte, signature *Signed) error {
 }
 
 // ThreatSpec TMv0.1 for HMACVerify
-// Mitigates cryptography against side-channel attack with use of time-constant comparison provided by standard package
+// Does symmetric message authentication verification for App:Crypto
+// Mitigates App:Crypto against side-channel attack with use of time-constant comparison provided by standard package
 
 // HMACVerify verifies the HMAC of the given message. If verified, the function returns nil, otherwise it returns an error.
 func HMACVerify(message, key, signature []byte) error {
