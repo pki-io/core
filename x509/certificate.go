@@ -1,3 +1,4 @@
+// ThreatSpec package github.com/pki-io/core/x509 as x509
 package x509
 
 import (
@@ -116,6 +117,9 @@ type Certificate struct {
 	Data CertificateData
 }
 
+// ThreatSpec TMv0.1 for NewCertificate
+// Creates new certificate for App:X509
+
 func NewCertificate(jsonString interface{}) (*Certificate, error) {
 	certificate := new(Certificate)
 	certificate.Schema = CertificateSchema
@@ -127,6 +131,9 @@ func NewCertificate(jsonString interface{}) (*Certificate, error) {
 	}
 }
 
+// ThreatSpec TMv0.1 for Certificate.Load
+// Does certificate JSON loading for App:X509
+
 func (certificate *Certificate) Load(jsonString interface{}) error {
 	data := new(CertificateData)
 	if data, err := certificate.FromJson(jsonString, data); err != nil {
@@ -137,6 +144,8 @@ func (certificate *Certificate) Load(jsonString interface{}) error {
 	}
 }
 
+// ThreatSpec TMv0.1 for Certificate.Dump
+// Does certificate JSON dumping for App:X509
 func (certificate *Certificate) Dump() string {
 	if jsonString, err := certificate.ToJson(certificate.Data); err != nil {
 		return ""
@@ -144,6 +153,9 @@ func (certificate *Certificate) Dump() string {
 		return jsonString
 	}
 }
+
+// ThreatSpec TMv0.1 for Certificate.Generate
+// Does certificate generation for App:X509
 
 func (certificate *Certificate) Generate(parentCertificate interface{}, subject *pkix.Name) error {
 	//https://www.socketloop.com/tutorials/golang-create-x509-certificate-private-and-public-keys
@@ -226,10 +238,15 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, subject 
 	return nil
 }
 
+// ThreatSpec TMv0.1 for Certificate.Certificate
+// Returns certificate for App:X509
+
 func (certificate *Certificate) Certificate() (*x509.Certificate, error) {
 	return PemDecodeX509Certificate([]byte(certificate.Data.Body.Certificate))
 }
 
+// ThreatSpec TMv0.1 for Certificate.PrivateKey
+// Returns certificate private key for App:X509
 func (certificate *Certificate) PrivateKey() (interface{}, error) {
 	if privateKey, err := crypto.PemDecodePrivate([]byte(certificate.Data.Body.PrivateKey)); err != nil {
 		return nil, fmt.Errorf("Could not decode rsa private key: %s", err)

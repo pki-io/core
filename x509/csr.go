@@ -1,3 +1,4 @@
+// ThreatSpec package github.com/pki-io/core/x509 as x509
 package x509
 
 import (
@@ -96,6 +97,9 @@ type CSR struct {
 	Data CSRData
 }
 
+// ThreatSpec TMv0.1 for NewCSR
+// Creates new CSR for App:X509
+
 func NewCSR(jsonString interface{}) (*CSR, error) {
 	csr := new(CSR)
 	csr.Schema = CSRSchema
@@ -107,6 +111,9 @@ func NewCSR(jsonString interface{}) (*CSR, error) {
 	}
 }
 
+// ThreatSpec TMv0.1 for CSR.Load
+// Does CSR JSON loading for App:X509
+
 func (csr *CSR) Load(jsonString interface{}) error {
 	data := new(CSRData)
 	if data, err := csr.FromJson(jsonString, data); err != nil {
@@ -117,6 +124,9 @@ func (csr *CSR) Load(jsonString interface{}) error {
 	}
 }
 
+// ThreatSpec TMv0.1 for CSR.Dump
+// Does CSR JSON dumping for App:X509
+
 func (csr *CSR) Dump() string {
 	if jsonString, err := csr.ToJson(csr.Data); err != nil {
 		return ""
@@ -124,6 +134,9 @@ func (csr *CSR) Dump() string {
 		return jsonString
 	}
 }
+
+// ThreatSpec TMv0.1 for CSR.Generate
+// Does CSR generation for App:Crypto
 
 func (csr *CSR) Generate() error {
 
@@ -197,6 +210,9 @@ func (csr *CSR) Generate() error {
 	return nil
 }
 
+// ThreatSpec TMv0.1 for CSR.Public
+// Returns CSR for App:X509
+
 func (csr *CSR) Public() (*CSR, error) {
 	selfJson := csr.Dump()
 	publicCSR, err := NewCSR(selfJson)
@@ -206,6 +222,9 @@ func (csr *CSR) Public() (*CSR, error) {
 	publicCSR.Data.Body.PrivateKey = ""
 	return publicCSR, nil
 }
+
+// ThreatSpec TMv0.1 for CSR.PublicKey
+// Returns CSR public key for App:X509
 
 func (csr *CSR) PublicKey() (interface{}, error) {
 	if rawCSR, err := PemDecodeX509CSR([]byte(csr.Data.Body.CSR)); err != nil {

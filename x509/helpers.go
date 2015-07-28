@@ -1,3 +1,4 @@
+// ThreatSpec package github.com/pki-io/core/x509 as x509
 package x509
 
 import (
@@ -9,10 +10,16 @@ import (
 	"strings"
 )
 
+// ThreatSpec TMv0.1 for PemEncodeX509CertificateDER
+// Does PEM encoding of an X509 certificate for App:X509
+
 func PemEncodeX509CertificateDER(cert []byte) []byte {
 	b := &pem.Block{Type: "CERTIFICATE", Bytes: cert}
 	return pem.EncodeToMemory(b)
 }
+
+// ThreatSpec TMv0.1 for PemDecodeX509Certificate
+// Does PEM decoding of a X509 certificate for App:X509
 
 func PemDecodeX509Certificate(in []byte) (*x509.Certificate, error) {
 	b, _ := pem.Decode(in)
@@ -23,10 +30,16 @@ func PemDecodeX509Certificate(in []byte) (*x509.Certificate, error) {
 	}
 }
 
+// ThreatSpec TMv0.1 for PemEncodeX509CSRDER
+// Does PEM encoding of X509 CSR for App:X509
+
 func PemEncodeX509CSRDER(cert []byte) []byte {
 	b := &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: cert}
 	return pem.EncodeToMemory(b)
 }
+
+// ThreatSpec TMv0.1 for PemDecodeX509CSR
+// Does PEM decoding of X509 CSR for App:X509
 
 func PemDecodeX509CSR(in []byte) (*x509.CertificateRequest, error) {
 	b, _ := pem.Decode(in)
@@ -36,6 +49,9 @@ func PemDecodeX509CSR(in []byte) (*x509.CertificateRequest, error) {
 		return csr, nil
 	}
 }
+
+// ThreatSpec TMv0.1 for NewSerial
+// Does new certificate serial creation for App:X509
 
 func NewSerial() (*big.Int, error) {
 	uuid := crypto.TimeOrderedUUID()

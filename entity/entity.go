@@ -1,3 +1,4 @@
+// ThreatSpec package github.com/pki-io/core/entity as entity
 package entity
 
 import (
@@ -113,6 +114,9 @@ type Entity struct {
 	Data EntityData
 }
 
+// ThreatSpec TMv0.1 for New
+// Creates new entity for App:Entity
+
 // New returns a new Entity.
 func New(jsonString interface{}) (*Entity, error) {
 	entity := new(Entity)
@@ -122,6 +126,9 @@ func New(jsonString interface{}) (*Entity, error) {
 		return entity, nil
 	}
 }
+
+// ThreatSpec TMv0.1 for Entity.New
+// Does entity initialisation for App:Entity
 
 // New initializes the entity.
 func (entity *Entity) New(jsonString interface{}) error {
@@ -134,6 +141,9 @@ func (entity *Entity) New(jsonString interface{}) error {
 	}
 }
 
+// ThreatSpec TMv0.1 for Entity.Load
+// Does entity JSON loading for App:Entity
+
 // Load takes a JSON string and sets the entity data.
 func (entity *Entity) Load(jsonString interface{}) error {
 	data := new(EntityData)
@@ -145,6 +155,9 @@ func (entity *Entity) Load(jsonString interface{}) error {
 	}
 }
 
+// ThreatSpec TMv0.1 for Entity.Dump
+// Does entity JSON dumping for App:Entity
+
 // Dump serializes the entity, returning a JSON string.
 func (entity *Entity) Dump() string {
 	if jsonString, err := entity.ToJson(entity.Data); err != nil {
@@ -153,6 +166,9 @@ func (entity *Entity) Dump() string {
 		return jsonString
 	}
 }
+
+// ThreatSpec TMv0.1 for Entity.DumpPublic
+// Does entity dumping of public JSON for App:Entity
 
 // DumpPublic serializes the public entity data, returning a JSON string.
 func (entity *Entity) DumpPublic() string {
@@ -163,6 +179,9 @@ func (entity *Entity) DumpPublic() string {
 		return public.Dump()
 	}
 }
+
+// ThreatSpec TMv0.1 for Entity.generateRSAKeys
+// Does RSA key generation for App:Entity
 
 // generateRSAKeys generates RSA keys.
 func (entity *Entity) generateRSAKeys() (*rsa.PrivateKey, *rsa.PrivateKey, error) {
@@ -196,6 +215,9 @@ func (entity *Entity) generateRSAKeys() (*rsa.PrivateKey, *rsa.PrivateKey, error
 	return signingKey, encryptionKey, nil
 }
 
+// ThreatSpec TMv0.1 for Entity.generateECKeys
+// Does EC key generation for App:Entity
+
 // generateECKeys generates EC keys.
 func (entity *Entity) generateECKeys() (*ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
 	signingKey, err := crypto.GenerateECKey()
@@ -212,6 +234,9 @@ func (entity *Entity) generateECKeys() (*ecdsa.PrivateKey, *ecdsa.PrivateKey, er
 
 	return signingKey, encryptionKey, nil
 }
+
+// ThreatSpec TMv0.1 for Entity.GenerateKeys
+// Does key generation for App:Entity
 
 // GenerateKeys generates RSA or EC keys for the entity, depending on the KeyType set.
 func (entity *Entity) GenerateKeys() error {
@@ -266,6 +291,9 @@ func (entity *Entity) GenerateKeys() error {
 	return nil
 }
 
+// ThreatSpec TMv0.1 for Entity.Sign
+// Does container using for App:Entity
+
 // Sign takes a Container and signs it using its private signing key.
 func (entity *Entity) Sign(container *document.Container) error {
 	var signatureMode crypto.Mode
@@ -296,6 +324,9 @@ func (entity *Entity) Sign(container *document.Container) error {
 	container.Data.Options.Signature = signature.Signature
 	return nil
 }
+
+// ThreatSpec TMv0.1 for Entity.Authenticate
+// Does container authentication with shared keys for App:Entity
 
 // Authenticate takes a Container and MACs it using the provided key.
 func (entity *Entity) Authenticate(container *document.Container, id, key string) error {
@@ -335,6 +366,9 @@ func (entity *Entity) Authenticate(container *document.Container, id, key string
 	return nil
 }
 
+// ThreatSpec TMv0.1 for Entity.VerifyAuthentication
+// Does authenticated container verification for App:Entity
+
 // VerifyAuthentication takes a Container and verifies the MAC for the given key.
 func (entity *Entity) VerifyAuthentication(container *document.Container, key string) error {
 	rawKey, err := hex.DecodeString(key)
@@ -365,6 +399,9 @@ func (entity *Entity) VerifyAuthentication(container *document.Container, key st
 	}
 }
 
+// ThreatSpec TMv0.1 for Entity.Verify
+// Does container signature verification for App:Entity
+
 // Verify takes a Container and verifies the signature using the entities public key.
 func (entity *Entity) Verify(container *document.Container) error {
 
@@ -386,6 +423,9 @@ func (entity *Entity) Verify(container *document.Container) error {
 	}
 }
 
+// ThreatSpec TMv0.1 for Entity.Decrypt
+// Does container decryption using private keys for App:Entity
+
 // Decrypt takes a Container and decrypts the content using the entities private decryption key.
 // It returns a plaintext string.
 func (entity *Entity) Decrypt(container *document.Container) (string, error) {
@@ -403,6 +443,9 @@ func (entity *Entity) Decrypt(container *document.Container) (string, error) {
 	}
 }
 
+// ThreatSpec TMv0.1 for Entity.SymmetricDecrypt
+// Does container symmetric decryption using shared keys for App:Entity
+
 // SymmetricDecrypt takes a Container and decrypts the content using the provided key.
 // It returns a plaintext string.
 func (entity *Entity) SymmetricDecrypt(container *document.Container, key string) (string, error) {
@@ -415,6 +458,9 @@ func (entity *Entity) SymmetricDecrypt(container *document.Container, key string
 	}
 }
 
+// ThreatSpec  TMv0.1 for Entity.Public
+// Returns public version of entity for App:Entity
+
 // Public returns the public entity data.
 func (entity *Entity) Public() (*Entity, error) {
 	selfJson := entity.Dump()
@@ -426,6 +472,9 @@ func (entity *Entity) Public() (*Entity, error) {
 	publicEntity.Data.Body.PrivateEncryptionKey = ""
 	return publicEntity, nil
 }
+
+// ThreatSpec TMv0.1 for Entity.SignString
+// Does string signing for App:Entity
 
 // SignString takes a message string and signs it.
 func (entity *Entity) SignString(content string) (*document.Container, error) {
@@ -442,6 +491,9 @@ func (entity *Entity) SignString(content string) (*document.Container, error) {
 	}
 }
 
+// ThreatSpec TMv0.1 for Entity.AuthenticateString
+// Does string authentication using shared keys for App:Entity
+
 // AuthenticateString takes a message string and key and MACs the message using the provided key.
 func (entity *Entity) AuthenticateString(content, id, key string) (*document.Container, error) {
 	container, err := document.NewContainer(nil)
@@ -456,6 +508,9 @@ func (entity *Entity) AuthenticateString(content, id, key string) (*document.Con
 		return container, nil
 	}
 }
+
+// ThreatSpec TMv0.1 for Entity.Encrypt
+// Does public key encryption for App:Entity
 
 // Encrypt takes a plaintext string and encrypts it for each provided entity.
 func (entity *Entity) Encrypt(content string, entities interface{}) (*document.Container, error) {
@@ -484,6 +539,9 @@ func (entity *Entity) Encrypt(content string, entities interface{}) (*document.C
 	return container, nil
 }
 
+// ThreatSpec TMv0.1 for Entity.SymmetricEncrypt
+// Does symmetric encryption using shared keys for App:Entity
+
 // SymmetricEncrypt takes a plaintext string and encrypts it with the given key.
 func (entity *Entity) SymmetricEncrypt(content, id, key string) (*document.Container, error) {
 
@@ -500,6 +558,9 @@ func (entity *Entity) SymmetricEncrypt(content, id, key string) (*document.Conta
 	return container, nil
 }
 
+// ThreatSpec TMv0.1 for Entity.EncryptThenSignString
+// Does public key encrypt-then-sign of strings for App:Entity
+
 // EncryptThenSignString takes a plaintext string, encrypts it then signs the ciphertext.
 func (entity *Entity) EncryptThenSignString(content string, entities interface{}) (*document.Container, error) {
 
@@ -514,6 +575,9 @@ func (entity *Entity) EncryptThenSignString(content string, entities interface{}
 
 	return container, nil
 }
+
+// ThreatSpec TMv0.1 for Entity.EncryptThenAuthenticateString
+// Does symmetric encrypt-then-mac of strings for App:Entity
 
 // EncryptThenAuthenticateString takes a plaintext string, encrypts it using the key and the MACs the ciphertext using they key.
 //
@@ -530,6 +594,9 @@ func (entity *Entity) EncryptThenAuthenticateString(content, id, key string) (*d
 	return container, nil
 }
 
+// ThreatSpec TMv0.1 for Entity.VerifyThenDecrypt
+// Does public key verify-then-decrypt for App:Entity
+
 // VerifyThenDecrypt takes a container, verifies the signature then decrypts, returning a plaintext string.
 func (entity *Entity) VerifyThenDecrypt(container *document.Container) (string, error) {
 	if err := entity.Verify(container); err != nil {
@@ -543,6 +610,9 @@ func (entity *Entity) VerifyThenDecrypt(container *document.Container) (string, 
 	return content, nil
 
 }
+
+// ThreatSpec TMv0.1 for Entity.VerifyAuthenticationThenDecrypt
+// Does symmetric verify-then-decrypt for App:Entity
 
 // VerifyAuthenticationThenDecrypt takes a container and verifies the MAC using the given key, then decrypts using the key, returning a plaintext string.
 //
