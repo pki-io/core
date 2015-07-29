@@ -4,6 +4,7 @@ package x509
 import (
 	"crypto/rand"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"fmt"
 	"github.com/pki-io/core/crypto"
 	"github.com/pki-io/core/document"
@@ -138,7 +139,7 @@ func (csr *CSR) Dump() string {
 // ThreatSpec TMv0.1 for CSR.Generate
 // Does CSR generation for App:Crypto
 
-func (csr *CSR) Generate() error {
+func (csr *CSR) Generate(subject *pkix.Name) error {
 
 	var privateKey interface{}
 	var err error
@@ -163,43 +164,44 @@ func (csr *CSR) Generate() error {
 	csr.Data.Body.PrivateKey = string(enc)
 
 	template := &x509.CertificateRequest{
-	//Raw                      []byte // Complete ASN.1 DER content (CSR, signature algorithm and signature).
-	//RawTBSCertificateRequest []byte // Certificate request info part of raw ASN.1 DER content.
-	//RawSubjectPublicKeyInfo  []byte // DER encoded SubjectPublicKeyInfo.
-	//RawSubject               []byte // DER encoded Subject.
+		//Raw                      []byte // Complete ASN.1 DER content (CSR, signature algorithm and signature).
+		//RawTBSCertificateRequest []byte // Certificate request info part of raw ASN.1 DER content.
+		//RawSubjectPublicKeyInfo  []byte // DER encoded SubjectPublicKeyInfo.
+		//RawSubject               []byte // DER encoded Subject.
 
-	//Version            int
-	//Signature          []byte
-	//SignatureAlgorithm SignatureAlgorithm
+		//Version            int
+		//Signature          []byte
+		//SignatureAlgorithm SignatureAlgorithm
 
-	//PublicKeyAlgorithm PublicKeyAlgorithm
-	//PublicKey          interface{}
+		//PublicKeyAlgorithm PublicKeyAlgorithm
+		//PublicKey          interface{}
 
-	//Subject pkix.Name
+		//Subject pkix.Name
+		Subject: *subject,
 
-	// Attributes is a collection of attributes providing
-	// additional information about the subject of the certificate.
-	// See RFC 2986 section 4.1.
-	//Attributes []pkix.AttributeTypeAndValueSET
+		// Attributes is a collection of attributes providing
+		// additional information about the subject of the certificate.
+		// See RFC 2986 section 4.1.
+		//Attributes []pkix.AttributeTypeAndValueSET
 
-	// Extensions contains raw X.509 extensions. When parsing CSRs, this
-	// can be used to extract extensions that are not parsed by this
-	// package.
-	//Extensions []pkix.Extension
+		// Extensions contains raw X.509 extensions. When parsing CSRs, this
+		// can be used to extract extensions that are not parsed by this
+		// package.
+		//Extensions []pkix.Extension
 
-	// ExtraExtensions contains extensions to be copied, raw, into any
-	// marshaled CSR. Values override any extensions that would otherwise
-	// be produced based on the other fields but are overridden by any
-	// extensions specified in Attributes.
-	//
-	// The ExtraExtensions field is not populated when parsing CSRs, see
-	// Extensions.
-	//ExtraExtensions []pkix.Extension
+		// ExtraExtensions contains extensions to be copied, raw, into any
+		// marshaled CSR. Values override any extensions that would otherwise
+		// be produced based on the other fields but are overridden by any
+		// extensions specified in Attributes.
+		//
+		// The ExtraExtensions field is not populated when parsing CSRs, see
+		// Extensions.
+		//ExtraExtensions []pkix.Extension
 
-	// Subject Alternate Name values.
-	//DNSNames       []string
-	//EmailAddresses []string
-	//IPAddresses    []net.IP
+		// Subject Alternate Name values.
+		//DNSNames       []string
+		//EmailAddresses []string
+		//IPAddresses    []net.IP
 	}
 
 	der, err := x509.CreateCertificateRequest(rand.Reader, template, privateKey)
