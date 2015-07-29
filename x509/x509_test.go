@@ -1,6 +1,7 @@
 package x509
 
 import (
+	"crypto/x509/pkix"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -20,7 +21,8 @@ func TestX509SignCSR(t *testing.T) {
 
 	csr, _ := NewCSR(nil)
 	csr.Data.Body.Name = "Server1"
-	csr.Generate()
+	subject := pkix.Name{CommonName: csr.Data.Body.Name}
+	csr.Generate(&subject)
 
 	csrPublic, _ := csr.Public()
 
