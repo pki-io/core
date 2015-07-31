@@ -294,8 +294,9 @@ func (ca *CA) GenerateSub(parentCA interface{}) error {
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
 		// see http://golang.org/pkg/crypto/x509/#KeyUsage
-		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		// http://security.stackexchange.com/questions/49229/root-certificate-key-usage-non-self-signed-end-entity
+		//ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 	}
 	var privateKey interface{}
 	var publicKey interface{}
