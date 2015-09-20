@@ -2,6 +2,7 @@ package fs
 
 import (
 	"fmt"
+	"github.com/pki-io/core/api"
 	"github.com/pki-io/core/crypto"
 	"io/ioutil"
 	"os"
@@ -14,8 +15,7 @@ const publicPath string = "public"
 const privatePath string = "private"
 
 type Api struct {
-	Id   string
-	Path string
+	api.Api
 }
 
 func NewAPI(path string) (*Api, error) {
@@ -23,11 +23,22 @@ func NewAPI(path string) (*Api, error) {
 	if err := os.MkdirAll(fullPath, publicDirMode); err != nil {
 		return nil, fmt.Errorf("Could not create path '%s': %s", fullPath, err)
 	}
-	return &Api{Path: fullPath}, nil
+	api := new(Api)
+	api.Path = fullPath
+	return api, nil
 }
 
-func (fs *Api) SendPublic(dstId string, name string, content string) error {
-	path := filepath.Join(fs.Path, dstId, publicPath)
+func (api *Api) Connect(path string) error {
+	fullPath := filepath.Join(path, pathRoot, apiVersion)
+	if err := os.MkdirAll(fullPath, publicDirMode); err != nil {
+		return fmt.Errorf("Could not create path '%s': %s", fullPath, err)
+	}
+	api.Path = fullPath
+	return nil
+}
+
+func (api *Api) SendPublic(dstId string, name string, content string) error {
+	path := filepath.Join(api.Path, dstId, publicPath)
 	if err := os.MkdirAll(path, publicDirMode); err != nil {
 		return fmt.Errorf("Could not create path '%s': %s", path, err)
 	}
@@ -38,8 +49,8 @@ func (fs *Api) SendPublic(dstId string, name string, content string) error {
 	return nil
 }
 
-func (fs *Api) GetPublic(dstId string, name string) (string, error) {
-	filename := filepath.Join(fs.Path, dstId, publicPath, name)
+func (api *Api) GetPublic(dstId string, name string) (string, error) {
+	filename := filepath.Join(api.Path, dstId, publicPath, name)
 	if content, err := ReadFile(filename); err != nil {
 		return "", fmt.Errorf("Could not read file '%s': %s", filename, err)
 	} else {
@@ -47,8 +58,8 @@ func (fs *Api) GetPublic(dstId string, name string) (string, error) {
 	}
 }
 
-func (fs *Api) SendPrivate(dstId string, name string, content string) error {
-	path := filepath.Join(fs.Path, dstId, privatePath)
+func (api *Api) SendPrivate(dstId string, name string, content string) error {
+	path := filepath.Join(api.Path, dstId, privatePath)
 	if err := os.MkdirAll(path, privateDirMode); err != nil {
 		return fmt.Errorf("Could not create path '%s': %s", path, err)
 	}
@@ -59,8 +70,8 @@ func (fs *Api) SendPrivate(dstId string, name string, content string) error {
 	return nil
 }
 
-func (fs *Api) GetPrivate(dstId string, name string) (string, error) {
-	filename := filepath.Join(fs.Path, dstId, privatePath, name)
+func (api *Api) GetPrivate(dstId string, name string) (string, error) {
+	filename := filepath.Join(api.Path, dstId, privatePath, name)
 	if content, err := ReadFile(filename); err != nil {
 		return "", fmt.Errorf("Could not read file '%s': %s", filename, err)
 	} else {
@@ -68,33 +79,8 @@ func (fs *Api) GetPrivate(dstId string, name string) (string, error) {
 	}
 }
 
-func (fs *Api) StorePublic(name string, content string) error {
-	if len(fs.Id) == 0 {
-		return fmt.Errorf("Id cannot be empty")
-	}
-	return fs.SendPublic(fs.Id, name, content)
-}
-
-func (fs *Api) LoadPublic(name string) (string, error) {
-	if len(fs.Id) == 0 {
-		return "", fmt.Errorf("Id cannot be empty")
-	}
-	return fs.GetPublic(fs.Id, name)
-}
-
-func (fs *Api) StorePrivate(name string, content string) error {
-	if len(fs.Id) == 0 {
-		return fmt.Errorf("Id cannot be empty")
-	}
-	return fs.SendPrivate(fs.Id, name, content)
-}
-
-func (fs *Api) DeletePrivate(name string) error {
-	if len(fs.Id) == 0 {
-		return fmt.Errorf("Id cannot be empty")
-	}
-
-	filename := filepath.Join(fs.Path, fs.Id, privatePath, name)
+func (api *Api) DeletePrivate(id, name string) error {
+	filename := filepath.Join(api.Path, id, privatePath, name)
 
 	if err := os.Remove(filename); err != nil {
 		return fmt.Errorf("Couldn't remove file: %s", err)
@@ -102,15 +88,8 @@ func (fs *Api) DeletePrivate(name string) error {
 	return nil
 }
 
-func (fs *Api) LoadPrivate(name string) (string, error) {
-	if len(fs.Id) == 0 {
-		return "", fmt.Errorf("Id cannot be empty")
-	}
-	return fs.GetPrivate(fs.Id, name)
-}
-
-func (fs *Api) Push(dstId, name, queue, content string) error {
-	path := filepath.Join(fs.Path, dstId, name, queue)
+func (api *Api) Push(dstId, name, queue, content string) error {
+	path := filepath.Join(api.Path, dstId, name, queue)
 
 	if err := os.MkdirAll(path, privateDirMode); err != nil {
 		return fmt.Errorf("Could not create path '%s': %s", path, err)
@@ -122,19 +101,16 @@ func (fs *Api) Push(dstId, name, queue, content string) error {
 	return nil
 }
 
-func (fs *Api) PushIncoming(dstId, queue, content string) error {
-	return fs.Push(dstId, "incoming", queue, content)
+func (api *Api) PushIncoming(dstId, queue, content string) error {
+	return api.Push(dstId, "incoming", queue, content)
 }
 
-func (fs *Api) PushOutgoing(queue, content string) error {
-	if 0 == len(fs.Id) {
-		return fmt.Errorf("Id cannot be empty")
-	}
-	return fs.Push(fs.Id, "outgoing", queue, content)
+func (api *Api) PushOutgoing(dstId, queue, content string) error {
+	return api.Push(dstId, "outgoing", queue, content)
 }
 
-func (fs *Api) Pop(srcId, name, queue string) (string, error) {
-	pattern := filepath.Join(fs.Path, srcId, name, queue, "*")
+func (api *Api) Pop(srcId, name, queue string) (string, error) {
+	pattern := filepath.Join(api.Path, srcId, name, queue, "*")
 	files, err := filepath.Glob(pattern)
 	if err != nil {
 		return "", fmt.Errorf("Could not glob files: %s", err)
@@ -156,19 +132,16 @@ func (fs *Api) Pop(srcId, name, queue string) (string, error) {
 	}
 }
 
-func (fs *Api) PopIncoming(queue string) (string, error) {
-	if 0 == len(fs.Id) {
-		return "", fmt.Errorf("Id cannot be empty")
-	}
-	return fs.Pop(fs.Id, "incoming", queue)
+func (api *Api) PopOutgoing(srcId, queue string) (string, error) {
+	return api.Pop(srcId, "outgoing", queue)
 }
 
-func (fs *Api) PopOutgoing(srcId, queue string) (string, error) {
-	return fs.Pop(srcId, "outgoing", queue)
+func (api *Api) PopIncoming(srcId, queue string) (string, error) {
+	return api.Pop(srcId, "incoming", queue)
 }
 
-func (fs *Api) Size(id, name, queue string) (int, error) {
-	pattern := filepath.Join(fs.Path, id, name, queue, "*")
+func (api *Api) Size(id, name, queue string) (int, error) {
+	pattern := filepath.Join(api.Path, id, name, queue, "*")
 	files, err := filepath.Glob(pattern)
 	if err != nil {
 		return 0, fmt.Errorf("Could not glob files: %s", err)
@@ -176,18 +149,14 @@ func (fs *Api) Size(id, name, queue string) (int, error) {
 	return len(files), nil
 }
 
-func (fs *Api) IncomingSize(queue string) (int, error) {
-	if 0 == len(fs.Id) {
-		return 0, fmt.Errorf("Id cannot be empty")
-	}
-	return fs.Size(fs.Id, "incoming", queue)
+func (api *Api) OutgoingSize(id, queue string) (int, error) {
+	return api.Size(id, "outgoing", queue)
 }
 
-func (fs *Api) OutgoingSize(id, queue string) (int, error) {
-	return fs.Size(id, "outgoing", queue)
+func (api *Api) IncomingSize(id, queue string) (int, error) {
+	return api.Size(id, "incoming", queue)
 }
 
-func (fs *Api) Authenticate(id, key string) error {
-	fs.Id = id
+func (api *Api) Authenticate(id, key string) error {
 	return nil
 }
