@@ -1,4 +1,4 @@
-DIRS = config crypto document entity fs index node x509
+DIRS = api config crypto document entity fs index node x509
 
 default: get-deps test
 
