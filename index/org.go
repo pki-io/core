@@ -294,6 +294,27 @@ func (index *OrgIndex) AddPairingKey(id, key string, i interface{}) error {
 	return nil
 }
 
+func (index *OrgIndex) GetPairingKeys() map[string]*PairingKey {
+	return index.Data.Body.PairingKeys
+}
+
+func (index *OrgIndex) GetPairingKey(id string) (*PairingKey, error) {
+	_, ok := index.Data.Body.PairingKeys[id]
+	if !ok {
+		return nil, fmt.Errorf("key %s does not exist", id)
+	}
+	return index.Data.Body.PairingKeys[id], nil
+}
+
+func (index *OrgIndex) RemovePairingKey(id string) error {
+	_, ok := index.Data.Body.PairingKeys[id]
+	if !ok {
+		return fmt.Errorf("key %s does not exist", id)
+	}
+	delete(index.Data.Body.PairingKeys, id)
+	return nil
+}
+
 func (index *OrgIndex) AddInviteKey(id, key, name string) error {
 	_, ok := index.Data.Body.InviteKeys[id]
 	if ok {
@@ -453,6 +474,21 @@ func (index *OrgIndex) RemoveCert(name string) error {
 	return nil
 }
 
+func (index *OrgIndex) ClearCertTags(cert string) error {
+	_, ok := index.Data.Body.Tags.CertReverse[cert]
+	if ok {
+		delete(index.Data.Body.Tags.CertReverse, cert)
+	}
+	for tag, _ := range index.Data.Body.Tags.CertForward {
+		for i, taggedCert := range index.Data.Body.Tags.CertForward[tag] {
+			if taggedCert == cert {
+				index.Data.Body.Tags.CertForward[tag] = append(index.Data.Body.Tags.CertForward[tag][:i], index.Data.Body.Tags.CertForward[tag][i+1:]...)
+			}
+		}
+	}
+	return nil
+}
+
 func (index *OrgIndex) AddCSRTags(csr string, i interface{}) error {
 	var inTags []string
 	switch t := i.(type) {
@@ -499,5 +535,20 @@ func (index *OrgIndex) RemoveCSR(name string) error {
 		return fmt.Errorf("Cert %s does not exist", name)
 	}
 	delete(index.Data.Body.CSRs, name)
+	return nil
+}
+
+func (index *OrgIndex) ClearCSRTags(csr string) error {
+	_, ok := index.Data.Body.Tags.CSRReverse[csr]
+	if ok {
+		delete(index.Data.Body.Tags.CSRReverse, csr)
+	}
+	for tag, _ := range index.Data.Body.Tags.CSRForward {
+		for i, taggedCSR := range index.Data.Body.Tags.CSRForward[tag] {
+			if taggedCSR == csr {
+				index.Data.Body.Tags.CSRForward[tag] = append(index.Data.Body.Tags.CSRForward[tag][:i], index.Data.Body.Tags.CSRForward[tag][i+1:]...)
+			}
+		}
+	}
 	return nil
 }
