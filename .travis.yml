@@ -1,7 +1,8 @@
 language: go
 go:
+  - 1.5.1
   - 1.4
-  - 1.3
+sudo: false
 before_install:
   - mkdir /tmp/fdm
   - wget https://raw.githubusercontent.com/pki-io/fdm/master/fdm -O /tmp/fdm/fdm

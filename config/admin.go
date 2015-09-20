@@ -63,6 +63,10 @@ func (conf *AdminConfig) GetOrg(name string) (*AdminOrgData, error) {
 	return nil, fmt.Errorf("Could not find org %s", name)
 }
 
+func (conf *AdminConfig) GetOrgs() []AdminOrgData {
+	return conf.Data.Org
+}
+
 func (conf *AdminConfig) OrgExists(name string) bool {
 	for _, org := range conf.Data.Org {
 		if org.Name == name {
