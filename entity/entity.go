@@ -155,6 +155,14 @@ func (entity *Entity) Load(jsonString interface{}) error {
 	}
 }
 
+func (entity *Entity) Id() string {
+	return entity.Data.Body.Id
+}
+
+func (entity *Entity) Name() string {
+	return entity.Data.Body.Name
+}
+
 // ThreatSpec TMv0.1 for Entity.Dump
 // Does entity JSON dumping for App:Entity
 
