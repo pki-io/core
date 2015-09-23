@@ -125,6 +125,14 @@ func (csr *CSR) Load(jsonString interface{}) error {
 	}
 }
 
+func (csr *CSR) Name() string {
+	return csr.Data.Body.Name
+}
+
+func (csr *CSR) Id() string {
+	return csr.Data.Body.Id
+}
+
 // ThreatSpec TMv0.1 for CSR.Dump
 // Does CSR JSON dumping for App:X509
 

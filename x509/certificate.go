@@ -154,6 +154,14 @@ func (certificate *Certificate) Dump() string {
 	}
 }
 
+func (certificate *Certificate) Name() string {
+	return certificate.Data.Body.Name
+}
+
+func (certificate *Certificate) Id() string {
+	return certificate.Data.Body.Id
+}
+
 // ThreatSpec TMv0.1 for Certificate.Generate
 // Does certificate generation for App:X509
 

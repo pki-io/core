@@ -200,6 +200,14 @@ func (ca *CA) Load(jsonString interface{}) error {
 	}
 }
 
+func (ca *CA) Id() string {
+	return ca.Data.Body.Id
+}
+
+func (ca *CA) Name() string {
+	return ca.Data.Body.Name
+}
+
 // ThreatSpec TMv0.1 for CA.Dump
 // Does CA JSON dumping for App:X509
 
