@@ -127,6 +127,10 @@ func (index *NodeIndex) Dump() string {
 	}
 }
 
+func (index *NodeIndex) Id() string {
+	return index.Data.Body.Id
+}
+
 func (index *NodeIndex) AddCertTags(cert string, i interface{}) error {
 	var inTags []string
 	switch t := i.(type) {
