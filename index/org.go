@@ -216,6 +216,10 @@ func (index *OrgIndex) Dump() string {
 	}
 }
 
+func (index *OrgIndex) Id() string {
+	return index.Data.Body.Id
+}
+
 func (index *OrgIndex) AddCATags(ca string, i interface{}) error {
 	var inTags []string
 	switch t := i.(type) {
