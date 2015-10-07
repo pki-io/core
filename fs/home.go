@@ -1,3 +1,4 @@
+// ThreatSpec package github.com/pki-io/core/fs as fs
 package fs
 
 import (
@@ -39,12 +40,20 @@ func (home *Home) FullPath(name string) string {
 	return filepath.Join(home.Path, name)
 }
 
+// ThreatSpec TMv0.1 for Home.Write
+// It writes files relative to home location for App:FileSystem
+// Mitigates App:FileSystem against unauthorised access with strict file permissions
+
 func (home *Home) Write(name, content string) error {
 	if err := ioutil.WriteFile(home.FullPath(name), []byte(content), privateFileMode); err != nil {
 		return fmt.Errorf("Could not write file: %s", err)
 	}
 	return nil
 }
+
+// ThreatSpec TMv0.1 for Home.Read
+// It reads files relative to home location for App:FileSystem
+// Exposes App:FileSystem to arbitrary data reads with insufficient file permission validation
 
 func (home *Home) Read(name string) (string, error) {
 	if content, err := ReadFile(home.FullPath(name)); err != nil {

@@ -1,3 +1,4 @@
+// ThreatSpec package github.com/pki-io/core/crypto as crypto
 package crypto
 
 import (
