@@ -387,18 +387,19 @@ func (ca *CA) PrivateKey() (interface{}, error) {
 // Does CSR signing by CA for App:X509
 func (ca *CA) Sign(csr *CSR, useCSRSubject bool) (*Certificate, error) {
 
-	var subject *pkix.Name
+	var subject pkix.Name
 
 	if useCSRSubject {
 		decodedCSR, err := PemDecodeX509CSR([]byte(csr.Data.Body.CSR))
 		if err != nil {
 			return nil, err
 		}
-		subject = &decodedCSR.Subject
-
+		subject = decodedCSR.Subject
 	} else {
 		subject := new(pkix.Name)
 		subject.CommonName = csr.Data.Body.Name
+		fmt.Println("GOT HERE 2")
+		fmt.Println(subject)
 		if ca.Data.Body.DNScope.Country != "" {
 			subject.Country = []string{ca.Data.Body.DNScope.Country}
 		}
@@ -435,7 +436,7 @@ func (ca *CA) Sign(csr *CSR, useCSRSubject bool) (*Certificate, error) {
 		BasicConstraintsValid: true,
 		SubjectKeyId:          []byte{1, 2, 3},
 		SerialNumber:          serial,
-		Subject:               *subject,
+		Subject:               subject,
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
 		// see http://golang.org/pkg/crypto/x509/#KeyUsage
