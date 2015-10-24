@@ -13,7 +13,7 @@ dev: clean get-deps
 	for d in $(DIRS); do (cd _vendor/src/github.com/pki-io/core && ln -s ../../../../../$$d .); done && \
 	test ! -d _vendor/pkg || rm -rf _vendor/pkg
 	fdm
-	go get github.com/stretchr/testify
+	fdm get github.com/stretchr/testify
 
 lint:
 	fdm --exec gometalinter ./...

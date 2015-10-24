@@ -385,30 +385,42 @@ func (ca *CA) PrivateKey() (interface{}, error) {
 
 // ThreatSpec TMv0.1 for CA.Sign
 // Does CSR signing by CA for App:X509
-func (ca *CA) Sign(csr *CSR) (*Certificate, error) {
+func (ca *CA) Sign(csr *CSR, useCSRSubject bool) (*Certificate, error) {
 
-	subject := new(pkix.Name)
-	subject.CommonName = csr.Data.Body.Name
-	if ca.Data.Body.DNScope.Country != "" {
-		subject.Country = []string{ca.Data.Body.DNScope.Country}
-	}
-	if ca.Data.Body.DNScope.Organization != "" {
-		subject.Organization = []string{ca.Data.Body.DNScope.Organization}
-	}
-	if ca.Data.Body.DNScope.OrganizationalUnit != "" {
-		subject.OrganizationalUnit = []string{ca.Data.Body.DNScope.OrganizationalUnit}
-	}
-	if ca.Data.Body.DNScope.Locality != "" {
-		subject.Locality = []string{ca.Data.Body.DNScope.Locality}
-	}
-	if ca.Data.Body.DNScope.Province != "" {
-		subject.Province = []string{ca.Data.Body.DNScope.Province}
-	}
-	if ca.Data.Body.DNScope.StreetAddress != "" {
-		subject.StreetAddress = []string{ca.Data.Body.DNScope.StreetAddress}
-	}
-	if ca.Data.Body.DNScope.PostalCode != "" {
-		subject.PostalCode = []string{ca.Data.Body.DNScope.PostalCode}
+	var subject pkix.Name
+
+	if useCSRSubject {
+		decodedCSR, err := PemDecodeX509CSR([]byte(csr.Data.Body.CSR))
+		if err != nil {
+			return nil, err
+		}
+		subject = decodedCSR.Subject
+	} else {
+		subject := new(pkix.Name)
+		subject.CommonName = csr.Data.Body.Name
+		fmt.Println("GOT HERE 2")
+		fmt.Println(subject)
+		if ca.Data.Body.DNScope.Country != "" {
+			subject.Country = []string{ca.Data.Body.DNScope.Country}
+		}
+		if ca.Data.Body.DNScope.Organization != "" {
+			subject.Organization = []string{ca.Data.Body.DNScope.Organization}
+		}
+		if ca.Data.Body.DNScope.OrganizationalUnit != "" {
+			subject.OrganizationalUnit = []string{ca.Data.Body.DNScope.OrganizationalUnit}
+		}
+		if ca.Data.Body.DNScope.Locality != "" {
+			subject.Locality = []string{ca.Data.Body.DNScope.Locality}
+		}
+		if ca.Data.Body.DNScope.Province != "" {
+			subject.Province = []string{ca.Data.Body.DNScope.Province}
+		}
+		if ca.Data.Body.DNScope.StreetAddress != "" {
+			subject.StreetAddress = []string{ca.Data.Body.DNScope.StreetAddress}
+		}
+		if ca.Data.Body.DNScope.PostalCode != "" {
+			subject.PostalCode = []string{ca.Data.Body.DNScope.PostalCode}
+		}
 	}
 
 	serial, err := NewSerial()
@@ -424,7 +436,7 @@ func (ca *CA) Sign(csr *CSR) (*Certificate, error) {
 		BasicConstraintsValid: true,
 		SubjectKeyId:          []byte{1, 2, 3},
 		SerialNumber:          serial,
-		Subject:               *subject,
+		Subject:               subject,
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
 		// see http://golang.org/pkg/crypto/x509/#KeyUsage
