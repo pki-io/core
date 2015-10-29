@@ -398,8 +398,6 @@ func (ca *CA) Sign(csr *CSR, useCSRSubject bool) (*Certificate, error) {
 	} else {
 		subject := new(pkix.Name)
 		subject.CommonName = csr.Data.Body.Name
-		fmt.Println("GOT HERE 2")
-		fmt.Println(subject)
 		if ca.Data.Body.DNScope.Country != "" {
 			subject.Country = []string{ca.Data.Body.DNScope.Country}
 		}

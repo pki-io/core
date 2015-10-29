@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/xeipuuv/gojsonschema"
+	"strings"
 )
 
 type Documenter interface {
@@ -53,10 +54,11 @@ func (doc *Document) FromJson(data interface{}, target interface{}) (interface{}
 			}
 		} else {
 			// Loop through errors
+			var errs []string
 			for _, desc := range result.Errors() {
-				fmt.Printf("- %s\n", desc)
+				errs = append(errs, fmt.Sprint(desc))
 			}
-			return nil, errors.New("ffs")
+			return nil, errors.New(strings.Join(errs, "\n"))
 		}
 	} else {
 		if err := json.Unmarshal([]byte(jsonData), target); err != nil {
