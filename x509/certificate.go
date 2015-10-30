@@ -237,7 +237,7 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, subject 
 		return fmt.Errorf("Could not create certificate: %s", err)
 	}
 	certificate.Data.Body.Certificate = string(PemEncodeX509CertificateDER(der))
-	certificate.Data.Body.Id = fmt.Sprintf("%d", template.SerialNumber)
+	certificate.Data.Body.Id = NewID()
 	enc, err := crypto.PemEncodePrivate(privateKey)
 	if err != nil {
 		return fmt.Errorf("Failed to pem encode private key: %s", err)
