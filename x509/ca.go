@@ -354,7 +354,7 @@ func (ca *CA) GenerateSub(parentCA interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Could not create certificate: %s", err)
 	}
-	ca.Data.Body.Id = fmt.Sprintf("%d", template.SerialNumber)
+	ca.Data.Body.Id = NewID()
 	ca.Data.Body.Certificate = string(PemEncodeX509CertificateDER(der))
 	enc, err := crypto.PemEncodePrivate(privateKey)
 	if err != nil {
@@ -387,17 +387,17 @@ func (ca *CA) PrivateKey() (interface{}, error) {
 // Does CSR signing by CA for App:X509
 func (ca *CA) Sign(csr *CSR, useCSRSubject bool) (*Certificate, error) {
 
-	var subject pkix.Name
+	subject := new(pkix.Name)
 
 	if useCSRSubject {
 		decodedCSR, err := PemDecodeX509CSR([]byte(csr.Data.Body.CSR))
 		if err != nil {
 			return nil, err
 		}
-		subject = decodedCSR.Subject
+		subject = &decodedCSR.Subject
 	} else {
-		subject := new(pkix.Name)
 		subject.CommonName = csr.Data.Body.Name
+
 		if ca.Data.Body.DNScope.Country != "" {
 			subject.Country = []string{ca.Data.Body.DNScope.Country}
 		}
@@ -434,7 +434,7 @@ func (ca *CA) Sign(csr *CSR, useCSRSubject bool) (*Certificate, error) {
 		BasicConstraintsValid: true,
 		SubjectKeyId:          []byte{1, 2, 3},
 		SerialNumber:          serial,
-		Subject:               subject,
+		Subject:               *subject,
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
 		// see http://golang.org/pkg/crypto/x509/#KeyUsage

@@ -3,6 +3,7 @@ package x509
 
 import (
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"github.com/pki-io/core/crypto"
@@ -48,6 +49,14 @@ func PemDecodeX509CSR(in []byte) (*x509.CertificateRequest, error) {
 	} else {
 		return csr, nil
 	}
+}
+
+// ThreatSpec TMv0.1 for NewID
+// Creates new ID for App:X509
+
+func NewID() string {
+	idBytes, _ := crypto.RandomBytes(16)
+	return hex.EncodeToString(idBytes)
 }
 
 // ThreatSpec TMv0.1 for NewSerial
