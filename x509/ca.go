@@ -438,8 +438,9 @@ func (ca *CA) Sign(csr *CSR, useCSRSubject bool) (*Certificate, error) {
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
 		// see http://golang.org/pkg/crypto/x509/#KeyUsage
+		// KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment | x509.KeyUsageKeyAgreement,
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 	}
 	parent, _ := ca.Certificate()
 	csrPublicKey, err := csr.PublicKey()
