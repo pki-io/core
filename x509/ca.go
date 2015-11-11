@@ -296,15 +296,15 @@ func (ca *CA) GenerateSub(parentCA interface{}) error {
 	template := &x509.Certificate{
 		IsCA: true,
 		BasicConstraintsValid: true,
-		SubjectKeyId:          []byte{1, 2, 3},
-		SerialNumber:          serial,
-		Subject:               *subject,
-		NotBefore:             notBefore,
-		NotAfter:              notAfter,
+		//SubjectKeyId:          []byte{1, 2, 3},
+		SerialNumber: serial,
+		Subject:      *subject,
+		NotBefore:    notBefore,
+		NotAfter:     notAfter,
 		// see http://golang.org/pkg/crypto/x509/#KeyUsage
 		// http://security.stackexchange.com/questions/49229/root-certificate-key-usage-non-self-signed-end-entity
 		//ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		KeyUsage: x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 	}
 	var privateKey interface{}
 	var publicKey interface{}
@@ -432,11 +432,11 @@ func (ca *CA) Sign(csr *CSR, useCSRSubject bool) (*Certificate, error) {
 	template := &x509.Certificate{
 		IsCA: false,
 		BasicConstraintsValid: true,
-		SubjectKeyId:          []byte{1, 2, 3},
-		SerialNumber:          serial,
-		Subject:               *subject,
-		NotBefore:             notBefore,
-		NotAfter:              notAfter,
+		//SubjectKeyId:          []byte{1, 2, 3},
+		SerialNumber: serial,
+		Subject:      *subject,
+		NotBefore:    notBefore,
+		NotAfter:     notAfter,
 		// see http://golang.org/pkg/crypto/x509/#KeyUsage
 		// KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment | x509.KeyUsageKeyAgreement,
