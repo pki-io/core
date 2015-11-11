@@ -185,8 +185,8 @@ func (certificate *Certificate) Generate(parentCertificate interface{}, subject 
 		NotAfter:              notAfter,
 		// see http://golang.org/pkg/crypto/x509/#KeyUsage
 		// http://security.stackexchange.com/questions/24106/which-key-usages-are-required-by-each-key-exchange-method
+		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment | x509.KeyUsageKeyAgreement,
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageKeyEncipherment | x509.KeyUsageKeyAgreement,
 	}
 
 	var privateKey interface{}
