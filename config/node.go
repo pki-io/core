@@ -12,6 +12,7 @@ type NodeData struct {
 	Name  string `toml:"name"`
 	Id    string `toml:"id"`
 	Index string `toml:"index"`
+	OrgId string `toml:"org_id"`
 }
 
 type NodeConfigData struct {
@@ -46,13 +47,13 @@ func (conf *NodeConfig) Load(tomlString string) error {
 	return nil
 }
 
-func (conf *NodeConfig) AddNode(name, id, indexId string) error {
+func (conf *NodeConfig) AddNode(name, id, indexId, orgId string) error {
 	for _, node := range conf.Data.Node {
 		if node.Name == name {
 			return fmt.Errorf("Could not add node '%s' as one with that name already exists", name)
 		}
 	}
-	conf.Data.Node = append(conf.Data.Node, NodeData{name, id, indexId})
+	conf.Data.Node = append(conf.Data.Node, NodeData{name, id, indexId, orgId})
 	return nil
 }
 
@@ -73,4 +74,13 @@ func (conf *NodeConfig) RemoveNode(name string) error {
 		}
 	}
 	return fmt.Errorf("key %s does not exist: %s", name)
+}
+
+func (conf *NodeConfig) OrgExists(orgId string) bool {
+	for _, node := range conf.Data.Node {
+		if node.OrgId == orgId {
+			return true
+		}
+	}
+	return false
 }

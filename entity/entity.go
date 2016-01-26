@@ -91,21 +91,37 @@ const EntitySchema string = `{
   }
 }`
 
+type Encrypter interface {
+	Id() string
+	Body() EntityBody
+	EncryptThenAuthenticateString(string, string, string) (*document.Container, error)
+	EncryptThenSignString(string, []Encrypter) (*document.Container, error)
+}
+
+type Decrypter interface {
+	Id() string
+	Body() EntityBody
+	VerifyAuthenticationThenDecrypt(*document.Container, string) (string, error)
+	VerifyThenDecrypt(*document.Container) (string, error)
+}
+
+type EntityBody struct {
+	Id                   string `json:"id"`
+	Name                 string `json:"name"`
+	KeyType              string `json:"key-type"`
+	PublicSigningKey     string `json:"public-signing-key"`
+	PrivateSigningKey    string `json:"private-signing-key"`
+	PublicEncryptionKey  string `json:"public-encryption-key"`
+	PrivateEncryptionKey string `json:"private-encryption-key"`
+}
+
 // EntityData represents parsed Entity JSON data.
 type EntityData struct {
-	Scope   string `json:"scope"`
-	Version int    `json:"version"`
-	Type    string `json:"type"`
-	Options string `json:"options"`
-	Body    struct {
-		Id                   string `json:"id"`
-		Name                 string `json:"name"`
-		KeyType              string `json:"key-type"`
-		PublicSigningKey     string `json:"public-signing-key"`
-		PrivateSigningKey    string `json:"private-signing-key"`
-		PublicEncryptionKey  string `json:"public-encryption-key"`
-		PrivateEncryptionKey string `json:"private-encryption-key"`
-	} `json:"body"`
+	Scope   string     `json:"scope"`
+	Version int        `json:"version"`
+	Type    string     `json:"type"`
+	Options string     `json:"options"`
+	Body    EntityBody `json:"body"`
 }
 
 // Entity participates in cryptographic operations, sending and receiving secured data.
@@ -161,6 +177,10 @@ func (entity *Entity) Id() string {
 
 func (entity *Entity) Name() string {
 	return entity.Data.Body.Name
+}
+
+func (entity *Entity) Body() EntityBody {
+	return entity.Data.Body
 }
 
 // ThreatSpec TMv0.1 for Entity.Dump
@@ -521,18 +541,18 @@ func (entity *Entity) AuthenticateString(content, id, key string) (*document.Con
 // Does public key encryption for App:Entity
 
 // Encrypt takes a plaintext string and encrypts it for each provided entity.
-func (entity *Entity) Encrypt(content string, entities interface{}) (*document.Container, error) {
+func (entity *Entity) Encrypt(content string, entities []Encrypter) (*document.Container, error) {
 	encryptionKeys := make(map[string]string)
 
-	switch t := entities.(type) {
-	case []*Entity:
-		for _, e := range entities.([]*Entity) {
-			encryptionKeys[e.Data.Body.Id] = e.Data.Body.PublicEncryptionKey
+	if entities == nil {
+		body := entity.Body()
+		encryptionKeys[entity.Id()] = body.PublicEncryptionKey
+	} else {
+		for _, e := range entities {
+			body := e.Body()
+			encryptionKeys[e.Id()] = body.PublicEncryptionKey
 		}
-	case nil:
-		encryptionKeys[entity.Data.Body.Id] = entity.Data.Body.PublicEncryptionKey
-	default:
-		return nil, fmt.Errorf("Invalid entities given: %T", t)
+
 	}
 
 	container, err := document.NewContainer(nil)
@@ -570,7 +590,7 @@ func (entity *Entity) SymmetricEncrypt(content, id, key string) (*document.Conta
 // Does public key encrypt-then-sign of strings for App:Entity
 
 // EncryptThenSignString takes a plaintext string, encrypts it then signs the ciphertext.
-func (entity *Entity) EncryptThenSignString(content string, entities interface{}) (*document.Container, error) {
+func (entity *Entity) EncryptThenSignString(content string, entities []Encrypter) (*document.Container, error) {
 
 	container, err := entity.Encrypt(content, entities)
 	if err != nil {
